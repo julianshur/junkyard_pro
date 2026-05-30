@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Junkyard Profit Finder</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #242424; --surface3: #2a2a2a;
+    --border: #2e2e2e; --accent: #d4ff4e; --accent-dim: rgba(212,255,78,0.12);
+    --text: #f0f0f0; --muted: #888; --green: #4ade80; --red: #f87171; --yellow: #fbbf24;
+    --radius: 10px; --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; padding: 2rem 1rem 4rem; }
+  .shell { max-width: 1000px; margin: 0 auto; }
+
+  .eyebrow { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); margin-bottom: .5rem; }
+  h1 { font-size: 28px; font-weight: 800; margin-bottom: .5rem; }
+  .lede { font-size: 15px; color: var(--muted); line-height: 1.6; max-width: 560px; margin-bottom: 1.75rem; }
+  .search-panel { padding: 2.5rem 0 2rem; }
+  .search-form label { font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px; }
+  .input-row { display: flex; gap: 8px; }
+  .input-row input { flex: 1; padding: 11px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 15px; outline: none; }
+  .input-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+  .btn { padding: 11px 22px; background: var(--accent); color: #0f0f0f; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .btn:hover:not(:disabled) { background: #c8f040; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 6px; }
+
+  .yard-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.5rem; }
+  .yard-option { padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+  .yard-option:hover { border-color: var(--accent); }
+  .yard-option strong { display: block; font-size: 14px; }
+  .yard-option span { font-size: 12px; color: var(--muted); }
+
+  .status { display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 1.5rem; font-size: 14px; color: var(--muted); }
+  .status.error { background: rgba(248,113,113,.08); border-color: rgba(248,113,113,.3); color: var(--red); }
+  .spinner { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #333; border-top-color: var(--accent); animation: spin .7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 2rem; }
+  .summary-grid article { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; }
+  .summary-grid span { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); display: block; margin-bottom: 4px; }
+  .summary-grid strong { font-size: 20px; font-weight: 700; display: block; }
+  .summary-grid a { font-size: 12px; color: var(--accent); text-decoration: none; margin-top: 4px; display: inline-block; }
+
+  /* Car cards */
+  .car-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 1rem; overflow: hidden; }
+  .car-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; cursor: pointer; user-select: none; }
+  .car-header:hover { background: var(--surface2); }
+  .car-title { font-size: 17px; font-weight: 700; }
+  .car-meta { font-size: 12px; color: var(--muted); margin-top: 3px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; background: var(--accent-dim); color: var(--accent); }
+  .chevron { color: var(--muted); font-size: 18px; transition: transform .2s; }
+  .car-card.open .chevron { transform: rotate(180deg); }
+
+  /* Profit panel */
+  .profit-panel { border-top: 1px solid var(--border); }
+  .panel-loading { display: flex; align-items: center; gap: 10px; padding: 1.25rem; font-size: 13px; color: var(--muted); }
+
+  /* Summary stats */
+  .profit-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 1rem 1.25rem .75rem; }
+  .pstat { background: var(--surface2); border-radius: 8px; padding: 10px 14px; }
+  .pstat span { font-size: 11px; color: var(--muted); display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: .04em; }
+  .pstat strong { font-size: 17px; font-weight: 700; }
+  .pstat.best strong { color: var(--accent); }
+  .pstat.profit strong { color: var(--green); }
+
+  /* Sortable table */
+  .table-wrap { padding: 0 1.25rem 1.25rem; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { padding: 8px 10px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap; }
+  thead th:hover { color: var(--text); }
+  thead th.sorted { color: var(--accent); }
+  thead th .sort-arrow { margin-left: 4px; opacity: .5; }
+  thead th.sorted .sort-arrow { opacity: 1; }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 9px 10px; vertical-align: middle; }
+  .td-part { font-weight: 500; max-width: 260px; }
+  .td-part a { color: var(--text); text-decoration: none; }
+  .td-part a:hover { color: var(--accent); }
+  .td-part .part-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .td-num { text-align: right; font-variant-numeric: tabular-nums; }
+  .td-yard { color: var(--yellow); }
+  .td-ebay { color: var(--text); }
+  .td-profit { font-weight: 700; }
+  .td-profit.pos { color: var(--green); }
+  .td-profit.neg { color: var(--red); }
+  .td-margin { color: var(--muted); }
+  .no-data { padding: 1.25rem; font-size: 13px; color: var(--muted); text-align: center; }
+
+  @media(max-width:600px){
+    .summary-grid{grid-template-columns:1fr 1fr;}
+    .input-row{flex-direction:column;}
+    .profit-stats{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <section class="search-panel">
+    <p class="eyebrow">LKQ Pick Your Part + eBay sold comps</p>
+    <h1>Junkyard Profit Finder</h1>
+    <p class="lede">Search a PYP yard, click any car to see yard prices vs eBay sold prices and your potential profit.</p>
+    <form class="search-form" id="search-form">
+      <label for="location">PYP yard location</label>
+      <div class="input-row">
+        <input id="location" type="search" placeholder="Sun Valley, CA" autocomplete="off" required />
+        <button class="btn" type="submit" id="search-btn">Search</button>
+      </div>
+    </form>
+  </section>
+
+  <div id="status-area"></div>
+  <div id="yard-picker"></div>
+  <div id="summary-area"></div>
+  <div id="results-area"></div>
+</div>
+
+<script>
+const API = "http://localhost:5180/api";
+let currentYard = null;
+
+function status(msg, isError = false) {
+  const el = document.getElementById("status-area");
+  if (!msg) { el.innerHTML = ""; return; }
+  el.innerHTML = `<div class="status${isError ? " error" : ""}">
+    ${isError ? "⚠️" : '<div class="spinner"></div>'}
+    <span>${msg}</span>
+  </div>`;
+}
+
+function fmt(n) {
+  if (n == null || isNaN(n)) return "—";
+  return "$" + Number(n).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+function esc(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ── yard search ───────────────────────────────────────────────────────────────
+document.getElementById("search-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const q = document.getElementById("location").value.trim();
+  if (!q) return;
+  document.getElementById("yard-picker").innerHTML = "";
+  document.getElementById("summary-area").innerHTML = "";
+  document.getElementById("results-area").innerHTML = "";
+  document.getElementById("search-btn").disabled = true;
+  status(`Searching for PYP yards near "${q}"…`);
+  try {
+    const res  = await fetch(`${API}/yards?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.yards?.length) throw new Error("No yards found.");
+    status("");
+    renderYardPicker(data.yards);
+  } catch(err) {
+    status(err.message, true);
+  } finally {
+    document.getElementById("search-btn").disabled = false;
+  }
+});
+
+function renderYardPicker(yards) {
+  if (yards.length === 1) { loadInventory(yards[0]); return; }
+  const el = document.getElementById("yard-picker");
+  el.innerHTML = `<p style="font-size:13px;color:var(--muted);margin-bottom:10px">Multiple yards found — pick one:</p>
+    <div class="yard-list">${yards.map((y,i) => `
+      <div class="yard-option" data-i="${i}">
+        <strong>${esc(y.name)}</strong>
+        <span>${esc(y.address || y.id)}</span>
+      </div>`).join("")}
+    </div>`;
+  el.querySelectorAll(".yard-option").forEach(btn => {
+    btn.addEventListener("click", () => { el.innerHTML = ""; loadInventory(yards[+btn.dataset.i]); });
+  });
+}
+
+// ── inventory ─────────────────────────────────────────────────────────────────
+async function loadInventory(yard) {
+  currentYard = yard;
+  document.getElementById("summary-area").innerHTML = "";
+  document.getElementById("results-area").innerHTML = "";
+  status(`Loading inventory for ${yard.name}…`);
+  try {
+    const res  = await fetch(`${API}/inventory/${yard.id}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.vehicles?.length) throw new Error("No vehicles found for this yard.");
+    status("");
+    renderSummary(yard, data.vehicles);
+    renderCars(data.vehicles);
+  } catch(err) {
+    status(err.message, true);
+  }
+}
+
+function renderSummary(yard, vehicles) {
+  document.getElementById("summary-area").innerHTML = `
+    <div class="summary-grid">
+      <article>
+        <span>Yard</span>
+        <strong style="font-size:15px">${esc(yard.name)}</strong>
+        <a href="https://www.pyp.com/inventory/${esc(yard.id)}/" target="_blank" rel="noreferrer">Open on pyp.com ↗</a>
+      </article>
+      <article><span>Vehicles</span><strong>${vehicles.length}</strong></article>
+      <article><span>Profit table</span><strong style="font-size:14px;font-weight:400;color:var(--muted)">click a car</strong></article>
+    </div>`;
+}
+
+// ── car cards ─────────────────────────────────────────────────────────────────
+function renderCars(vehicles) {
+  const area = document.getElementById("results-area");
+  area.innerHTML = vehicles.map((v, i) => `
+    <div class="car-card" id="card-${i}">
+      <div class="car-header" data-i="${i}">
+        <div style="display:flex;gap:12px;align-items:center">
+          ${v.img ? `<img src="${esc(v.img)}" width="80" height="48" style="border-radius:5px;object-fit:cover;flex-shrink:0" loading="lazy" alt="">` : ""}
+          <div>
+            <div class="car-title">${esc(v.year + " " + v.make + " " + v.model)}</div>
+            <div class="car-meta">
+              ${v.section ? `<span>§ ${esc(v.section)}</span>` : ""}
+              ${v.row     ? `<span>📍 Row ${esc(v.row)}</span>` : ""}
+              ${v.color   ? `<span>🎨 ${esc(v.color)}</span>` : ""}
+              ${v.dateAdded ? `<span>🗓 ${esc(v.dateAdded)}</span>` : ""}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="badge" id="badge-${i}" style="display:none"></span>
+          <span class="chevron">▾</span>
+        </div>
+      </div>
+      <div class="profit-panel" id="panel-${i}" style="display:none"></div>
+    </div>`).join("");
+
+  area.querySelectorAll(".car-header").forEach(hdr => {
+    hdr.addEventListener("click", () => toggleCard(vehicles[+hdr.dataset.i], +hdr.dataset.i));
+  });
+}
+
+const loaded = {};
+
+async function toggleCard(vehicle, i) {
+  const card  = document.getElementById(`card-${i}`);
+  const panel = document.getElementById(`panel-${i}`);
+  const open  = card.classList.toggle("open");
+  panel.style.display = open ? "block" : "none";
+  if (!open || loaded[i]) return;
+
+  panel.innerHTML = `<div class="panel-loading"><div class="spinner"></div> Loading yard prices + eBay sold comps…</div>`;
+
+  try {
+    const yardId = currentYard.id;
+    const { year, make, model } = vehicle;
+
+    // Fetch yard prices and eBay listings in parallel
+    const [priceRes, ebayRes] = await Promise.all([
+      fetch(`${API}/prices/${yardId}?year=${year}&make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}`),
+      fetch(`${API}/ebay?year=${year}&make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}`)
+    ]);
+
+    const priceData = await priceRes.json();
+    const ebayData  = await ebayRes.json();
+
+    const yardParts  = priceData.parts  || [];
+    const ebayItems  = ebayData.listings || [];
+
+    renderProfitTable(i, vehicle, yardParts, ebayItems, priceData.sourceUrl);
+    loaded[i] = true;
+  } catch(err) {
+    panel.innerHTML = `<div class="no-data" style="color:var(--red)">⚠️ ${esc(err.message)}</div>`;
+  }
+}
+
+// ── Profit table ──────────────────────────────────────────────────────────────
+let sortState = {}; // keyed by card index
+
+function renderProfitTable(i, vehicle, yardParts, ebayItems, sourceUrl) {
+  const panel = document.getElementById(`panel-${i}`);
+  const badge = document.getElementById(`badge-${i}`);
+
+  // Build merged rows: match yard parts to eBay listings by keyword
+  const rows = buildRows(yardParts, ebayItems);
+
+  if (!rows.length) {
+    panel.innerHTML = `<div class="no-data">
+      No pricing data found.
+      <a href="${esc(sourceUrl)}" target="_blank" rel="noopener" style="color:var(--accent);margin-left:8px">View on pyp.com ↗</a>
+    </div>`;
+    return;
+  }
+
+  badge.textContent = rows.length + " parts";
+  badge.style.display = "inline";
+
+  // Stats
+  const profitRows  = rows.filter(r => r.profit != null && r.profit > 0);
+  const bestProfit  = profitRows.length ? Math.max(...profitRows.map(r => r.profit)) : null;
+  const totalProfit = profitRows.reduce((s, r) => s + r.profit, 0);
+  const avgMargin   = profitRows.length
+    ? Math.round(profitRows.reduce((s,r) => s + r.margin, 0) / profitRows.length)
+    : null;
+
+  sortState[i] = sortState[i] || { col: "profit", dir: -1 };
+
+  panel.innerHTML = `
+    <div class="profit-stats">
+      <div class="pstat best"><span>Best Flip</span><strong>${fmt(bestProfit)}</strong></div>
+      <div class="pstat profit"><span>Total Upside</span><strong>${fmt(totalProfit)}</strong></div>
+      <div class="pstat"><span>Avg Margin</span><strong>${avgMargin != null ? avgMargin + "%" : "—"}</strong></div>
+      <div class="pstat"><span>Parts</span><strong>${rows.length}</strong></div>
+    </div>
+    <div class="table-wrap">
+      <table id="ptable-${i}">
+        <thead>
+          <tr>
+            <th data-col="part" data-i="${i}">Part <span class="sort-arrow"></span></th>
+            <th data-col="yardPrice" data-i="${i}" class="td-num">Yard Price <span class="sort-arrow"></span></th>
+            <th data-col="ebayPrice" data-i="${i}" class="td-num">eBay Sold <span class="sort-arrow"></span></th>
+            <th data-col="profit" data-i="${i}" class="td-num sorted">Profit <span class="sort-arrow">▾</span></th>
+            <th data-col="margin" data-i="${i}" class="td-num">Margin <span class="sort-arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-${i}"></tbody>
+      </table>
+    </div>`;
+
+  renderTableRows(i, rows);
+
+  // Sort on header click
+  panel.querySelectorAll("thead th[data-col]").forEach(th => {
+    th.addEventListener("click", () => {
+      const col = th.dataset.col;
+      const s   = sortState[i];
+      s.dir = (s.col === col) ? s.dir * -1 : -1;
+      s.col = col;
+      panel.querySelectorAll("thead th").forEach(t => {
+        t.classList.remove("sorted");
+        t.querySelector(".sort-arrow").textContent = "";
+      });
+      th.classList.add("sorted");
+      th.querySelector(".sort-arrow").textContent = s.dir === -1 ? "▾" : "▴";
+      renderTableRows(i, rows);
+    });
+  });
+}
+
+function renderTableRows(i, rows) {
+  const s    = sortState[i];
+  const tbody = document.getElementById(`tbody-${i}`);
+
+  const sorted = [...rows].sort((a, b) => {
+    const av = a[s.col] ?? (s.dir === -1 ? -Infinity : Infinity);
+    const bv = b[s.col] ?? (s.dir === -1 ? -Infinity : Infinity);
+    if (typeof av === "string") return s.dir * av.localeCompare(bv);
+    return s.dir * (bv - av);
+  });
+
+  tbody.innerHTML = sorted.map(r => `
+    <tr>
+      <td class="td-part">
+        ${r.ebayUrl ? `<a href="${esc(r.ebayUrl)}" target="_blank" rel="noopener">${esc(r.part)}</a>` : esc(r.part)}
+        ${r.ebayTitle ? `<div class="part-sub">${esc(r.ebayTitle.slice(0, 60))}${r.ebayTitle.length > 60 ? "…" : ""}</div>` : ""}
+      </td>
+      <td class="td-num td-yard">${r.yardPrice != null ? fmt(r.yardPrice) : "<span style='color:var(--muted)'>—</span>"}</td>
+      <td class="td-num td-ebay">${r.ebayPrice != null ? fmt(r.ebayPrice) : "<span style='color:var(--muted)'>—</span>"}</td>
+      <td class="td-num td-profit ${r.profit > 0 ? 'pos' : r.profit < 0 ? 'neg' : ''}">${r.profit != null ? fmt(r.profit) : "<span style='color:var(--muted)'>—</span>"}</td>
+      <td class="td-num td-margin">${r.margin != null ? r.margin + "%" : "<span style='color:var(--muted)'>—</span>"}</td>
+    </tr>`).join("");
+}
+
+// ── Match yard parts to eBay listings ────────────────────────────────────────
+function buildRows(yardParts, ebayItems) {
+  const rows = [];
+
+  // If we have yard prices, match each part to the best eBay listing
+  if (yardParts.length) {
+    yardParts.forEach(yp => {
+      const keywords = yp.partName.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+      // Find best-matching eBay listing by keyword overlap
+      let bestEbay = null, bestScore = 0;
+      ebayItems.forEach(ei => {
+        const title = ei.title.toLowerCase();
+        const score = keywords.filter(k => title.includes(k)).length;
+        if (score > bestScore) { bestScore = score; bestEbay = ei; }
+      });
+
+      const yardPrice = yp.price;
+      const ebayPrice = bestScore > 0 ? bestEbay.soldPrice : null;
+      const profit    = ebayPrice != null ? Math.round((ebayPrice - yardPrice) * 100) / 100 : null;
+      const margin    = (ebayPrice != null && ebayPrice > 0) ? Math.round((profit / ebayPrice) * 100) : null;
+
+      rows.push({
+        part: yp.partName,
+        yardPrice,
+        ebayPrice,
+        profit,
+        margin,
+        ebayTitle: bestEbay?.title || null,
+        ebayUrl:   bestEbay?.url   || null,
+      });
+    });
+  } else if (ebayItems.length) {
+    // No yard prices — show eBay items only with avg yard price note
+    ebayItems.forEach(ei => {
+      rows.push({
+        part:       ei.title,
+        yardPrice:  null,
+        ebayPrice:  ei.soldPrice,
+        profit:     null,
+        margin:     null,
+        ebayTitle:  null,
+        ebayUrl:    ei.url,
+      });
+    });
+  }
+
+  return rows;
+}
+</script>
+</body>
+</html>
