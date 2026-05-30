@@ -7,85 +7,66 @@ const path    = require("path");
 const app  = express();
 const PORT = process.env.PORT || 5180;
 
-app.use(cors({
-  origin: '*', // Allow all origins — lock this down to your Turbify domain in production
-  methods: ['GET'],
-}));
+app.use(cors({ origin: "*", methods: ["GET"] }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// ── Puppeteer browser singleton ───────────────────────────────────────────────
-// One browser instance is reused across requests to avoid slow cold starts.
-let browser = null;
+// Shared axios instance that mimics a real browser
+const http = axios.create({
+  timeout: 20000,
+  headers: {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache",
+    "sec-ch-ua": '"Chromium";v="124","Google Chrome";v="124"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "document",
+    "sec-fetch-mode": "navigate",
+    "sec-fetch-site": "none",
+    "sec-fetch-user": "?1",
+    "Upgrade-Insecure-Requests": "1",
+  },
+});
 
-async function getBrowser() {
-  if (browser) return browser;
-  const puppeteer = require("puppeteer");
-  const fs2 = require("fs");
+// Fetch a page, first hitting the homepage to get session cookies
+const cookieJar = {}; // domain -> cookie string
 
-  // On cloud (Railway/Render) use puppeteer's bundled Chromium.
-  // On Windows dev machine, prefer system Chrome.
-  const isCloud = !!(process.env.RAILWAY_ENVIRONMENT || process.env.RENDER || process.env.DYNO);
+async function fetchPage(url, referer = null) {
+  const domain = new URL(url).hostname;
 
-  let executablePath;
-  if (!isCloud) {
-    const chromePaths = [
-      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-      "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-      (process.env.LOCALAPPDATA || "") + "\\Google\\Chrome\\Application\\chrome.exe",
-      "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-      "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
-    ];
-    executablePath = chromePaths.find(p => { try { return fs2.existsSync(p); } catch(_) { return false; } });
+  // Prime cookies by visiting homepage if we haven't yet
+  if (!cookieJar[domain]) {
+    try {
+      const homeUrl = `https://${domain}/`;
+      const r = await http.get(homeUrl, { maxRedirects: 5 });
+      const setCookie = r.headers["set-cookie"];
+      if (setCookie) {
+        cookieJar[domain] = setCookie.map(c => c.split(";")[0]).join("; ");
+        console.log(`[cookies] primed for ${domain}`);
+      }
+    } catch(_) {}
+    if (!cookieJar[domain]) cookieJar[domain] = ""; // mark as attempted
   }
 
-  if (executablePath) console.log("[browser] using system Chrome:", executablePath);
-  else console.log("[browser] using Puppeteer bundled Chromium");
+  const headers = {};
+  if (cookieJar[domain]) headers["Cookie"] = cookieJar[domain];
+  if (referer) headers["Referer"] = referer;
 
-  browser = await puppeteer.launch({
-    headless: "new",
-    executablePath: executablePath || undefined,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-      "--disable-blink-features=AutomationControlled",
-    ],
-  });
-  console.log("[browser] launched");
-  return browser;
-}
+  const r = await http.get(url, { headers, maxRedirects: 5 });
 
-// Fetch a URL with a real headless Chrome, return the final HTML.
-async function fetchWithBrowser(url, waitFor = null) {
-  const b    = await getBrowser();
-  const page = await b.newPage();
-  try {
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-      "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-    );
-    await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
-    await page.evaluateOnNewDocument(() => {
-      Object.defineProperty(navigator, "webdriver", { get: () => undefined });
-      window.chrome = { runtime: {} };
-    });
-
-    await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
-
-    // Wait for specific element or settle for 2s
-    if (waitFor) {
-      await page.waitForSelector(waitFor, { timeout: 15000 }).catch(() => {});
-      // Extra buffer for all rows to render
-      await new Promise(r => setTimeout(r, 500));
-    } else {
-      await new Promise(r => setTimeout(r, 2000));
-    }
-
-    return await page.content();
-  } finally {
-    await page.close();
+  // Update cookies from response
+  const setCookie = r.headers["set-cookie"];
+  if (setCookie) {
+    const newCookies = setCookie.map(c => c.split(";")[0]).join("; ");
+    cookieJar[domain] = cookieJar[domain]
+      ? cookieJar[domain] + "; " + newCookies
+      : newCookies;
   }
+
+  return r.data;
 }
 
 // ── Known PYP store list ──────────────────────────────────────────────────────
@@ -109,95 +90,75 @@ const KNOWN_STORES = [
   { id: "seattle",             name: "Pick Your Part - Seattle",         address: "Seattle, WA" },
 ];
 
+// ── GET /health ───────────────────────────────────────────────────────────────
+app.get("/health", (_, res) => res.json({ status: "ok" }));
+
 // ── GET /api/yards?q=<location> ───────────────────────────────────────────────
 app.get("/api/yards", async (req, res) => {
   const q = (req.query.q || "").trim().toLowerCase();
   if (!q) return res.json({ error: "Missing location query" });
-  console.log(`[yards] searching for: "${q}"`);
+  console.log(`[yards] searching: "${q}"`);
 
-  // Try to scrape pyp.com/locations with Puppeteer for a fresh store list
   let allStores = [...KNOWN_STORES];
+
+  // Try to scrape live store list
   try {
-    const html = await fetchWithBrowser("https://www.pyp.com/locations");
+    const html = await fetchPage("https://www.pyp.com/locations");
     const $ = cheerio.load(html);
     $("a[href*='/inventory/']").each((_, el) => {
-      const href = $(el).attr("href") || "";
-      const slug = href.match(/\/inventory\/([^/]+)/)?.[1];
-      if (!slug) return;
+      const slug = $(el).attr("href")?.match(/\/inventory\/([^/]+)/)?.[1];
       const name = $(el).text().trim();
-      const address = $(el).closest("[class*='store'],[class*='location']")
-        .find("[class*='address'],address,p").first().text().trim();
       if (slug && name && !allStores.find(s => s.id === slug)) {
-        allStores.push({ id: slug, name, address });
+        allStores.push({ id: slug, name, address: "" });
       }
     });
-    console.log(`[yards] total stores after scrape: ${allStores.length}`);
+    console.log(`[yards] total after scrape: ${allStores.length}`);
   } catch (err) {
-    console.log(`[yards] locations scrape failed: ${err.message} — using known list`);
+    console.log(`[yards] scrape failed: ${err.message}`);
   }
 
-  // Fuzzy match — score by word overlap but weight name/city matches higher
-  const qWords = q.split(/[\s,]+/).filter(Boolean).filter(w => w.length > 1);
+  const qWords = q.split(/[\s,]+/).filter(w => w.length > 1);
   const scored = allStores.map(s => {
-    const nameHay = s.name.toLowerCase();
-    const addrHay = s.address.toLowerCase();
-    const fullHay = nameHay + ' ' + addrHay;
-    // Each query word: 2pts if in name, 1pt if in address
-    const score = qWords.reduce((n, w) => {
-      if (nameHay.includes(w)) return n + 2;
-      if (addrHay.includes(w)) return n + 1;
-      return n;
-    }, 0);
+    const nameH = s.name.toLowerCase();
+    const addrH = s.address.toLowerCase();
+    const score = qWords.reduce((n, w) => n + (nameH.includes(w) ? 2 : addrH.includes(w) ? 1 : 0), 0);
     return { ...s, score };
   }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
 
   if (!scored.length) {
-    return res.json({
-      yards: allStores.slice(0, 12),
-      message: `No exact match for "${q}" — showing all known yards.`,
-    });
+    return res.json({ yards: allStores.slice(0, 12), message: `No exact match — showing all known yards.` });
   }
-
-  // If top result score is tied, show all tied results so user can pick
-  const topScore = scored[0].score;
-  const topMatches = scored.filter(s => s.score === topScore);
-  res.json({ yards: topMatches.length === 1 ? topMatches : scored.slice(0, 6) });
+  res.json({ yards: scored.slice(0, 6) });
 });
 
 // ── GET /api/inventory/:yardId ────────────────────────────────────────────────
 app.get("/api/inventory/:yardId", async (req, res) => {
   const { yardId } = req.params;
-  if (!yardId) return res.json({ error: "Missing yard ID" });
-
   const url = `https://www.pyp.com/inventory/${yardId}/`;
   console.log(`[inventory] fetching: ${url}`);
 
   let html;
   try {
-    // Use Puppeteer — pyp.com blocks plain axios with 403 (Cloudflare)
-    html = await fetchWithBrowser(url, ".pypvi_resultRow");
+    html = await fetchPage(url, "https://www.pyp.com/");
   } catch (err) {
-    console.error("[inventory] browser fetch failed:", err.message);
-    return res.json({ error: "Failed to load inventory page: " + err.message });
+    return res.json({ error: "Failed to load inventory: " + err.message });
   }
 
-  const $        = cheerio.load(html);
+  const $ = cheerio.load(html);
   const vehicles = [];
 
   $(".pypvi_resultRow").each((_, el) => {
     if (vehicles.length >= 20) return false;
     const $el = $(el);
-
-    const ymmText = $el.find(".pypvi_ymm").text().replace(/\s+/g, " ").trim();
+    const ymmText  = $el.find(".pypvi_ymm").text().replace(/\s+/g, " ").trim();
     const ymmMatch = ymmText.match(/^(\d{4})\s+(\S+)\s+(.+)$/);
     if (!ymmMatch) return;
     const [, year, make, model] = ymmMatch;
 
     let row = null, section = null, color = null, vin = null, stockNo = null, dateAdded = null;
-
     $el.find(".pypvi_detailItem").each((_, d) => {
       const text = $(d).text().replace(/\s+/g, " ").trim();
-      const m = (re) => text.match(re)?.[1]?.trim() || null;
+      const m = re => text.match(re)?.[1]?.trim() || null;
       row     = row     || m(/Row\s*:\s*(\S+)/i);
       section = section || m(/Section\s*:\s*(\S+)/i);
       color   = color   || m(/Color\s*:\s*(.+)/i);
@@ -207,118 +168,21 @@ app.get("/api/inventory/:yardId", async (req, res) => {
 
     const timeEl = $el.find("time");
     if (timeEl.length) dateAdded = timeEl.attr("datetime")?.split("T")[0] || timeEl.text().trim();
-
     const img = $el.find("img").first().attr("src") || null;
 
     vehicles.push({ year: parseInt(year), make, model, section, row, color, vin, stockNo, dateAdded, img });
   });
 
-  console.log(`[inventory] found ${vehicles.length} vehicles`);
+  const rowCount = (html.match(/pypvi_resultRow/g) || []).length;
+  console.log(`[inventory] pypvi_resultRow in HTML: ${rowCount}, parsed: ${vehicles.length}`);
 
   if (!vehicles.length) {
-    // Log what we actually got to help debug
-    const rowCount = (html.match(/pypvi_resultRow/g) || []).length;
-    const ymmCount = (html.match(/pypvi_ymm/g) || []).length;
-    console.log(`[inventory] debug — pypvi_resultRow: ${rowCount}, pypvi_ymm: ${ymmCount}, html length: ${html.length}`);
-    if (rowCount === 0) {
-      const bodyIdx = html.indexOf('<body');
-      console.log('[inventory] body snippet:', html.slice(bodyIdx, bodyIdx + 400));
-    }
-    return res.json({ error: `No vehicles found for "${yardId}". rowCount=${rowCount} ymmCount=${ymmCount}` });
+    return res.json({ error: `No vehicles found for "${yardId}". rowCount=${rowCount}` });
   }
-
   res.json({ vehicles });
 });
 
-// ── GET /api/ebay?year=&make=&model= ─────────────────────────────────────────
-app.get("/api/ebay", async (req, res) => {
-  const { year, make, model } = req.query;
-  if (!year || !make || !model) return res.json({ error: "Missing year/make/model" });
-
-  const query = encodeURIComponent(`${year} ${make} ${model} parts`);
-  const url   = `https://www.ebay.com/sch/i.html?_nkw=${query}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=16&_ipg=60`;
-  console.log(`[ebay] fetching: ${url}`);
-
-  let html;
-  try {
-    // Visit eBay homepage first to pick up cookies, then go to search
-    const b = await getBrowser();
-    const page = await b.newPage();
-    await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
-    await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
-    await page.evaluateOnNewDocument(() => {
-      Object.defineProperty(navigator, "webdriver", { get: () => undefined });
-      window.chrome = { runtime: {} };
-    });
-    // Land on eBay first for cookies
-    await page.goto("https://www.ebay.com", { waitUntil: "domcontentloaded", timeout: 15000 }).catch(()=>{});
-    await new Promise(r => setTimeout(r, 1500));
-    // Now navigate to the sold search
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-    await page.waitForSelector(".s-item__title", { timeout: 10000 }).catch(() => {});
-    html = await page.content();
-    await page.close();
-  } catch (err) {
-    console.log("[ebay] browser error:", err.message);
-    return res.json({ error: "Failed to load eBay: " + err.message });
-  }
-
-  const $        = cheerio.load(html);
-  const listings = [];
-
-  // eBay now uses .s-card (new UI) — fall back to .s-item (old UI) if needed
-  const useNewUI = $(".s-card").length > 0;
-  const selector = useNewUI ? ".s-card" : ".s-item";
-  console.log(`[ebay] UI: ${useNewUI ? 'new (s-card)' : 'old (s-item)'}, count: ${$(selector).length}`);
-
-  $(selector).each((_, el) => {
-    if (listings.length >= 20) return false;
-    const $el = $(el);
-
-    let title, price, href, dateSold, condition;
-
-    if (useNewUI) {
-      // New eBay card UI (2024+)
-      title = $el.find(".s-card__title, [class*='card__title'], .su-card__title").text().trim();
-      if (!title) title = $el.find("h3, h2").first().text().trim();
-      const priceEl = $el.find("[class*='price']").first();
-      price = parseFloat(priceEl.text().replace(/[^0-9.]/g, ""));
-      href  = $el.find("a.s-card__link, a[class*='card__link'], a").first().attr("href") || "";
-      dateSold  = $el.find("[class*='sold'], [class*='ended'], [class*='date']").first().text().trim() || null;
-      condition = $el.find("[class*='condition'], [class*='subtitle']").first().text().trim() || null;
-    } else {
-      // Legacy .s-item UI
-      title = (
-        $el.find(".s-item__title span[role='heading']").text() ||
-        $el.find(".s-item__title").text()
-      ).replace("New listing", "").trim();
-      price    = parseFloat($el.find(".s-item__price").first().text().replace(/[^0-9.]/g, ""));
-      href     = $el.find(".s-item__link").attr("href") || "";
-      dateSold = $el.find(".s-item__caption--signal, .s-item__ended-date, .POSITIVE, .s-item__caption span").first().text().trim() || null;
-      condition = $el.find(".SECONDARY_INFO, .s-item__subtitle").first().text().trim() || null;
-    }
-
-    if (!title || title === "Shop on eBay" || title === "Results matching fewer words") return;
-    if (!price || price < 5) return;
-
-    listings.push({
-      title,
-      soldPrice: price,
-      url:      href ? href.split("?")[0] : null,
-      dateSold,
-      category: condition,
-    });
-  });
-
-  listings.sort((a, b) => b.soldPrice - a.soldPrice);
-  console.log(`[ebay] returning ${listings.length} listings`);
-  res.json({ listings });
-});
-
-
-
-// ── GET /api/prices/:yardId?year=&make=&model= ───────────────────────────────
-// Scrapes PYP part prices for a specific vehicle.
+// ── GET /api/prices/:yardId ───────────────────────────────────────────────────
 app.get("/api/prices/:yardId", async (req, res) => {
   const { yardId } = req.params;
   const { year, make, model } = req.query;
@@ -329,7 +193,7 @@ app.get("/api/prices/:yardId", async (req, res) => {
 
   let html;
   try {
-    html = await fetchWithBrowser(url, ".parts-table, table, .price-row, [class*='price']");
+    html = await fetchPage(url, `https://www.pyp.com/inventory/${yardId}/`);
   } catch (err) {
     return res.json({ error: "Failed to load prices: " + err.message });
   }
@@ -337,67 +201,73 @@ app.get("/api/prices/:yardId", async (req, res) => {
   const $ = cheerio.load(html);
   const parts = [];
 
-  // PYP prices page renders a table of parts with prices
-  // Try multiple selectors for their table structure
-  const rows = $("table tr, .price-row, [class*='partRow'], [class*='part-row']");
-  console.log(`[prices] found ${rows.length} rows`);
-
-  rows.each((_, el) => {
-    const $el = $(el);
-    const cells = $el.find("td");
+  $("table tr").each((_, el) => {
+    const cells = $(el).find("td");
     if (cells.length < 2) return;
     const partName = cells.eq(0).text().trim();
-    const priceText = cells.eq(1).text().trim();
-    const price = parseFloat(priceText.replace(/[^0-9.]/g, ""));
-    if (!partName || !price) return;
-    parts.push({ partName, price });
+    const price    = parseFloat(cells.eq(1).text().replace(/[^0-9.]/g, ""));
+    if (partName && price) parts.push({ partName, price });
   });
-
-  // Fallback: look for any element with a dollar amount near a part name
-  if (!parts.length) {
-    $("[class*='part'], [class*='price-item'], li").each((_, el) => {
-      const text = $(el).text().replace(/\s+/g, " ").trim();
-      const m = text.match(/^(.+?)\s+\$([0-9]+(?:\.[0-9]{2})?)/);
-      if (m) parts.push({ partName: m[1].trim(), price: parseFloat(m[2]) });
-    });
-  }
-
-  if (!parts.length) {
-    // Log snippet for debugging
-    console.log("[prices] no parts found, snippet:", html.slice(html.indexOf("<body"), html.indexOf("<body") + 600));
-  }
 
   console.log(`[prices] found ${parts.length} parts`);
   res.json({ parts, sourceUrl: url });
 });
 
-// ── GET /api/debug/:yardId — dump raw HTML for inspection ────────────────────
-app.get("/api/debug/:yardId", async (req, res) => {
-  const { yardId } = req.params;
+// ── GET /api/ebay ─────────────────────────────────────────────────────────────
+app.get("/api/ebay", async (req, res) => {
+  const { year, make, model } = req.query;
+  if (!year || !make || !model) return res.json({ error: "Missing params" });
+
+  const query = encodeURIComponent(`${year} ${make} ${model} parts`);
+  const url   = `https://www.ebay.com/sch/i.html?_nkw=${query}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=16&_ipg=60`;
+  console.log(`[ebay] fetching: ${url}`);
+
+  let html;
   try {
-    const html = await fetchWithBrowser(`https://www.pyp.com/inventory/${yardId}/`, null);
-    const snippet = html.slice(0, 3000);
-    const hasRows = html.includes('pypvi_resultRow');
-    const rowCount = (html.match(/pypvi_resultRow/g) || []).length;
-    res.json({ yardId, hasRows, rowCount, snippet });
-  } catch(err) {
-    res.json({ error: err.message });
+    html = await fetchPage(url, "https://www.ebay.com/");
+  } catch (err) {
+    return res.json({ error: "Failed to load eBay: " + err.message });
   }
+
+  const $ = cheerio.load(html);
+  const listings = [];
+
+  const useNewUI = $(".s-card").length > 0;
+  const selector = useNewUI ? ".s-card" : ".s-item";
+  console.log(`[ebay] UI: ${useNewUI ? "new(s-card)" : "old(s-item)"}, count: ${$(selector).length}`);
+
+  $(selector).each((_, el) => {
+    if (listings.length >= 20) return false;
+    const $el = $(el);
+    let title, price, href, dateSold, condition;
+
+    if (useNewUI) {
+      title     = $el.find(".s-card__title, [class*='card__title']").text().trim() || $el.find("h3,h2").first().text().trim();
+      price     = parseFloat($el.find("[class*='price']").first().text().replace(/[^0-9.]/g, ""));
+      href      = $el.find("a.s-card__link, a[class*='card__link'], a").first().attr("href") || "";
+      dateSold  = $el.find("[class*='sold'],[class*='ended'],[class*='date']").first().text().trim() || null;
+      condition = $el.find("[class*='condition'],[class*='subtitle']").first().text().trim() || null;
+    } else {
+      title     = ($el.find(".s-item__title span[role='heading']").text() || $el.find(".s-item__title").text()).replace("New listing","").trim();
+      price     = parseFloat($el.find(".s-item__price").first().text().replace(/[^0-9.]/g,""));
+      href      = $el.find(".s-item__link").attr("href") || "";
+      dateSold  = $el.find(".s-item__caption--signal,.s-item__ended-date,.POSITIVE").first().text().trim() || null;
+      condition = $el.find(".SECONDARY_INFO,.s-item__subtitle").first().text().trim() || null;
+    }
+
+    if (!title || title === "Shop on eBay" || !price || price < 5) return;
+    listings.push({ title, soldPrice: price, url: href ? href.split("?")[0] : null, dateSold, category: condition });
+  });
+
+  listings.sort((a, b) => b.soldPrice - a.soldPrice);
+  console.log(`[ebay] returning ${listings.length} listings`);
+  res.json({ listings });
 });
 
-// Health check — Railway uses this to confirm the app is alive
-app.get("/health", (_, res) => res.json({ status: "ok" }));
-
-// Health check — Railway uses this to confirm the app is alive
-app.get("/health", (_, res) => res.json({ status: "ok" }));
-
-// Exit immediately on shutdown signals
+// ── Shutdown ──────────────────────────────────────────────────────────────────
 process.on("SIGINT",  () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));
 
-// Bind to 0.0.0.0 so Railway can reach the port
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`
-🔧 Junkyard Profit Finder running on port ${PORT}
-`);
+  console.log(`\n🔧 Junkyard Profit Finder running on port ${PORT}\n`);
 });
