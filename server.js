@@ -5,7 +5,7 @@ const cors    = require("cors");
 const path    = require("path");
 
 const app  = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 5180;
 
 app.use(cors({
   origin: '*', // Allow all origins — lock this down to your Turbify domain in production
@@ -49,8 +49,6 @@ async function getBrowser() {
       "--disable-setuid-sandbox",
       "--disable-dev-shm-usage",
       "--disable-gpu",
-      "--no-zygote",
-      "--single-process",
       "--disable-blink-features=AutomationControlled",
     ],
   });
@@ -393,6 +391,4 @@ process.on("SIGTERM", () => { browser?.close(); process.exit(); });
 
 app.listen(PORT, () => {
   console.log(`\n🔧 Junkyard Profit Finder → http://localhost:${PORT}\n`);
-  // Warm up Puppeteer on startup so first request isn't slow
-  getBrowser().catch(console.error);
 });
