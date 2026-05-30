@@ -385,10 +385,19 @@ app.get("/api/debug/:yardId", async (req, res) => {
   }
 });
 
-// Graceful shutdown — close the browser
-process.on("SIGINT",  () => { browser?.close(); process.exit(); });
-process.on("SIGTERM", () => { browser?.close(); process.exit(); });
+// Health check — Railway uses this to confirm the app is alive
+app.get("/health", (_, res) => res.json({ status: "ok" }));
 
-app.listen(PORT, () => {
-  console.log(`\n🔧 Junkyard Profit Finder → http://localhost:${PORT}\n`);
+// Health check — Railway uses this to confirm the app is alive
+app.get("/health", (_, res) => res.json({ status: "ok" }));
+
+// Exit immediately on shutdown signals
+process.on("SIGINT",  () => process.exit(0));
+process.on("SIGTERM", () => process.exit(0));
+
+// Bind to 0.0.0.0 so Railway can reach the port
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`
+🔧 Junkyard Profit Finder running on port ${PORT}
+`);
 });
