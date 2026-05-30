@@ -5,9 +5,12 @@ const cors    = require("cors");
 const path    = require("path");
 
 const app  = express();
-const PORT = process.env.PORT || 5180;
+const PORT = process.env.PORT || 8080;
 
-app.use(cors());
+app.use(cors({
+  origin: '*', // Allow all origins — lock this down to your Turbify domain in production
+  methods: ['GET'],
+}));
 app.use(express.static(path.join(__dirname, "public")));
 
 // ── Puppeteer browser singleton ───────────────────────────────────────────────
@@ -18,22 +21,36 @@ async function getBrowser() {
   if (browser) return browser;
   const puppeteer = require("puppeteer");
   const fs2 = require("fs");
-  const chromePaths = [
-    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-    (process.env.LOCALAPPDATA || "") + "\\Google\\Chrome\\Application\\chrome.exe",
-    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-    "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
-  ];
-  const executablePath = chromePaths.find(p => { try { return fs2.existsSync(p); } catch(_) { return false; } });
+
+  // On cloud (Railway/Render) use puppeteer's bundled Chromium.
+  // On Windows dev machine, prefer system Chrome.
+  const isCloud = !!(process.env.RAILWAY_ENVIRONMENT || process.env.RENDER || process.env.DYNO);
+
+  let executablePath;
+  if (!isCloud) {
+    const chromePaths = [
+      "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+      (process.env.LOCALAPPDATA || "") + "\\Google\\Chrome\\Application\\chrome.exe",
+      "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+      "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+    ];
+    executablePath = chromePaths.find(p => { try { return fs2.existsSync(p); } catch(_) { return false; } });
+  }
+
   if (executablePath) console.log("[browser] using system Chrome:", executablePath);
-  else console.log("[browser] falling back to Puppeteer bundled Chrome");
+  else console.log("[browser] using Puppeteer bundled Chromium");
+
   browser = await puppeteer.launch({
     headless: "new",
     executablePath: executablePath || undefined,
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--no-zygote",
+      "--single-process",
       "--disable-blink-features=AutomationControlled",
     ],
   });
