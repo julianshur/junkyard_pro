@@ -1,3 +1,4 @@
+// v5 - no puppeteer, routes at root
 const express = require("express");
 const axios   = require("axios");
 const cheerio = require("cheerio");
@@ -8,6 +9,9 @@ const app  = express();
 const PORT = process.env.PORT || 5180;
 
 app.use(cors({ origin: "*", methods: ["GET"] }));
+
+// Test route
+app.get("/test", (_, res) => res.json({ ok: true, routes: "working", version: 5 }));
 
 // Shared axios instance that mimics a real browser
 const http = axios.create({
