@@ -351,11 +351,11 @@ function renderProfitTable(i, vehicle, yardParts, ebayItems, sourceUrl) {
 
   panel.innerHTML = `
     <div class="filter-bar">
-      <label>Min profit:</label>
+      <label>Min:</label>
       <input type="range" min="0" max="2000" step="10" value="0" id="price-filter-min-${i}" oninput="updatePriceFilter(${i})">
-      <span class="val" id="price-filter-val-${i}">$0 – $2000</span>
+      <span class="val" id="price-filter-val-${i}">$0 – $2000+</span>
       <input type="range" min="0" max="2000" step="10" value="2000" id="price-filter-max-${i}" oninput="updatePriceFilter(${i})">
-      <label>Max profit</label>
+      <label>Max</label>
     </div>
     <div class="profit-stats">
       <div class="pstat best"><span>Best Flip</span><strong>${fmt(bestProfit)}</strong></div>
@@ -434,12 +434,16 @@ function renderTableRows(i, rows) {
 
 // ── Price filter ──────────────────────────────────────────────────────────────
 function updatePriceFilter(i) {
-  const minVal = parseInt(document.getElementById(`price-filter-min-${i}`).value);
-  const maxVal = parseInt(document.getElementById(`price-filter-max-${i}`).value);
-  // Keep min <= max
-  const lo = Math.min(minVal, maxVal);
-  const hi = Math.max(minVal, maxVal);
-  document.getElementById(`price-filter-val-${i}`).textContent = `$${lo} – $${hi === 2000 ? "2000+" : hi}`;
+  const minSlider = document.getElementById(`price-filter-min-${i}`);
+  const maxSlider = document.getElementById(`price-filter-max-${i}`);
+  let lo = parseInt(minSlider.value);
+  let hi = parseInt(maxSlider.value);
+  // Enforce min <= max by pushing sliders apart
+  if (lo > hi) {
+    if (document.activeElement === minSlider) { hi = lo; maxSlider.value = lo; }
+    else { lo = hi; minSlider.value = hi; }
+  }
+  document.getElementById(`price-filter-val-${i}`).textContent = `$${lo} – $${hi >= 2000 ? "2000+" : hi}`;
   const allRows = window._allRows?.[i];
   if (allRows) renderTableRows(i, filterRows(allRows, lo, hi));
 }
