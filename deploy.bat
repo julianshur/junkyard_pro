@@ -2,7 +2,7 @@
 cd /d "%~dp0"
 setlocal
 
-set FTP_USER=byoq1zt2rc5qg23e
+set FTP_USER=julianshur@junkyardpro.com
 set FTP_HOST=ftp.junkyardpro.com
 set REMOTE_DIR=/home/byoq1zt2rc5qg23e/public_html
 
@@ -14,8 +14,9 @@ echo === Git add ===
 git add .
 
 echo === Git commit ===
-set /p MSG="Commit message (or press enter): "
-if "%MSG%"=="" set MSG=Auto deploy
+#set /p MSG="Commit message (or press enter): "
+#if "%MSG%"=="" set MSG=Auto deploy
+set MSG=Auto deploy
 git commit -m "%MSG%"
 git push
 
