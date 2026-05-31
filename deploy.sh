@@ -3,16 +3,12 @@
 set -e
 
 FTP_HOST="ftp.junkyardpro.com"
-FTP_USER="[julianshur@junkyardpro.com](mailto:julianshur@junkyardpro.com)"
-FTP_PORT="21"
-REMOTE_DIR="/"
+FTP_USER="julianshur@junkyardpro.com"
+REMOTE_DIR="/public_html"
 
-# Prompt for password if not already set
-
-if [ -z "$FTP_PASS" ]; then
+# Prompt for FTP password
 read -s -p "FTP Password: " FTP_PASS
 echo
-fi
 
 COMMIT_MSG="${1:-Auto deploy $(date '+%Y-%m-%d %H:%M:%S')}"
 
@@ -27,25 +23,33 @@ BRANCH=$(git branch --show-current)
 echo "Pushing to Git..."
 git push origin "$BRANCH"
 
-echo "Deploying to Turbify via FTPS..."
+# Create temporary WinSCP script
+cat > winscp-upload.txt << EOF
+open ftps://$FTP_USER:$FTP_PASS@$FTP_HOST/ -explicit
+option batch abort
+option confirm off
 
-lftp -u "$FTP_USER","$FTP_PASS" "$FTP_HOST" <<EOF
-set ftp:ssl-force true
-set ftp:ssl-protect-data true
-set ssl:verify-certificate true
+synchronize remote "$(pwd)" "$REMOTE_DIR" -delete
 
-open -p $FTP_PORT $FTP_HOST
-
-mirror -R 
---verbose 
---delete 
---exclude .git/ 
---exclude .github/ 
---exclude node_modules/ 
---exclude "*.log" 
-./ $REMOTE_DIR
-
-quit
+exit
 EOF
+
+# Locate WinSCP
+WINSCP="/c/Program Files (x86)/WinSCP/WinSCP.com"
+
+if [ ! -f "$WINSCP" ]; then
+    WINSCP="/c/Program Files/WinSCP/WinSCP.com"
+fi
+
+if [ ! -f "$WINSCP" ]; then
+    echo "WinSCP.com not found."
+    rm -f winscp-upload.txt
+    exit 1
+fi
+
+echo "Uploading to Turbify..."
+"$WINSCP" /script=winscp-upload.txt
+
+rm -f winscp-upload.txt
 
 echo "Deployment complete."
