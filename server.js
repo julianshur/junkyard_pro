@@ -407,6 +407,7 @@ app.get("/ebay", async (req, res) => {
       condition = $el.find(".SECONDARY_INFO,.s-item__subtitle").first().text().trim() || null;
     }
 
+    title = title.replace(/Opens in a new window or tab/gi, "").replace(/\s+/g, " ").trim();
     if (!title || title === "Shop on eBay" || title === "Results matching fewer words") return;
     if (!price || price < 1) return;
     const cond = (condition || "").toLowerCase();
