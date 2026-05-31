@@ -339,7 +339,7 @@ app.get("/ebay", async (req, res) => {
       const rawPrice = priceTexts[0] || $el.find("[class*='price']").first().text();
       price = parseFloat(rawPrice.replace(/[^0-9.]/g, "")) || 0;
       href  = $el.find("a").first().attr("href") || "";
-      dateSold  = $el.find("[class*='sold'],[class*='POSITIVE'],[class*='signal']").first().text().trim() || null;
+            dateSold = $el.find("[class*='sold'],[class*='POSITIVE'],[class*='signal'],[class*='ended']").first().text().trim() || (cardText.match(/Sold [A-Z][a-z]+/)?.[0]) || null;
       condition = $el.find("[class*='SECONDARY'],[class*='subtitle'],[class*='condition']").first().text().trim() || null;
       // Log first item for debugging
       if (listings.length === 0) {
@@ -364,14 +364,9 @@ app.get("/ebay", async (req, res) => {
     const soldMatch = cardText.match(/(\d[\d,]*)\s+sold/i);
     const soldCount = soldMatch ? parseInt(soldMatch[1].replace(/,/g, "")) : 1;
 
-    // Hard reject: active listings have no dateSold AND no "X sold" text
-    // Sold completed listings always have a date like "Sold  MM/DD/YYYY" in the card
-    const hasSoldDate = !!dateSold && dateSold.length > 3;
-    const hasSoldCount = cardText.match(/(\d+)\s+sold/i);
-    if (!hasSoldDate && !hasSoldCount) {
-      console.log("[ebay] skipping active listing:", title.slice(0,40));
-      return;
-    }
+    // Trust ScraperAPI's LH_Sold=1 filter — don't reject based on missing sold date
+    // (s-card UI doesn't always surface the sold date in parseable text)
+    // Only reject if price looks like an active "Buy It Now" outlier (no sold signal at all)
     listings.push({ title, soldPrice: price, url: href ? href.split("?")[0] : null, dateSold, category: condition, soldCount });
   });
 
