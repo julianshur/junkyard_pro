@@ -394,8 +394,13 @@ No explanation, just the JSON array.` }],
     console.log(`[claude] smart queries:`, arr);
     return arr;
   } catch(e) {
-    console.log("[claude] query gen failed:", e.message);
-    return [`${year} ${make} ${model} parts`];
+    console.log("[claude] query gen failed:", e.message, e.response?.status);
+    // Smart fallback — search for the 3 most universally valuable parts
+    return [
+      `${year} ${make} ${model} engine`,
+      `${year} ${make} ${model} transmission`,
+      `${year} ${make} ${model} door`,
+    ];
   }
 }
 
@@ -518,10 +523,12 @@ app.get("/prefetch/:yardId", async (req, res) => {
 
   res.json({ ok: true, count: invCached.vehicles.length }); // respond immediately
 
-  // Background: warm eBay cache for each vehicle, 3 at a time
+  // Background: warm eBay cache for each vehicle, 1 at a time with delay
+  // to avoid hitting Claude/ScraperAPI rate limits
   const vehicles = invCached.vehicles;
   for (let i = 0; i < vehicles.length; i += 3) {
-    await Promise.all(vehicles.slice(i, i + 3).map(async v => {
+    await Promise.all(vehicles.slice(i, i + 3).map(async (v, j) => {
+      await new Promise(r => setTimeout(r, j * 2000)); // stagger by 2s each
       const key = `ebay:${v.year}:${v.make}:${v.model}`;
       if (cacheGet(key)) return;
       try {
@@ -582,6 +589,8 @@ app.get("/prefetch/:yardId", async (req, res) => {
         console.log(`[prefetch] ${v.year} ${v.make} ${v.model}: ${listings.length} listings cached`);
       } catch(e){ console.log(`[prefetch] failed ${v.year} ${v.make} ${v.model}:`, e.message); }
     }));
+    // Wait 3s between batches to avoid rate limits
+    if (i + 3 < vehicles.length) await new Promise(r => setTimeout(r, 3000));
   }
 });
 
