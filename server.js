@@ -246,7 +246,17 @@ async function fetchEbayListings(searchQueries) {
         let title, price, href, condition;
         if (newUI) {
           title = $el.find("h3").first().text().trim() || $el.find("[class*=card-title]").text().trim();
-          const pt = []; $el.find("[class*=price],[class*=Price]").each((_,p) => { const t=$(p).text().trim(); if(t.match(/\$[0-9]/)) pt.push(t); });
+          // eBay s-card uses su-styled-text for price amounts
+          const pt = [];
+          $el.find(".su-styled-text, [class*=price], [class*=Price]").each((_,p) => {
+            const t = $(p).text().trim();
+            if (t.match(/^\$[0-9]/) || t.match(/^[0-9]+\.[0-9]{2}$/)) pt.push(t);
+          });
+          // Also try extracting any $XX.XX pattern from card text
+          if (!pt.length) {
+            const priceMatch = ct.match(/\$([0-9,]+\.[0-9]{2})/);
+            if (priceMatch) pt.push(priceMatch[0]);
+          }
           price = parseFloat((pt[0]||"").replace(/[^0-9.]/g,"")) || 0;
           href  = $el.find("a").first().attr("href") || "";
           condition = $el.find("[class*=SECONDARY],[class*=subtitle],[class*=condition]").first().text().trim() || null;
@@ -258,8 +268,11 @@ async function fetchEbayListings(searchQueries) {
         }
         title = (title||"").replace(/Opens in a new window or tab/gi,"").replace(/\s+/g," ").trim();
         if (!title || title === "Shop on eBay" || !price || price < 1) return;
+        // Skip promo/placeholder cards
+        if (!href || href.includes("rover.ebay.com")) return;
+        // Only reject if condition field (not title) says "New" — avoids rejecting used items with "New" in part name
         const cond = (condition||"").toLowerCase();
-        if (cond.includes("new") && !cond.includes("like new") && !cond.includes("open box")) return;
+        if (cond === "new" || cond === "brand new") return;
         const sm = ct.match(/(\d[\d,]*)\s+sold/i);
         allListings.push({ title, soldPrice: price, url: href ? href.split("?")[0] : null, category: condition, soldCount: sm ? parseInt(sm[1].replace(/,/g,"")) : 1 });
       });
