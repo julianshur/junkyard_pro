@@ -92,6 +92,10 @@
   .td-margin { color: var(--muted); }
   .no-data { padding: 1.25rem; font-size: 13px; color: var(--muted); text-align: center; }
 
+  .filter-bar { display:flex; align-items:center; gap:16px; padding: .75rem 1.25rem; background:var(--surface2); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .filter-bar label { font-size:12px; color:var(--muted); white-space:nowrap; }
+  .filter-bar .val { font-size:13px; font-weight:600; color:var(--accent); min-width:50px; }
+  input[type=range] { flex:1; min-width:120px; max-width:200px; accent-color:var(--accent); }
   @media(max-width:600px){
     .summary-grid{grid-template-columns:1fr 1fr;}
     .input-row{flex-direction:column;}
@@ -280,7 +284,7 @@ async function toggleCard(vehicle, i) {
 
     // Fetch yard prices and eBay listings in parallel
     const [priceRes, ebayRes] = await Promise.all([
-      fetch(`${API}/prices/${yardId}?year=${year}&make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}`),
+      fetch(`${API}/prices/${yardId}?year=${year}&make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}${vehicle.stockNo ? '&stockNo=' + encodeURIComponent(vehicle.stockNo) : ''}`),
       fetch(`${API}/ebay?year=${year}&make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}`)
     ]);
 
@@ -329,6 +333,12 @@ function renderProfitTable(i, vehicle, yardParts, ebayItems, sourceUrl) {
   sortState[i] = sortState[i] || { col: "profit", dir: -1 };
 
   panel.innerHTML = `
+    <div class="filter-bar">
+      <label>Min eBay price:</label>
+      <input type="range" min="20" max="1000" step="10" value="20" id="price-filter-${i}" oninput="updatePriceFilter(${i})">
+      <span class="val" id="price-filter-val-${i}">$20</span>
+      <label style="margin-left:8px;color:var(--muted);font-size:11px">Drag to filter rows</label>
+    </div>
     <div class="profit-stats">
       <div class="pstat best"><span>Best Flip</span><strong>${fmt(bestProfit)}</strong></div>
       <div class="pstat profit"><span>Total Upside</span><strong>${fmt(totalProfit)}</strong></div>
@@ -340,6 +350,7 @@ function renderProfitTable(i, vehicle, yardParts, ebayItems, sourceUrl) {
         <thead>
           <tr>
             <th data-col="part" data-i="${i}">Part <span class="sort-arrow"></span></th>
+            <th data-col="soldCount" data-i="${i}" class="td-num">Times Sold <span class="sort-arrow"></span></th>
             <th data-col="yardPrice" data-i="${i}" class="td-num">Yard Price <span class="sort-arrow"></span></th>
             <th data-col="ebayPrice" data-i="${i}" class="td-num">eBay Sold <span class="sort-arrow"></span></th>
             <th data-col="profit" data-i="${i}" class="td-num sorted">Profit <span class="sort-arrow">▾</span></th>
@@ -350,6 +361,9 @@ function renderProfitTable(i, vehicle, yardParts, ebayItems, sourceUrl) {
       </table>
     </div>`;
 
+  // Store rows globally for price filter
+  if (!window._allRows) window._allRows = {};
+  window._allRows[i] = rows;
   renderTableRows(i, rows);
 
   // Sort on header click
@@ -387,6 +401,7 @@ function renderTableRows(i, rows) {
         ${r.ebayUrl ? `<a href="${esc(r.ebayUrl)}" target="_blank" rel="noopener">${esc(r.part)}</a>` : esc(r.part)}
         ${r.ebayTitle ? `<div class="part-sub">${esc(r.ebayTitle.slice(0, 60))}${r.ebayTitle.length > 60 ? "…" : ""}</div>` : ""}
       </td>
+      <td class="td-num" style="color:var(--muted)">${r.soldCount > 1 ? r.soldCount + "×" : "—"}</td>
       <td class="td-num td-yard">${r.yardPrice != null ? fmt(r.yardPrice) : "<span style='color:var(--muted)'>—</span>"}</td>
       <td class="td-num td-ebay">${r.ebayPrice != null ? fmt(r.ebayPrice) : "<span style='color:var(--muted)'>—</span>"}</td>
       <td class="td-num td-profit ${r.profit > 0 ? 'pos' : r.profit < 0 ? 'neg' : ''}">${r.profit != null ? fmt(r.profit) : "<span style='color:var(--muted)'>—</span>"}</td>
@@ -394,24 +409,38 @@ function renderTableRows(i, rows) {
     </tr>`).join("");
 }
 
-// ── Match yard parts to eBay listings ────────────────────────────────────────
+// ── Price filter ──────────────────────────────────────────────────────────────
+function updatePriceFilter(i) {
+  const slider = document.getElementById(`price-filter-${i}`);
+  const val = parseInt(slider.value);
+  document.getElementById(`price-filter-val-${i}`).textContent = `$${val}`;
+  // Re-render table with new filter
+  const allRows = window._allRows?.[i];
+  if (allRows) renderTableRows(i, allRows.filter(r => !r.ebayPrice || r.ebayPrice >= val));
+}
+
+// ── Match eBay listings to yard parts (eBay-first) ────────────────────────────
 function buildRows(yardParts, ebayItems) {
   const rows = [];
 
-  // If we have yard prices, match each part to the best eBay listing
-  if (yardParts.length) {
+  if (yardParts.length && ebayItems.length) {
+    // Match each yard part to the best eBay listing by keyword overlap
     yardParts.forEach(yp => {
-      const keywords = yp.partName.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-      // Find best-matching eBay listing by keyword overlap
+      const keywords = yp.partName.toLowerCase()
+        .replace(/[,()]/g, " ")
+        .split(/\s+/)
+        .filter(w => w.length > 2 && !["cyl","the","and","for","with"].includes(w));
+
       let bestEbay = null, bestScore = 0;
       ebayItems.forEach(ei => {
+        if (!ei.title || ei.title === "Shop on eBay") return;
         const title = ei.title.toLowerCase();
         const score = keywords.filter(k => title.includes(k)).length;
         if (score > bestScore) { bestScore = score; bestEbay = ei; }
       });
 
       const yardPrice = yp.price;
-      const ebayPrice = bestScore > 0 ? bestEbay.soldPrice : null;
+      const ebayPrice = bestScore >= 1 ? bestEbay.soldPrice : null;
       const profit    = ebayPrice != null ? Math.round((ebayPrice - yardPrice) * 100) / 100 : null;
       const margin    = (ebayPrice != null && ebayPrice > 0) ? Math.round((profit / ebayPrice) * 100) : null;
 
@@ -421,22 +450,43 @@ function buildRows(yardParts, ebayItems) {
         ebayPrice,
         profit,
         margin,
-        ebayTitle: bestEbay?.title || null,
-        ebayUrl:   bestEbay?.url   || null,
+        ebayTitle: ebayPrice ? bestEbay.title : null,
+        ebayUrl:   ebayPrice ? bestEbay.url   : null,
       });
     });
-  } else if (ebayItems.length) {
-    // No yard prices — show eBay items only with avg yard price note
+
+    // Also add eBay listings that didn't match any yard part
+    const usedEbayUrls = new Set(rows.map(r => r.ebayUrl).filter(Boolean));
     ebayItems.forEach(ei => {
+      if (!ei.title || ei.title === "Shop on eBay") return;
+      if (usedEbayUrls.has(ei.url)) return;
       rows.push({
-        part:       ei.title,
-        yardPrice:  null,
-        ebayPrice:  ei.soldPrice,
-        profit:     null,
-        margin:     null,
-        ebayTitle:  null,
-        ebayUrl:    ei.url,
+        part:      ei.title.length > 50 ? ei.title.slice(0, 50) + "…" : ei.title,
+        yardPrice: null,
+        ebayPrice: ei.soldPrice,
+        profit:    null,
+        margin:    null,
+        ebayTitle: ei.title,
+        ebayUrl:   ei.url,
       });
+    });
+
+  } else if (ebayItems.length) {
+    ebayItems.forEach(ei => {
+      if (!ei.title || ei.title === "Shop on eBay") return;
+      rows.push({
+        part:      ei.title.length > 60 ? ei.title.slice(0, 60) + "…" : ei.title,
+        yardPrice: null,
+        ebayPrice: ei.soldPrice,
+        profit:    null,
+        margin:    null,
+        ebayTitle: ei.title,
+        ebayUrl:   ei.url,
+      });
+    });
+  } else if (yardParts.length) {
+    yardParts.forEach(yp => {
+      rows.push({ part: yp.partName, yardPrice: yp.price, ebayPrice: null, profit: null, margin: null, ebayTitle: null, ebayUrl: null });
     });
   }
 
