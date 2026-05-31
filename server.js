@@ -282,8 +282,9 @@ app.get("/prices/:yardId", async (req, res) => {
     });
   }
 
-  console.log(`[prices] found ${parts.length} parts`);
-  res.json({ parts, sourceUrl: url });
+  console.log(`[prices] found ${parts.length} parts, html length: ${html.length}`);
+  console.log("[prices] snippet:", typeof html === "string" ? html.slice(0, 600).replace(/\s+/g, " ") : "non-string response");
+  res.json({ parts, sourceUrl: url, debug: { htmlLength: html.length, snippet: typeof html === "string" ? html.slice(0, 300) : "non-string" } });
 });
 
 // ── GET /api/ebay ─────────────────────────────────────────────────────────────
