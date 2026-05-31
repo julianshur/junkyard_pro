@@ -116,23 +116,19 @@ async function fetchPage(url, referer = null) {
 
 // ── Known PYP store list ──────────────────────────────────────────────────────
 const KNOWN_STORES = [
-  { id: "sun-valley-1263",                   priceSlug: "sun-valley-help-yourself-1263",     name: "Pick Your Part - Sun Valley",      address: "8000 Laurel Canyon Blvd, Sun Valley, CA" },
-  { id: "wilmington-help-yourself-1262",     priceSlug: "wilmington-help-yourself-1262",     name: "Pick Your Part - Wilmington",      address: "1600 E Anaheim St, Wilmington, CA" },
-  { id: "el-monte-help-yourself-1269",       priceSlug: "el-monte-help-yourself-1269",       name: "Pick Your Part - El Monte",        address: "3888 Tyler Ave, El Monte, CA" },
-  { id: "stanton-help-yourself-1267",        priceSlug: "stanton-help-yourself-1267",        name: "Pick Your Part - Stanton",         address: "10901 Beach Blvd, Stanton, CA" },
-  { id: "fresno-help-yourself",              priceSlug: "fresno-help-yourself",              name: "Pick Your Part - Fresno",          address: "4620 S Chestnut Ave, Fresno, CA" },
-  { id: "san-bernardino-help-yourself-1274", priceSlug: "san-bernardino-help-yourself-1274", name: "Pick Your Part - San Bernardino",  address: "2205 W 2nd St, San Bernardino, CA" },
-  { id: "long-beach-help-yourself-1259",     priceSlug: "long-beach-help-yourself-1259",     name: "Pick Your Part - Long Beach",      address: "2700 E Willow St, Long Beach, CA" },
-  { id: "van-nuys-help-yourself",            priceSlug: "van-nuys-help-yourself",            name: "Pick Your Part - Van Nuys",        address: "7901 Sepulveda Blvd, Van Nuys, CA" },
-  { id: "north-hollywood-help-yourself",     priceSlug: "north-hollywood-help-yourself",     name: "Pick Your Part - North Hollywood", address: "7600 Lankershim Blvd, North Hollywood, CA" },
-  { id: "orlando-help-yourself",             priceSlug: "orlando-help-yourself",             name: "Pick Your Part - Orlando",         address: "5900 Hoffner Ave, Orlando, FL" },
-  { id: "houston-help-yourself",             priceSlug: "houston-help-yourself",             name: "Pick Your Part - Houston",         address: "9435 Wallisville Rd, Houston, TX" },
-  { id: "phoenix-help-yourself",             priceSlug: "phoenix-help-yourself",             name: "Pick Your Part - Phoenix",         address: "4020 W Lower Buckeye Rd, Phoenix, AZ" },
-  { id: "las-vegas-help-yourself",           priceSlug: "las-vegas-help-yourself",           name: "Pick Your Part - Las Vegas",       address: "6750 W Cheyenne Ave, Las Vegas, NV" },
-  { id: "sacramento-help-yourself",          priceSlug: "sacramento-help-yourself",          name: "Pick Your Part - Sacramento",      address: "Sacramento, CA" },
-  { id: "denver-help-yourself",              priceSlug: "denver-help-yourself",              name: "Pick Your Part - Denver",          address: "Denver, CO" },
-  { id: "portland-help-yourself",            priceSlug: "portland-help-yourself",            name: "Pick Your Part - Portland",        address: "Portland, OR" },
-  { id: "seattle-help-yourself",             priceSlug: "seattle-help-yourself",             name: "Pick Your Part - Seattle",         address: "Seattle, WA" },
+  { id: "sun-valley-1263",               priceSlug: "sun-valley-1263",               name: "Pick Your Part - Sun Valley",      address: "Sun Valley, CA" },
+  { id: "wilmington-help-yourself-1262", priceSlug: "wilmington-help-yourself-1262", name: "Pick Your Part - Wilmington",      address: "Wilmington, CA" },
+  { id: "victorville-1287",              priceSlug: "victorville-1287",              name: "Pick Your Part - Victorville",     address: "Victorville, CA" },
+  { id: "santa-fe-springs-1282",         priceSlug: "santa-fe-springs-1282",         name: "Pick Your Part - Santa Fe Springs",address: "Santa Fe Springs, CA" },
+  { id: "san-bernardino-1291",           priceSlug: "san-bernardino-1291",           name: "Pick Your Part - San Bernardino",  address: "San Bernardino, CA" },
+  { id: "riverside-1290",                priceSlug: "riverside-1290",                name: "Pick Your Part - Riverside",       address: "Riverside, CA" },
+  { id: "ontario-1280",                  priceSlug: "ontario-1280",                  name: "Pick Your Part - Ontario",         address: "Ontario, CA" },
+  { id: "monrovia-1281",                 priceSlug: "monrovia-1281",                 name: "Pick Your Part - Monrovia",        address: "Monrovia, CA" },
+  { id: "hesperia-1292",                 priceSlug: "hesperia-1292",                 name: "Pick Your Part - Hesperia",        address: "Hesperia, CA" },
+  { id: "fontana-1285",                  priceSlug: "fontana-1285",                  name: "Pick Your Part - Fontana",         address: "Fontana, CA" },
+  { id: "chula-vista-1264",              priceSlug: "chula-vista-1264",              name: "Pick Your Part - Chula Vista",     address: "Chula Vista, CA" },
+  { id: "rialto-1284",                   priceSlug: "rialto-1284",                   name: "Pick Your Part - Rialto",          address: "Rialto, CA" },
+  { id: "anaheim-1265",                  priceSlug: "anaheim-1265",                  name: "Pick Your Part - Anaheim",         address: "Anaheim, CA" },
 ];
 
 // ── GET /health ───────────────────────────────────────────────────────────────
