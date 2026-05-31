@@ -1,12 +1,13 @@
 @echo off
+cd /d "%~dp0"
 setlocal
 
 set FTP_HOST=ftp.junkyardpro.com
-set FTP_USER=julianshur@junkyardpro.com
-set REMOTE_DIR=/
+set FTP_USER=byoq1zt2rc5qg23e
+set REMOTE_DIR=/public_html
 
 echo Enter FTP password:
-set /p FTP_PASS=b1n6b0n61!
+set /p FTP_PASS= b1n6b0n61!/n
 
 echo.
 echo === Git add ===
@@ -20,12 +21,11 @@ git push
 
 echo.
 echo === Creating WinSCP script ===
-
 (
 echo open ftps://%FTP_USER%:%FTP_PASS%@%FTP_HOST%/ -explicit
 echo option batch abort
 echo option confirm off
-cd /d "%~dp0"
+echo cd %REMOTE_DIR%
 echo synchronize remote . .
 echo exit
 ) > winscp_script.txt
