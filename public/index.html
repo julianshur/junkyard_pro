@@ -438,40 +438,49 @@ function filterRows(rows, minProfit) {
 
 // ── Match eBay listings to yard parts (eBay-first) ────────────────────────────
 function buildRows(yardParts, ebayItems) {
-  const STOP = new Set(["for","the","and","with","cyl","inch","used","oem","fits","pair","set","new","listing"]);
-
-  // Yard-part-first: for each yard part, find the best matching eBay sold listing
-  // If no eBay match found, skip the row entirely
   const rows = [];
 
   yardParts.forEach(yp => {
-    const partWords = yp.partName.toLowerCase().replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(w => w.length > 2 && !STOP.has(w));
+    const keywords  = yp.keywords  || [];
+    const excludes  = yp.exclude   || [];
+    const titleLow  = t => t.toLowerCase();
 
-    let bestEbay = null, bestScore = 0;
+    // Find best eBay match using keyword/exclude rules
+    let bestEbay = null, bestSoldCount = 0;
+
     ebayItems.forEach(ei => {
       if (!ei.title || ei.title === "Shop on eBay") return;
-      const titleWords = ei.title.toLowerCase().replace(/[^a-z0-9 ]/g," ").split(/\s+/).filter(w => w.length > 2 && !STOP.has(w));
-      const score = partWords.filter(w => titleWords.includes(w)).length;
-      if (score > bestScore || (score === bestScore && score > 0 && ei.soldCount > (bestEbay?.soldCount || 0))) {
-        bestScore = score; bestEbay = ei;
+      const t = titleLow(ei.title);
+
+      // All keywords must appear in the eBay title
+      if (keywords.length && !keywords.every(k => t.includes(k.toLowerCase()))) return;
+
+      // None of the exclude terms can appear
+      if (excludes.some(ex => t.includes(ex.toLowerCase()))) return;
+
+      // Pick highest soldCount, break ties by price
+      if (!bestEbay || ei.soldCount > bestSoldCount ||
+          (ei.soldCount === bestSoldCount && ei.soldPrice > bestEbay.soldPrice)) {
+        bestEbay = ei;
+        bestSoldCount = ei.soldCount || 1;
       }
     });
 
-    if (!bestEbay || bestScore < 1) return; // no eBay match — skip this yard part
+    if (!bestEbay) return; // no match — skip row
 
     const yardPrice = yp.price;
     const ebayPrice = bestEbay.soldPrice;
-    const profit = Math.round((ebayPrice - yardPrice) * 100) / 100;
-    const margin = ebayPrice > 0 ? Math.round((profit / ebayPrice) * 100) : null;
+    const profit    = Math.round((ebayPrice - yardPrice) * 100) / 100;
+    const margin    = ebayPrice > 0 ? Math.round((profit / ebayPrice) * 100) : null;
 
     rows.push({
-      part: yp.partName,
+      part:      yp.partName,
       yardPrice,
       ebayPrice,
       profit,
       margin,
       ebayTitle: bestEbay.title,
-      ebayUrl: bestEbay.url,
+      ebayUrl:   bestEbay.url,
       soldCount: bestEbay.soldCount || 1,
     });
   });
