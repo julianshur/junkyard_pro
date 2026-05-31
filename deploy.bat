@@ -2,7 +2,7 @@
 cd /d "%~dp0"
 setlocal
 
-set FTP_USER=julianshur@junkyardpro.com
+set FTP_USER=julianshur
 set FTP_HOST=ftp.junkyardpro.com
 set REMOTE_DIR=/home/byoq1zt2rc5qg23e/public_html
 
