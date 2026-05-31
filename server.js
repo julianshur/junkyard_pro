@@ -233,13 +233,10 @@ async function fetchEbayListings(searchQueries) {
       const sel = newUI ? ".s-card" : ".s-item";
       const selCount = $(sel).length;
       console.log(`[ebay] "${q.slice(0,40)}" ui:${newUI?"s-card":"s-item"} items:${selCount} htmlLen:${typeof html === "string" ? html.length : "non-string"}`);
-      // Debug first card structure
-      if (selCount > 0 && allListings.length === 0) {
-        const $first = $($(sel)[1]); // skip first which is often a promo
-        const allClasses = [];
-        $first.find("*").each((_, el) => { const c = $(el).attr("class"); if(c && c.includes("price")) allClasses.push(c.split(" ")[0]); });
-        console.log("[ebay] price classes found:", [...new Set(allClasses)].slice(0,8).join(", "));
-        console.log("[ebay] first card text snippet:", $first.text().replace(/\s+/g," ").slice(0,200));
+      // Debug: dump HTML of card index 2 (skip promo at 0)
+      if (selCount > 2 && allListings.length === 0) {
+        const $card = $($(sel)[2]);
+        console.log("[ebay] card[2] html:", $card.html()?.slice(0,600).replace(/\s+/g," "));
       }
       $(sel).each((_, el) => {
         const $el = $(el), ct = $el.text();
