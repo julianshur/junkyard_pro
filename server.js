@@ -85,9 +85,10 @@ async function fetchPage(url, referer = null) {
 
   // For ebay.com — use ScraperAPI if available, otherwise direct
   if (domain.includes("ebay.com") && scraperKey) {
-    const proxyUrl = `http://api.scraperapi.com?api_key=${scraperKey}&url=${encodeURIComponent(url)}&render=false`;
-    console.log(`[fetch] using ScraperAPI for ${url}`);
-    const r = await http.get(proxyUrl, { timeout: 30000 });
+    // render=true executes JavaScript so LH_Sold=1 filter is actually applied
+    const proxyUrl = `http://api.scraperapi.com?api_key=${scraperKey}&url=${encodeURIComponent(url)}&render=true&country_code=us`;
+    console.log(`[fetch] using ScraperAPI (rendered) for ebay`);
+    const r = await http.get(proxyUrl, { timeout: 60000 });
     return r.data;
   }
 
