@@ -233,16 +233,18 @@ async function fetchEbayListings(searchQueries) {
       const sel = newUI ? ".s-card" : ".s-item";
       const selCount = $(sel).length;
       console.log(`[ebay] "${q.slice(0,40)}" ui:${newUI?"s-card":"s-item"} items:${selCount} htmlLen:${typeof html === "string" ? html.length : "non-string"}`);
-      // Debug: dump more HTML of card index 2
+      // Debug: dump full card text and find dollar amounts
       if (selCount > 2 && allListings.length === 0) {
         const $card = $($(sel)[2]);
         const cardHtml = $card.html() || "";
-        // Find price section
-        const priceIdx = cardHtml.indexOf("su-styled-text");
-        console.log("[ebay] price section:", cardHtml.slice(Math.max(0,priceIdx-50), priceIdx+200).replace(/\s+/g," "));
-        // Find title section  
-        const h3Idx = cardHtml.indexOf("<h3");
-        console.log("[ebay] title section:", cardHtml.slice(h3Idx, h3Idx+300).replace(/\s+/g," "));
+        const cardText = $card.text().replace(/\s+/g," ").trim();
+        console.log("[ebay] card text:", cardText.slice(0,400));
+        // Find all dollar amounts in HTML
+        const dollars = cardHtml.match(/\$[0-9,]+\.[0-9]{2}/g) || [];
+        console.log("[ebay] dollar amounts in html:", dollars.slice(0,5));
+        // Find title
+        const titleIdx = cardHtml.indexOf("s-card__title");
+        console.log("[ebay] title html:", cardHtml.slice(titleIdx, titleIdx+300).replace(/\s+/g," "));
       }
       $(sel).each((_, el) => {
         const $el = $(el), ct = $el.text();
