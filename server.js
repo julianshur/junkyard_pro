@@ -163,7 +163,7 @@ Be strict on category — a headlight washer nozzle is NOT a Headlight Assembly.
 
   try {
     const r = await http.post("https://api.anthropic.com/v1/messages", {
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-haiku-4-5",
       max_tokens: 1500,
       messages: [{ role: "user", content: prompt }],
     }, { headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" }, timeout: 30000 });
@@ -383,7 +383,7 @@ async function getSearchQueries(year, make, model) {
   if (!apiKey) return [`${year} ${make} ${model} parts`];
   try {
     const r = await http.post("https://api.anthropic.com/v1/messages", {
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-haiku-4-5",
       max_tokens: 300,
       messages: [{ role: "user", content:
         `For a ${year} ${make} ${model} at a self-service junkyard, list the 5 most valuable parts commonly resold on eBay. Consider what makes this specific vehicle desirable for parts (reliable engine, popular body panels, rare trim, etc).
