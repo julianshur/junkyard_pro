@@ -303,7 +303,8 @@ app.get("/ebay", async (req, res) => {
   if (!year || !make || !model) return res.json({ error: "Missing params" });
 
   const query = encodeURIComponent(`${year} ${make} ${model} parts`);
-  const url   = `https://www.ebay.com/sch/i.html?_nkw=${query}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=16&_ipg=60`;
+  // _ipg=240 = max results, _sop=12 = most watched/popular first
+  const url   = `https://www.ebay.com/sch/i.html?_nkw=${query}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=240`;
   console.log(`[ebay] fetching: ${url}`);
 
   let html;
@@ -352,12 +353,23 @@ app.get("/ebay", async (req, res) => {
       condition = $el.find(".SECONDARY_INFO,.s-item__subtitle").first().text().trim() || null;
     }
 
-    if (!title || title === "Shop on eBay" || !price || price < 5) return;
-    listings.push({ title, soldPrice: price, url: href ? href.split("?")[0] : null, dateSold, category: condition });
+    if (!title || title === "Shop on eBay" || title === "Results matching fewer words") return;
+    if (!price || price < 1) return;
+    // Reject new/brand-new parts — we only want used/pre-owned
+    const cond = (condition || "").toLowerCase();
+    if (cond.includes("new") && !cond.includes("like new") && !cond.includes("open box")) return;
+
+    // Extract sold count from "X sold" anywhere in the card
+    const cardText = $el.text();
+    const soldMatch = cardText.match(/(\d[\d,]*)\s+sold/i);
+    const soldCount = soldMatch ? parseInt(soldMatch[1].replace(/,/g, "")) : 1;
+
+    listings.push({ title, soldPrice: price, url: href ? href.split("?")[0] : null, dateSold, category: condition, soldCount });
   });
 
-  listings.sort((a, b) => b.soldPrice - a.soldPrice);
-  console.log(`[ebay] returning ${listings.length} listings`);
+  // Sort by soldCount desc, then price desc
+  listings.sort((a, b) => (b.soldCount - a.soldCount) || (b.soldPrice - a.soldPrice));
+  console.log(`[ebay] returning ${listings.length} listings, top soldCount: ${listings[0]?.soldCount}`);
   res.json({ listings });
 });
 
