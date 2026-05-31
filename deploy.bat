@@ -2,9 +2,9 @@
 cd /d "%~dp0"
 setlocal
 
-set FTP_HOST=ftp.junkyardpro.com
 set FTP_USER=byoq1zt2rc5qg23e
-set REMOTE_DIR=/public_html
+set FTP_HOST=ftp.junkyardpro.com
+set REMOTE_DIR=/public_html/junkyardpro.com/julianshur
 
 echo Enter FTP password:
 set /p FTP_PASS= b1n6b0n61!
