@@ -40,7 +40,28 @@ const cookieJar = {}; // domain -> cookie string
 async function fetchPage(url, referer = null) {
   const domain = new URL(url).hostname;
 
-  // Prime cookies by visiting homepage if we haven't yet
+  // For pyp.com — route through ScraperAPI (free tier: 1000 req/month)
+  // Sign up free at https://www.scraperapi.com/ and set SCRAPER_API_KEY env var
+  // Without a key we try direct first, then fall back to allorigins proxy
+  const scraperKey = process.env.SCRAPER_API_KEY;
+
+  if (domain.includes("pyp.com") && scraperKey) {
+    const proxyUrl = `http://api.scraperapi.com?api_key=${scraperKey}&url=${encodeURIComponent(url)}&render=false`;
+    console.log(`[fetch] using ScraperAPI for ${url}`);
+    const r = await http.get(proxyUrl, { timeout: 30000 });
+    return r.data;
+  }
+
+  // For pyp.com without a key — use allorigins CORS proxy
+  if (domain.includes("pyp.com")) {
+    console.log(`[fetch] using allorigins proxy for ${url}`);
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const r = await http.get(proxyUrl, { timeout: 30000 });
+    // allorigins wraps response in { contents: "..." }
+    return r.data.contents || r.data;
+  }
+
+  // For all other domains (eBay etc) — direct request with cookie jar
   if (!cookieJar[domain]) {
     try {
       const homeUrl = `https://${domain}/`;
@@ -51,7 +72,7 @@ async function fetchPage(url, referer = null) {
         console.log(`[cookies] primed for ${domain}`);
       }
     } catch(_) {}
-    if (!cookieJar[domain]) cookieJar[domain] = ""; // mark as attempted
+    if (!cookieJar[domain]) cookieJar[domain] = "";
   }
 
   const headers = {};
@@ -60,7 +81,6 @@ async function fetchPage(url, referer = null) {
 
   const r = await http.get(url, { headers, maxRedirects: 5 });
 
-  // Update cookies from response
   const setCookie = r.headers["set-cookie"];
   if (setCookie) {
     const newCookies = setCookie.map(c => c.split(";")[0]).join("; ");
