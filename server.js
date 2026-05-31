@@ -303,7 +303,7 @@ app.get("/ebay", async (req, res) => {
   if (!year || !make || !model) return res.json({ error: "Missing params" });
 
   const query = encodeURIComponent(`${year} ${make} ${model} parts`);
-  // _ipg=240 = max results, _sop=12 = most watched/popular first
+  // LH_Sold=1 = sold listings only, LH_Complete=1 = completed, _sop=12 = most watched
   const url   = `https://www.ebay.com/sch/i.html?_nkw=${query}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=240`;
   console.log(`[ebay] fetching: ${url}`);
 
@@ -364,6 +364,14 @@ app.get("/ebay", async (req, res) => {
     const soldMatch = cardText.match(/(\d[\d,]*)\s+sold/i);
     const soldCount = soldMatch ? parseInt(soldMatch[1].replace(/,/g, "")) : 1;
 
+    // Hard reject: active listings have no dateSold AND no "X sold" text
+    // Sold completed listings always have a date like "Sold  MM/DD/YYYY" in the card
+    const hasSoldDate = !!dateSold && dateSold.length > 3;
+    const hasSoldCount = cardText.match(/(\d+)\s+sold/i);
+    if (!hasSoldDate && !hasSoldCount) {
+      console.log("[ebay] skipping active listing:", title.slice(0,40));
+      return;
+    }
     listings.push({ title, soldPrice: price, url: href ? href.split("?")[0] : null, dateSold, category: condition, soldCount });
   });
 
