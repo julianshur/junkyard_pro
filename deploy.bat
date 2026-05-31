@@ -25,7 +25,7 @@ echo === Creating WinSCP script ===
 echo open ftps://%FTP_USER%:%FTP_PASS%@%FTP_HOST%/ -explicit
 echo option batch abort
 echo option confirm off
-echo cd %REMOTE_DIR%
+cd /d "%~dp0"
 echo synchronize remote . .
 echo exit
 ) > winscp_script.txt
