@@ -34,6 +34,20 @@ const http = axios.create({
   },
 });
 
+// ── Server-side cache (1hr TTL) ──────────────────────────────────────────────
+const cache = new Map();
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+function cacheGet(key) {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL) { cache.delete(key); return null; }
+  return entry.data;
+}
+function cacheSet(key, data) {
+  cache.set(key, { data, ts: Date.now() });
+}
+
 // Fetch a page, first hitting the homepage to get session cookies
 const cookieJar = {}; // domain -> cookie string
 
@@ -236,6 +250,10 @@ app.get("/yards", async (req, res) => {
 // ── GET /api/inventory/:yardId ────────────────────────────────────────────────
 app.get("/inventory/:yardId", async (req, res) => {
   const { yardId } = req.params;
+  const cacheKey = `inv:${yardId}`;
+  const cached = cacheGet(cacheKey);
+  if (cached) { console.log(`[inventory] cache hit: ${yardId}`); return res.json(cached); }
+
   const url = `https://www.pyp.com/inventory/${yardId}/`;
   console.log(`[inventory] fetching: ${url}`);
 
@@ -281,7 +299,10 @@ app.get("/inventory/:yardId", async (req, res) => {
   if (!vehicles.length) {
     return res.json({ error: `No vehicles found for "${yardId}". rowCount=${rowCount}` });
   }
-  res.json({ vehicles });
+
+  const result = { vehicles };
+  cacheSet(cacheKey, result);
+  res.json(result);
 });
 
 // ── GET /api/prices/:yardId ───────────────────────────────────────────────────
@@ -383,6 +404,11 @@ app.get("/ebay", async (req, res) => {
   const { year, make, model } = req.query;
   if (!year || !make || !model) return res.json({ error: "Missing params" });
 
+  // Check cache first
+  const ebayKey = `ebay:${year}:${make}:${model}`;
+  const cached = cacheGet(ebayKey);
+  if (cached) { console.log(`[ebay] cache hit: ${year} ${make} ${model}`); return res.json({ listings: cached }); }
+
   // Claude generates targeted queries for this vehicle
   const searchQueries = await getSearchQueries(year, make, model);
   console.log(`[ebay] searching ${searchQueries.length} queries for ${year} ${make} ${model}`);
@@ -475,9 +501,88 @@ app.get("/ebay", async (req, res) => {
 
   await matchAndScoreListings(listings, PYP_PARTS);
 
+  // Cache for 1hr so repeated clicks are instant
+  const ebayKey2 = `ebay:${year}:${make}:${model}`;
+  cacheSet(ebayKey2, listings);
+
   res.json({ listings });
 });
 
+
+// ── GET /prefetch/:yardId — pre-warm eBay cache for all vehicles ──────────────
+app.get("/prefetch/:yardId", async (req, res) => {
+  const { yardId } = req.params;
+  const invCached = cacheGet(`inv:${yardId}`);
+  if (!invCached?.vehicles) return res.json({ ok: false, reason: "no inventory cached" });
+
+  res.json({ ok: true, count: invCached.vehicles.length }); // respond immediately
+
+  // Background: warm eBay cache for each vehicle, 3 at a time
+  const vehicles = invCached.vehicles;
+  for (let i = 0; i < vehicles.length; i += 3) {
+    await Promise.all(vehicles.slice(i, i + 3).map(async v => {
+      const key = `ebay:${v.year}:${v.make}:${v.model}`;
+      if (cacheGet(key)) return;
+      try {
+        // Simulate the eBay fetch by calling our own route internally
+        const queries = await getSearchQueries(v.year, v.make, v.model);
+        const allL = [];
+        await Promise.all(queries.map(async q => {
+          const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=60`;
+          try {
+            const html = await fetchPage(url, "https://www.ebay.com/");
+            const $ = cheerio.load(html);
+            const newUI = $(".s-card").length > 0;
+            const sel = newUI ? ".s-card" : ".s-item";
+            $(sel).each((_, el) => {
+              const $el=$(el), ct=$el.text();
+              let title="", price=0, href="", condition="";
+              if (newUI) {
+                title=$el.find("h3").first().text().trim();
+                const pt=[]; $el.find("[class*=price]").each((_,p)=>{const t=$(p).text().trim();if(t.match(/\$[0-9]/))pt.push(t);});
+                price=parseFloat((pt[0]||"").replace(/[^0-9.]/g,""))||0;
+                href=$el.find("a").first().attr("href")||"";
+                condition=$el.find("[class*=SECONDARY],[class*=condition]").first().text().trim()||"";
+              } else {
+                title=$el.find(".s-item__title").text().replace("New listing","").trim();
+                price=parseFloat($el.find(".s-item__price").first().text().replace(/[^0-9.]/g,""));
+                href=$el.find(".s-item__link").attr("href")||"";
+                condition=$el.find(".SECONDARY_INFO").first().text().trim()||"";
+              }
+              title=(title||"").replace(/Opens in a new window or tab/gi,"").replace(/\s+/g," ").trim();
+              if (!title||title==="Shop on eBay"||!price||price<1) return;
+              const c=condition.toLowerCase();
+              if (c.includes("new")&&!c.includes("like new")&&!c.includes("open box")) return;
+              const sm=ct.match(/(\d[\d,]*)\s+sold/i);
+              allL.push({title,soldPrice:price,url:href?href.split("?")[0]:null,category:condition,soldCount:sm?parseInt(sm[1].replace(/,/g,"")):1});
+            });
+          } catch(e){}
+        }));
+        const seen=new Set();
+        const listings=allL.filter(l=>{if(!l.url||seen.has(l.url))return false;seen.add(l.url);return true;})
+          .sort((a,b)=>(b.soldCount-a.soldCount)||(b.soldPrice-a.soldPrice));
+        const PYP=[
+          {partName:"Engine, 4 Cyl",price:275},{partName:"Engine, 6 Cyl",price:325},{partName:"Engine, 8 Cyl",price:375},
+          {partName:"Transmission, Auto",price:175},{partName:"Transmission, Manual",price:150},{partName:"Transfer Case",price:125},
+          {partName:"Rear Axle Assembly",price:125},{partName:"Differential",price:75},{partName:"Drive Shaft",price:35},
+          {partName:"Hood",price:50},{partName:"Door",price:50},{partName:"Trunk Lid",price:45},{partName:"Fender",price:40},
+          {partName:"Bumper",price:35},{partName:"Radiator Core Support",price:45},{partName:"Radiator",price:35},
+          {partName:"A/C Condenser",price:35},{partName:"AC Compressor",price:45},{partName:"Alternator",price:35},
+          {partName:"Starter",price:25},{partName:"Power Steering Pump",price:25},{partName:"Water Pump",price:20},
+          {partName:"Fuel Pump",price:25},{partName:"Fuel Tank",price:35},{partName:"Seat, Front",price:35},
+          {partName:"Seat, Rear",price:25},{partName:"Dashboard",price:50},{partName:"Steering Column",price:35},
+          {partName:"Steering Wheel",price:20},{partName:"Tailgate",price:55},{partName:"Wheel, Alloy",price:25},
+          {partName:"Windshield",price:35},{partName:"Headlight Assembly",price:20},{partName:"Tail Light Assembly",price:15},
+          {partName:"Grille",price:25},{partName:"Catalytic Converter",price:50},{partName:"ECU/Computer",price:35},
+          {partName:"Instrument Cluster",price:30},{partName:"Radio/Stereo",price:20},{partName:"Air Bag",price:50},
+        ];
+        await matchAndScoreListings(listings, PYP);
+        cacheSet(key, listings);
+        console.log(`[prefetch] ${v.year} ${v.make} ${v.model}: ${listings.length} listings cached`);
+      } catch(e){ console.log(`[prefetch] failed ${v.year} ${v.make} ${v.model}:`, e.message); }
+    }));
+  }
+});
 
 // Serve static files AFTER API routes so /yards etc. aren't intercepted
 const publicDir = path.join(__dirname, "public");
