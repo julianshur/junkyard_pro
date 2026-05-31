@@ -1,0 +1,7 @@
+open ftps://julianshur@junkyardpro.com:b1n6b0n61!@ftp.junkyardpro.com/ -explicit
+option batch abort
+option confirm off
+
+synchronize remote "/c/Users/Julian/Documents/git/junkyard_pro" "/public_html" -delete
+
+exit
