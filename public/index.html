@@ -361,10 +361,11 @@ function renderProfitTable(i, vehicle, yardParts, ebayItems, sourceUrl) {
         <thead>
           <tr>
             <th data-col="part" data-i="${i}">Part <span class="sort-arrow"></span></th>
-            <th data-col="soldCount" data-i="${i}" class="td-num">Times Sold <span class="sort-arrow"></span></th>
+            <th data-col="soldCount" data-i="${i}" class="td-num">× Sold <span class="sort-arrow"></span></th>
             <th data-col="yardPrice" data-i="${i}" class="td-num">Yard Price <span class="sort-arrow"></span></th>
             <th data-col="ebayPrice" data-i="${i}" class="td-num">eBay Sold <span class="sort-arrow"></span></th>
-            <th data-col="profit" data-i="${i}" class="td-num sorted">Profit <span class="sort-arrow">▾</span></th>
+            <th data-col="demand" data-i="${i}" class="td-num sorted">Demand <span class="sort-arrow">▾</span></th>
+            <th data-col="profit" data-i="${i}" class="td-num">Profit <span class="sort-arrow"></span></th>
             <th data-col="margin" data-i="${i}" class="td-num">Margin <span class="sort-arrow"></span></th>
           </tr>
         </thead>
@@ -414,6 +415,7 @@ function renderTableRows(i, rows) {
         ${r.ebayUrl ? `<a href="${esc(r.ebayUrl)}" target="_blank" rel="noopener">${esc(r.part)}</a>` : esc(r.part)}
         ${r.ebayTitle ? `<div class="part-sub">${esc(r.ebayTitle.slice(0, 60))}${r.ebayTitle.length > 60 ? "…" : ""}</div>` : ""}
       </td>
+      <td class="td-num">${"★".repeat(r.demand||0)}${"☆".repeat(5-(r.demand||0))}</td>
       <td class="td-num" style="color:var(--muted)">${r.soldCount > 1 ? r.soldCount + "×" : "—"}</td>
       <td class="td-num td-yard">${r.yardPrice != null ? fmt(r.yardPrice) : "<span style='color:var(--muted)'>—</span>"}</td>
       <td class="td-num td-ebay">${r.ebayPrice != null ? fmt(r.ebayPrice) : "<span style='color:var(--muted)'>—</span>"}</td>
@@ -438,35 +440,26 @@ function filterRows(rows, minProfit) {
 
 // ── Match eBay listings to yard parts (eBay-first) ────────────────────────────
 function buildRows(yardParts, ebayItems) {
-  const rows = [];
-  // dedupe by PYP category — keep best soldCount then highest ebayPrice
   const seen = {};
-
   ebayItems.forEach(ei => {
-    if (!ei.pypCategory || !ei.pypPrice) return; // Claude found no match
+    if (!ei.pypCategory || !ei.pypPrice) return;
     if (!ei.title || ei.title === "Shop on eBay") return;
-
-    const yardPrice = ei.pypPrice;
-    const ebayPrice = ei.soldPrice;
-    const profit    = Math.round((ebayPrice - yardPrice) * 100) / 100;
-    const margin    = ebayPrice > 0 ? Math.round((profit / ebayPrice) * 100) : null;
-    const sc        = ei.soldCount || 1;
-
-    const existing = seen[ei.pypCategory];
-    if (!existing || sc > existing.soldCount || (sc === existing.soldCount && ebayPrice > existing.ebayPrice)) {
-      seen[ei.pypCategory] = {
-        part:      ei.pypCategory,
-        yardPrice,
-        ebayPrice,
-        profit,
-        margin,
-        ebayTitle: ei.title,
-        ebayUrl:   ei.url,
-        soldCount: sc,
+    const key = ei.pypCategory;
+    const existing = seen[key];
+    const sc = ei.soldCount || 1;
+    // Keep highest demand, break ties by soldCount then price
+    if (!existing || (ei.demand||1) > (existing.demand||1) ||
+        ((ei.demand||1) === (existing.demand||1) && sc > existing.soldCount) ||
+        ((ei.demand||1) === (existing.demand||1) && sc === existing.soldCount && ei.soldPrice > existing.ebayPrice)) {
+      const profit = Math.round((ei.soldPrice - ei.pypPrice) * 100) / 100;
+      const margin = ei.soldPrice > 0 ? Math.round((profit / ei.soldPrice) * 100) : null;
+      seen[key] = {
+        part: ei.pypCategory, yardPrice: ei.pypPrice, ebayPrice: ei.soldPrice,
+        profit, margin, ebayTitle: ei.title, ebayUrl: ei.url,
+        soldCount: sc, demand: ei.demand || 1,
       };
     }
   });
-
   return Object.values(seen);
 }
 </script>
