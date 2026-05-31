@@ -233,10 +233,16 @@ async function fetchEbayListings(searchQueries) {
       const sel = newUI ? ".s-card" : ".s-item";
       const selCount = $(sel).length;
       console.log(`[ebay] "${q.slice(0,40)}" ui:${newUI?"s-card":"s-item"} items:${selCount} htmlLen:${typeof html === "string" ? html.length : "non-string"}`);
-      // Debug: dump HTML of card index 2 (skip promo at 0)
+      // Debug: dump more HTML of card index 2
       if (selCount > 2 && allListings.length === 0) {
         const $card = $($(sel)[2]);
-        console.log("[ebay] card[2] html:", $card.html()?.slice(0,600).replace(/\s+/g," "));
+        const cardHtml = $card.html() || "";
+        // Find price section
+        const priceIdx = cardHtml.indexOf("su-styled-text");
+        console.log("[ebay] price section:", cardHtml.slice(Math.max(0,priceIdx-50), priceIdx+200).replace(/\s+/g," "));
+        // Find title section  
+        const h3Idx = cardHtml.indexOf("<h3");
+        console.log("[ebay] title section:", cardHtml.slice(h3Idx, h3Idx+300).replace(/\s+/g," "));
       }
       $(sel).each((_, el) => {
         const $el = $(el), ct = $el.text();
