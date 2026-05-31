@@ -52,13 +52,35 @@ async function fetchPage(url, referer = null) {
     return r.data;
   }
 
-  // For pyp.com without a key — use allorigins CORS proxy
+  // For pyp.com without a key — try multiple free proxies in order
   if (domain.includes("pyp.com")) {
-    console.log(`[fetch] using allorigins proxy for ${url}`);
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-    const r = await http.get(proxyUrl, { timeout: 30000 });
-    // allorigins wraps response in { contents: "..." }
-    return r.data.contents || r.data;
+    const proxies = [
+      // ScraperSite raw proxy
+      `https://thingproxy.freeboard.io/fetch/${url}`,
+      // corsproxy.io
+      `https://corsproxy.io/?${encodeURIComponent(url)}`,
+      // allorigins
+      `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    ];
+
+    for (const proxyUrl of proxies) {
+      try {
+        console.log(`[fetch] trying proxy: ${proxyUrl.split('?')[0]}`);
+        const r = await http.get(proxyUrl, { timeout: 20000 });
+        const html = r.data?.contents || r.data;
+        if (typeof html === 'string' && html.includes('pypvi_resultRow')) {
+          console.log(`[fetch] proxy worked: ${proxyUrl.split('?')[0]}`);
+          return html;
+        }
+        if (typeof html === 'string' && html.length > 1000) {
+          console.log(`[fetch] proxy returned HTML (no rows): ${proxyUrl.split('?')[0]}`);
+          return html; // return anyway, let parser handle it
+        }
+      } catch(e) {
+        console.log(`[fetch] proxy failed: ${e.message}`);
+      }
+    }
+    throw new Error('All proxies failed for ' + url);
   }
 
   // For all other domains (eBay etc) — direct request with cookie jar
