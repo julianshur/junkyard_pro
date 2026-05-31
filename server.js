@@ -169,8 +169,11 @@ Be strict on category — a headlight washer nozzle is NOT a Headlight Assembly.
     }, { headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" }, timeout: 30000 });
 
     const text = r.data.content[0].text;
-    const json = text.match(/\{[\s\S]*\}/)?.[0];
-    const results = JSON.parse(json);
+    // Find the outermost JSON object robustly
+    const start = text.indexOf("{");
+    const end   = text.lastIndexOf("}");
+    if (start === -1 || end === -1) throw new Error("No JSON object in response: " + text.slice(0,100));
+    const results = JSON.parse(text.slice(start, end + 1));
 
     let matched = 0;
     batch.forEach((l, i) => {
@@ -187,6 +190,37 @@ Be strict on category — a headlight washer nozzle is NOT a Headlight Assembly.
   } catch(e) {
     console.log("[claude] match+score failed:", e.message);
   }
+}
+
+// ── Score a yard's profit potential based on its vehicle list ────────────────
+async function scoreYard(vehicles) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+
+  // Fast heuristic score (no API needed) — used as fallback
+  // Scoring: newer year = more points, desirable makes = bonus
+  const HOT_MAKES = ["BMW","MERCEDES","MERCEDES-BENZ","AUDI","LEXUS","ACURA","INFINITI","PORSCHE","LAND ROVER","CADILLAC","VOLVO"];
+  const GOOD_MAKES = ["HONDA","TOYOTA","NISSAN","SUBARU","MAZDA","HYUNDAI","KIA","VOLKSWAGEN","FORD","CHEVY","CHEVROLET","GMC","DODGE","JEEP","RAM"];
+  let score = 0;
+  const currentYear = new Date().getFullYear();
+  vehicles.forEach(v => {
+    const age = currentYear - (v.year || 2000);
+    // Age score: newer = higher (max 30 pts per car)
+    score += Math.max(0, 30 - age * 1.5);
+    // Make bonus
+    const make = (v.make || "").toUpperCase();
+    if (HOT_MAKES.some(m => make.includes(m))) score += 25;
+    else if (GOOD_MAKES.some(m => make.includes(m))) score += 10;
+  });
+
+  // Normalize to 0-100
+  const maxPossible = vehicles.length * 55;
+  const normalized = Math.min(100, Math.round((score / maxPossible) * 100));
+
+  // Grade: green=70+, yellow=40-69, red=<40
+  const grade = normalized >= 70 ? "green" : normalized >= 40 ? "yellow" : "red";
+  const label = normalized >= 70 ? "High" : normalized >= 40 ? "Medium" : "Low";
+
+  return { score: normalized, grade, label };
 }
 
 // ── Known PYP store list ──────────────────────────────────────────────────────
@@ -300,7 +334,11 @@ app.get("/inventory/:yardId", async (req, res) => {
     return res.json({ error: `No vehicles found for "${yardId}". rowCount=${rowCount}` });
   }
 
-  const result = { vehicles };
+  // Score yard profit potential
+  const yardScore = await scoreYard(vehicles);
+  console.log(`[inventory] yard score: ${yardScore.score} (${yardScore.grade})`);
+
+  const result = { vehicles, yardScore };
   cacheSet(cacheKey, result);
   res.json(result);
 });
@@ -376,6 +414,49 @@ app.get("/prices/:yardId", async (req, res) => {
   console.log(`[prices] returning standard PYP price list for ${yardId}`);
   res.json({ parts: PYP_PRICES, sourceUrl, note: "Standard PYP flat-rate prices" });
 });
+
+// ── Shared eBay scraping logic ───────────────────────────────────────────────
+async function fetchEbayListings(searchQueries) {
+  const allListings = [];
+  for (const q of searchQueries) {
+    const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=60`;
+    try {
+      const html = await fetchPage(url, "https://www.ebay.com/");
+      const $ = cheerio.load(html);
+      const useNewUI = $(".s-card").length > 0;
+      const selector = useNewUI ? ".s-card" : ".s-item";
+      $(selector).each((_, el) => {
+        const $el = $(el);
+        const cardText = $el.text();
+        let title, price, href, condition;
+        if (useNewUI) {
+          title = $el.find("h3").first().text().trim() || $el.find("[class*=card-title]").text().trim();
+          const pt = []; $el.find("[class*=price],[class*=Price]").each((_,p) => { const t=$(p).text().trim(); if(t.match(/\$[0-9]/)) pt.push(t); });
+          price = parseFloat((pt[0]||"").replace(/[^0-9.]/g,"")) || 0;
+          href  = $el.find("a").first().attr("href") || "";
+          condition = $el.find("[class*=SECONDARY],[class*=subtitle],[class*=condition]").first().text().trim() || null;
+        } else {
+          title = ($el.find(".s-item__title span[role=heading]").text() || $el.find(".s-item__title").text()).replace("New listing","").trim();
+          price = parseFloat($el.find(".s-item__price").first().text().replace(/[^0-9.]/g,""));
+          href  = $el.find(".s-item__link").attr("href") || "";
+          condition = $el.find(".SECONDARY_INFO,.s-item__subtitle").first().text().trim() || null;
+        }
+        title = (title||"").replace(/Opens in a new window or tab/gi,"").replace(/\s+/g," ").trim();
+        if (!title || title === "Shop on eBay" || !price || price < 1) return;
+        const cond = (condition||"").toLowerCase();
+        if (cond.includes("new") && !cond.includes("like new") && !cond.includes("open box")) return;
+        const sm = cardText.match(/(\d[\d,]*)\s+sold/i);
+        allListings.push({ title, soldPrice: price, url: href ? href.split("?")[0] : null, category: condition, soldCount: sm ? parseInt(sm[1].replace(/,/g,"")) : 1 });
+      });
+    } catch(e) {
+      console.log(`[ebay] query failed "${q}":`, e.message);
+      if (e.response?.status === 429) break;
+    }
+  }
+  const seen = new Set();
+  return allListings.filter(l => { if (!l.url || seen.has(l.url)) return false; seen.add(l.url); return true; })
+    .sort((a,b) => (b.soldCount - a.soldCount) || (b.soldPrice - a.soldPrice));
+}
 
 // ── Ask Claude for best search queries for this specific vehicle ─────────────
 async function getSearchQueries(year, make, model) {
@@ -532,43 +613,10 @@ app.get("/prefetch/:yardId", async (req, res) => {
       const key = `ebay:${v.year}:${v.make}:${v.model}`;
       if (cacheGet(key)) return;
       try {
-        // Simulate the eBay fetch by calling our own route internally
+        // Reuse the shared scraping logic via fetchEbayListings helper
         const queries = await getSearchQueries(v.year, v.make, v.model);
-        const allL = [];
-        for (const q of queries) {
-          const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=60`;
-          try {
-            const html = await fetchPage(url, "https://www.ebay.com/");
-            const $ = cheerio.load(html);
-            const newUI = $(".s-card").length > 0;
-            const sel = newUI ? ".s-card" : ".s-item";
-            $(sel).each((_, el) => {
-              const $el=$(el), ct=$el.text();
-              let title="", price=0, href="", condition="";
-              if (newUI) {
-                title=$el.find("h3").first().text().trim();
-                const pt=[]; $el.find("[class*=price]").each((_,p)=>{const t=$(p).text().trim();if(t.match(/\$[0-9]/))pt.push(t);});
-                price=parseFloat((pt[0]||"").replace(/[^0-9.]/g,""))||0;
-                href=$el.find("a").first().attr("href")||"";
-                condition=$el.find("[class*=SECONDARY],[class*=condition]").first().text().trim()||"";
-              } else {
-                title=$el.find(".s-item__title").text().replace("New listing","").trim();
-                price=parseFloat($el.find(".s-item__price").first().text().replace(/[^0-9.]/g,""));
-                href=$el.find(".s-item__link").attr("href")||"";
-                condition=$el.find(".SECONDARY_INFO").first().text().trim()||"";
-              }
-              title=(title||"").replace(/Opens in a new window or tab/gi,"").replace(/\s+/g," ").trim();
-              if (!title||title==="Shop on eBay"||!price||price<1) return;
-              const c=condition.toLowerCase();
-              if (c.includes("new")&&!c.includes("like new")&&!c.includes("open box")) return;
-              const sm=ct.match(/(\d[\d,]*)\s+sold/i);
-              allL.push({title,soldPrice:price,url:href?href.split("?")[0]:null,category:condition,soldCount:sm?parseInt(sm[1].replace(/,/g,"")):1});
-            });
-          } catch(e){}
-        }
-        const seen=new Set();
-        const listings=allL.filter(l=>{if(!l.url||seen.has(l.url))return false;seen.add(l.url);return true;})
-          .sort((a,b)=>(b.soldCount-a.soldCount)||(b.soldPrice-a.soldPrice));
+        const listings = await fetchEbayListings(queries);
+        console.log(`[prefetch] ${v.year} ${v.make} ${v.model}: scraped ${listings.length} raw listings`);
         const PYP=[
           {partName:"Engine, 4 Cyl",price:275},{partName:"Engine, 6 Cyl",price:325},{partName:"Engine, 8 Cyl",price:375},
           {partName:"Transmission, Auto",price:175},{partName:"Transmission, Manual",price:150},{partName:"Transfer Case",price:125},
