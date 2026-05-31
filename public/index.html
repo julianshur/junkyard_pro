@@ -114,14 +114,34 @@
     </form>
   </section>
 
-  <div id="status-area"></div>
+  <div id="wake-notice" style="display:none;padding:10px 16px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:8px;font-size:13px;color:#fbbf24;margin-bottom:1rem">
+  ⏳ Server is waking up (free tier) — takes ~30 seconds. Wait for this message to disappear then search.
+</div>
+<div id="status-area"></div>
   <div id="yard-picker"></div>
   <div id="summary-area"></div>
   <div id="results-area"></div>
 </div>
 
 <script>
-const API = "https://junkyard-profit-finder.onrender.com";
+const API = ""; // set to your Render URL when hosted on Turbify e.g. "https://junkyard-pro.onrender.com"
+
+// Wake up Render on page load (free tier spins down after inactivity)
+(function pingServer() {
+  const serverUrl = API || window.location.origin;
+  fetch(serverUrl + '/health')
+    .then(r => r.json())
+    .then(() => {
+      const n = document.getElementById('wake-notice');
+      if (n) n.style.display = 'none';
+      console.log('[server] awake');
+    })
+    .catch(() => {
+      const n = document.getElementById('wake-notice');
+      if (n) n.style.display = 'block';
+      setTimeout(pingServer, 5000);
+    });
+})();
 let currentYard = null;
 
 function status(msg, isError = false) {
