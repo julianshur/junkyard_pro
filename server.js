@@ -326,11 +326,24 @@ app.get("/ebay", async (req, res) => {
     let title, price, href, dateSold, condition;
 
     if (useNewUI) {
-      title     = $el.find(".s-card__title, [class*='card__title']").text().trim() || $el.find("h3,h2").first().text().trim();
-      price     = parseFloat($el.find("[class*='price']").first().text().replace(/[^0-9.]/g, ""));
-      href      = $el.find("a.s-card__link, a[class*='card__link'], a").first().attr("href") || "";
-      dateSold  = $el.find("[class*='sold'],[class*='ended'],[class*='date']").first().text().trim() || null;
-      condition = $el.find("[class*='condition'],[class*='subtitle']").first().text().trim() || null;
+      // s-card structure: title in h3, price in .s-item__price or .textual-display
+      title = $el.find("h3").first().text().trim() ||
+              $el.find(".s-card__title, [class*='card-title']").text().trim();
+      // Price — try multiple selectors, take first numeric value
+      const priceTexts = [];
+      $el.find("[class*='price'], [class*='Price']").each((_, p) => {
+        const t = $(p).text().trim();
+        if (t && t.match(/\$[0-9]/)) priceTexts.push(t);
+      });
+      const rawPrice = priceTexts[0] || $el.find("[class*='price']").first().text();
+      price = parseFloat(rawPrice.replace(/[^0-9.]/g, "")) || 0;
+      href  = $el.find("a").first().attr("href") || "";
+      dateSold  = $el.find("[class*='sold'],[class*='POSITIVE'],[class*='signal']").first().text().trim() || null;
+      condition = $el.find("[class*='SECONDARY'],[class*='subtitle'],[class*='condition']").first().text().trim() || null;
+      // Log first item for debugging
+      if (listings.length === 0) {
+        console.log("[ebay] s-card sample title:", title, "price:", price, "rawPrice:", rawPrice);
+      }
     } else {
       title     = ($el.find(".s-item__title span[role='heading']").text() || $el.find(".s-item__title").text()).replace("New listing","").trim();
       price     = parseFloat($el.find(".s-item__price").first().text().replace(/[^0-9.]/g,""));
