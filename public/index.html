@@ -106,7 +106,7 @@
   .filter-bar { display:flex; align-items:center; gap:16px; padding: .75rem 1.25rem; background:var(--surface2); border-bottom:1px solid var(--border); flex-wrap:wrap; }
   .filter-bar label { font-size:12px; color:var(--muted); white-space:nowrap; }
   .filter-bar .val { font-size:13px; font-weight:600; color:var(--accent); min-width:50px; }
-  input[type=range] { flex:1; min-width:120px; max-width:200px; accent-color:var(--accent); }
+  input[type=range] { flex:1; min-width:100px; max-width:160px; accent-color:var(--accent); cursor:pointer; }
   @media(max-width:600px){
     .summary-grid{grid-template-columns:1fr 1fr;}
     .input-row{flex-direction:column;}
@@ -352,9 +352,10 @@ function renderProfitTable(i, vehicle, yardParts, ebayItems, sourceUrl) {
   panel.innerHTML = `
     <div class="filter-bar">
       <label>Min profit:</label>
-      <input type="range" min="0" max="1000" step="10" value="0" id="price-filter-${i}" oninput="updatePriceFilter(${i})">
-      <span class="val" id="price-filter-val-${i}">$0</span>
-      <label style="margin-left:8px;color:var(--muted);font-size:11px">Drag to filter rows</label>
+      <input type="range" min="0" max="2000" step="10" value="0" id="price-filter-min-${i}" oninput="updatePriceFilter(${i})">
+      <span class="val" id="price-filter-val-${i}">$0 – $2000</span>
+      <input type="range" min="0" max="2000" step="10" value="2000" id="price-filter-max-${i}" oninput="updatePriceFilter(${i})">
+      <label>Max profit</label>
     </div>
     <div class="profit-stats">
       <div class="pstat best"><span>Best Flip</span><strong>${fmt(bestProfit)}</strong></div>
@@ -382,7 +383,7 @@ function renderProfitTable(i, vehicle, yardParts, ebayItems, sourceUrl) {
   // Store rows globally for price filter
   if (!window._allRows) window._allRows = {};
   window._allRows[i] = rows;
-  const filteredRows = filterRows(rows, 0);
+  const filteredRows = filterRows(rows, 0, Infinity);
   renderTableRows(i, filteredRows);
 
   // Sort on header click
@@ -398,8 +399,9 @@ function renderProfitTable(i, vehicle, yardParts, ebayItems, sourceUrl) {
       });
       th.classList.add("sorted");
       th.querySelector(".sort-arrow").textContent = s.dir === -1 ? "▾" : "▴";
-      const minP = parseInt(document.getElementById(`price-filter-${i}`)?.value || 0);
-      renderTableRows(i, filterRows(rows, minP));
+      const minP = parseInt(document.getElementById(`price-filter-min-${i}`)?.value || 0);
+      const maxP = parseInt(document.getElementById(`price-filter-max-${i}`)?.value || 2000);
+      renderTableRows(i, filterRows(rows, minP, maxP));
     });
   });
 }
@@ -432,16 +434,22 @@ function renderTableRows(i, rows) {
 
 // ── Price filter ──────────────────────────────────────────────────────────────
 function updatePriceFilter(i) {
-  const slider = document.getElementById(`price-filter-${i}`);
-  const val = parseInt(slider.value);
-  document.getElementById(`price-filter-val-${i}`).textContent = `$${val}`;
+  const minVal = parseInt(document.getElementById(`price-filter-min-${i}`).value);
+  const maxVal = parseInt(document.getElementById(`price-filter-max-${i}`).value);
+  // Keep min <= max
+  const lo = Math.min(minVal, maxVal);
+  const hi = Math.max(minVal, maxVal);
+  document.getElementById(`price-filter-val-${i}`).textContent = `$${lo} – $${hi === 2000 ? "2000+" : hi}`;
   const allRows = window._allRows?.[i];
-  if (allRows) renderTableRows(i, filterRows(allRows, val));
+  if (allRows) renderTableRows(i, filterRows(allRows, lo, hi));
 }
 
-function filterRows(rows, minProfit) {
-  // Only show rows with an eBay match AND profit >= minProfit
-  return rows.filter(r => r.ebayPrice != null && r.yardPrice != null && (r.profit == null || r.profit >= minProfit));
+function filterRows(rows, minProfit = 0, maxProfit = Infinity) {
+  return rows.filter(r =>
+    r.ebayPrice != null && r.yardPrice != null &&
+    r.profit >= minProfit &&
+    (maxProfit >= 2000 || r.profit <= maxProfit)
+  );
 }
 
 // ── Match eBay listings to yard parts (eBay-first) ────────────────────────────

@@ -386,8 +386,8 @@ async function getSearchQueries(year, make, model) {
       model: "claude-haiku-4-5",
       max_tokens: 300,
       messages: [{ role: "user", content:
-        `For a ${year} ${make} ${model} at a self-service junkyard, list the 5 most valuable parts commonly resold on eBay. Consider what makes this specific vehicle desirable for parts (reliable engine, popular body panels, rare trim, etc).
-Return ONLY a JSON array of 5 eBay search strings like: ["2003 Honda Accord engine","2003 Honda Accord transmission"]
+        `For a ${year} ${make} ${model} at a self-service junkyard, list the 3 most valuable parts commonly resold on eBay. Focus on high-value items: engine, transmission, rare/popular body parts.
+Return ONLY a JSON array of 3 eBay search strings like: ["2003 Honda Accord engine","2003 Honda Accord transmission","2003 Honda Accord door"]
 No explanation, just the JSON array.` }],
     }, { headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" }, timeout: 15000 });
     const arr = JSON.parse(r.data.content[0].text.match(/\[[\s\S]*\]/)?.[0]);
@@ -413,9 +413,9 @@ app.get("/ebay", async (req, res) => {
   const searchQueries = await getSearchQueries(year, make, model);
   console.log(`[ebay] searching ${searchQueries.length} queries for ${year} ${make} ${model}`);
 
-  // Fetch all queries in parallel
+  // Fetch queries sequentially to avoid ScraperAPI 429 rate limits
   const allListings = [];
-  await Promise.all(searchQueries.map(async (q) => {
+  for (const q of searchQueries) {
     const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=60`;
     try {
       const html = await fetchPage(url, "https://www.ebay.com/");
@@ -458,8 +458,9 @@ app.get("/ebay", async (req, res) => {
       });
     } catch(e) {
       console.log(`[ebay] query failed "${q}":`, e.message);
+      if (e.response?.status === 429) break; // stop if rate limited
     }
-  }));
+  }
 
   // Dedupe by URL, sort by soldCount desc then price desc
   const seenUrls = new Set();
@@ -527,7 +528,7 @@ app.get("/prefetch/:yardId", async (req, res) => {
         // Simulate the eBay fetch by calling our own route internally
         const queries = await getSearchQueries(v.year, v.make, v.model);
         const allL = [];
-        await Promise.all(queries.map(async q => {
+        for (const q of queries) {
           const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=60`;
           try {
             const html = await fetchPage(url, "https://www.ebay.com/");
@@ -557,7 +558,7 @@ app.get("/prefetch/:yardId", async (req, res) => {
               allL.push({title,soldPrice:price,url:href?href.split("?")[0]:null,category:condition,soldCount:sm?parseInt(sm[1].replace(/,/g,"")):1});
             });
           } catch(e){}
-        }));
+        }
         const seen=new Set();
         const listings=allL.filter(l=>{if(!l.url||seen.has(l.url))return false;seen.add(l.url);return true;})
           .sort((a,b)=>(b.soldCount-a.soldCount)||(b.soldPrice-a.soldPrice));
