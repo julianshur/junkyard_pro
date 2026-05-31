@@ -116,23 +116,23 @@ async function fetchPage(url, referer = null) {
 
 // ── Known PYP store list ──────────────────────────────────────────────────────
 const KNOWN_STORES = [
-  { id: "sun-valley-1263",     name: "Pick Your Part - Sun Valley",      address: "8000 Laurel Canyon Blvd, Sun Valley, CA" },
-  { id: "wilmington-1258",     name: "Pick Your Part - Wilmington",      address: "1600 E Anaheim St, Wilmington, CA" },
-  { id: "el-monte-1269",       name: "Pick Your Part - El Monte",        address: "3888 Tyler Ave, El Monte, CA" },
-  { id: "stanton-1267",        name: "Pick Your Part - Stanton",         address: "10901 Beach Blvd, Stanton, CA" },
-  { id: "fresno",              name: "Pick Your Part - Fresno",          address: "4620 S Chestnut Ave, Fresno, CA" },
-  { id: "san-bernardino-1274", name: "Pick Your Part - San Bernardino",  address: "2205 W 2nd St, San Bernardino, CA" },
-  { id: "long-beach-1259",     name: "Pick Your Part - Long Beach",      address: "2700 E Willow St, Long Beach, CA" },
-  { id: "van-nuys",            name: "Pick Your Part - Van Nuys",        address: "7901 Sepulveda Blvd, Van Nuys, CA" },
-  { id: "north-hollywood",     name: "Pick Your Part - North Hollywood", address: "7600 Lankershim Blvd, North Hollywood, CA" },
-  { id: "orlando",             name: "Pick Your Part - Orlando",         address: "5900 Hoffner Ave, Orlando, FL" },
-  { id: "houston",             name: "Pick Your Part - Houston",         address: "9435 Wallisville Rd, Houston, TX" },
-  { id: "phoenix",             name: "Pick Your Part - Phoenix",         address: "4020 W Lower Buckeye Rd, Phoenix, AZ" },
-  { id: "las-vegas",           name: "Pick Your Part - Las Vegas",       address: "6750 W Cheyenne Ave, Las Vegas, NV" },
-  { id: "sacramento",          name: "Pick Your Part - Sacramento",      address: "Sacramento, CA" },
-  { id: "denver",              name: "Pick Your Part - Denver",          address: "Denver, CO" },
-  { id: "portland",            name: "Pick Your Part - Portland",        address: "Portland, OR" },
-  { id: "seattle",             name: "Pick Your Part - Seattle",         address: "Seattle, WA" },
+  { id: "sun-valley-1263",     priceSlug: "sun-valley-help-yourself-1263",     name: "Pick Your Part - Sun Valley",      address: "8000 Laurel Canyon Blvd, Sun Valley, CA" },
+  { id: "wilmington-1258",     priceSlug: "wilmington-help-yourself-1258",     name: "Pick Your Part - Wilmington",      address: "1600 E Anaheim St, Wilmington, CA" },
+  { id: "el-monte-1269",       priceSlug: "el-monte-help-yourself-1269",       name: "Pick Your Part - El Monte",        address: "3888 Tyler Ave, El Monte, CA" },
+  { id: "stanton-1267",        priceSlug: "stanton-help-yourself-1267",        name: "Pick Your Part - Stanton",         address: "10901 Beach Blvd, Stanton, CA" },
+  { id: "fresno",              priceSlug: "fresno-help-yourself",              name: "Pick Your Part - Fresno",          address: "4620 S Chestnut Ave, Fresno, CA" },
+  { id: "san-bernardino-1274", priceSlug: "san-bernardino-help-yourself-1274", name: "Pick Your Part - San Bernardino",  address: "2205 W 2nd St, San Bernardino, CA" },
+  { id: "long-beach-1259",     priceSlug: "long-beach-help-yourself-1259",     name: "Pick Your Part - Long Beach",      address: "2700 E Willow St, Long Beach, CA" },
+  { id: "van-nuys",            priceSlug: "van-nuys-help-yourself",            name: "Pick Your Part - Van Nuys",        address: "7901 Sepulveda Blvd, Van Nuys, CA" },
+  { id: "north-hollywood",     priceSlug: "north-hollywood-help-yourself",     name: "Pick Your Part - North Hollywood", address: "7600 Lankershim Blvd, North Hollywood, CA" },
+  { id: "orlando",             priceSlug: "orlando-help-yourself",             name: "Pick Your Part - Orlando",         address: "5900 Hoffner Ave, Orlando, FL" },
+  { id: "houston",             priceSlug: "houston-help-yourself",             name: "Pick Your Part - Houston",         address: "9435 Wallisville Rd, Houston, TX" },
+  { id: "phoenix",             priceSlug: "phoenix-help-yourself",             name: "Pick Your Part - Phoenix",         address: "4020 W Lower Buckeye Rd, Phoenix, AZ" },
+  { id: "las-vegas",           priceSlug: "las-vegas-help-yourself",           name: "Pick Your Part - Las Vegas",       address: "6750 W Cheyenne Ave, Las Vegas, NV" },
+  { id: "sacramento",          priceSlug: "sacramento-help-yourself",          name: "Pick Your Part - Sacramento",      address: "Sacramento, CA" },
+  { id: "denver",              priceSlug: "denver-help-yourself",              name: "Pick Your Part - Denver",          address: "Denver, CO" },
+  { id: "portland",            priceSlug: "portland-help-yourself",            name: "Pick Your Part - Portland",        address: "Portland, OR" },
+  { id: "seattle",             priceSlug: "seattle-help-yourself",             name: "Pick Your Part - Seattle",         address: "Seattle, WA" },
 ];
 
 // ── GET /health ───────────────────────────────────────────────────────────────
@@ -233,15 +233,36 @@ app.get("/prices/:yardId", async (req, res) => {
   const { year, make, model } = req.query;
   if (!year || !make || !model) return res.json({ error: "Missing year/make/model" });
 
-  const url = `https://www.pyp.com/parts/${yardId}/?year=${year}&make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}`;
+  // Look up the known price slug, or generate candidates
+  const knownStore = KNOWN_STORES.find(s => s.id === yardId);
+  const storeNum = yardId.match(/(\d+)$/)?.[1] || "";
+  const pricesSlugs = knownStore?.priceSlug
+    ? [knownStore.priceSlug, yardId, yardId.replace(/-(\d+)$/, `-help-yourself-$1`)]
+    : [yardId.replace(/-(\d+)$/, `-help-yourself-$1`), yardId];
+
+  const url = `https://www.pyp.com/prices/${pricesSlugs[0]}/`;
   console.log(`[prices] fetching: ${url}`);
 
-  let html;
-  try {
-    html = await fetchPage(url, `https://www.pyp.com/inventory/${yardId}/`);
-  } catch (err) {
-    return res.json({ error: "Failed to load prices: " + err.message });
+  let html = null;
+  let workingUrl = url;
+
+  for (const slug of pricesSlugs) {
+    const tryUrl = `https://www.pyp.com/prices/${slug}/`;
+    try {
+      console.log(`[prices] trying: ${tryUrl}`);
+      const h = await fetchPage(tryUrl, `https://www.pyp.com/`);
+      if (typeof h === "string" && h.length > 5000) {
+        html = h;
+        workingUrl = tryUrl;
+        console.log(`[prices] success: ${tryUrl}`);
+        break;
+      }
+    } catch(e) {
+      console.log(`[prices] failed ${tryUrl}: ${e.message}`);
+    }
   }
+
+  if (!html) return res.json({ error: "Could not load prices page. Try visiting pyp.com/prices directly.", sourceUrl: url });
 
   const $ = cheerio.load(html);
   const parts = [];
@@ -282,9 +303,19 @@ app.get("/prices/:yardId", async (req, res) => {
     });
   }
 
-  console.log(`[prices] found ${parts.length} parts, html length: ${html.length}`);
+  // Filter out motorcycle parts (MC prefix), scrap, and generic items
+  const filtered = parts.filter(p => {
+    const n = p.partName.toUpperCase();
+    return !n.startsWith("MC ") &&
+           !n.includes("SCRAP") &&
+           !n.includes("FREON") &&
+           !n.includes("BATTERY") &&
+           p.price > 0 &&
+           p.price < 10000;
+  });
+  console.log(`[prices] found ${parts.length} parts, filtered to ${filtered.length}, html length: ${html.length}`);
   console.log("[prices] snippet:", typeof html === "string" ? html.slice(0, 600).replace(/\s+/g, " ") : "non-string response");
-  res.json({ parts, sourceUrl: url, debug: { htmlLength: html.length, snippet: typeof html === "string" ? html.slice(0, 300) : "non-string" } });
+  res.json({ parts: filtered, sourceUrl: workingUrl, debug: { htmlLength: html.length, snippet: typeof html === "string" ? html.slice(0, 300) : "non-string" } });
 });
 
 // ── GET /api/ebay ─────────────────────────────────────────────────────────────
