@@ -229,6 +229,8 @@ async function loadInventory(yard) {
     status("");
     renderSummary(yard, data.vehicles);
     renderCars(data.vehicles);
+    // Kick off background pre-warming of eBay cache for all vehicles
+    fetch(`${API}/prefetch/${yard.id}`).catch(() => {});
   } catch(err) {
     status(err.message, true);
   }
@@ -274,6 +276,13 @@ function renderCars(vehicles) {
     </div>`).join("");
 
   area.querySelectorAll(".car-header").forEach(hdr => {
+    // Hover: kick off eBay fetch early so click feels instant
+    hdr.addEventListener("mouseenter", () => {
+      const v = vehicles[+hdr.dataset.i];
+      if (!window._loaded?.[+hdr.dataset.i]) {
+        fetch(`${API}/ebay?year=${v.year}&make=${encodeURIComponent(v.make)}&model=${encodeURIComponent(v.model)}`).catch(()=>{});
+      }
+    });
     hdr.addEventListener("click", () => toggleCard(vehicles[+hdr.dataset.i], +hdr.dataset.i));
   });
 }
@@ -293,14 +302,11 @@ async function toggleCard(vehicle, i) {
     const yardId = currentYard.id;
     const { year, make, model } = vehicle;
 
-    // Fetch yard prices and eBay listings in parallel
-    const [priceRes, ebayRes] = await Promise.all([
-      fetch(`${API}/prices/${yardId}?year=${year}&make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}${vehicle.stockNo ? '&stockNo=' + encodeURIComponent(vehicle.stockNo) : ''}`),
-      fetch(`${API}/ebay?year=${year}&make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}`)
+    // Fetch yard prices and eBay listings in parallel (already cached from prefetch)
+    const [priceData, ebayData] = await Promise.all([
+      fetch(`${API}/prices/${yardId}?year=${year}&make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}`).then(r => r.json()),
+      fetch(`${API}/ebay?year=${year}&make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}`).then(r => r.json()),
     ]);
-
-    const priceData = await priceRes.json();
-    const ebayData  = await ebayRes.json();
 
     const yardParts  = priceData.parts  || [];
     const ebayItems  = ebayData.listings || [];
