@@ -231,6 +231,8 @@ async function fetchEbayListings(searchQueries) {
       const $ = cheerio.load(html);
       const newUI = $(".s-card").length > 0;
       const sel = newUI ? ".s-card" : ".s-item";
+      const selCount = $(sel).length;
+      console.log(`[ebay] "${q.slice(0,40)}" ui:${newUI?"s-card":"s-item"} items:${selCount} htmlLen:${typeof html === "string" ? html.length : "non-string"}`);
       $(sel).each((_, el) => {
         const $el = $(el), ct = $el.text();
         let title, price, href, condition;
