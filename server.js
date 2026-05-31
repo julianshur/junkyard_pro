@@ -326,11 +326,12 @@ app.get("/ebay", async (req, res) => {
     const $el = $(el);
     let title, price, href, dateSold, condition;
 
+    // cardText must be declared before useNewUI block
+    const cardText = $el.text();
+
     if (useNewUI) {
-      // s-card structure: title in h3, price in .s-item__price or .textual-display
       title = $el.find("h3").first().text().trim() ||
               $el.find(".s-card__title, [class*='card-title']").text().trim();
-      // Price — try multiple selectors, take first numeric value
       const priceTexts = [];
       $el.find("[class*='price'], [class*='Price']").each((_, p) => {
         const t = $(p).text().trim();
@@ -339,12 +340,9 @@ app.get("/ebay", async (req, res) => {
       const rawPrice = priceTexts[0] || $el.find("[class*='price']").first().text();
       price = parseFloat(rawPrice.replace(/[^0-9.]/g, "")) || 0;
       href  = $el.find("a").first().attr("href") || "";
-            dateSold = $el.find("[class*='sold'],[class*='POSITIVE'],[class*='signal'],[class*='ended']").first().text().trim() || (cardText.match(/Sold [A-Z][a-z]+/)?.[0]) || null;
+      dateSold = $el.find("[class*='sold'],[class*='POSITIVE'],[class*='signal'],[class*='ended']").first().text().trim() || cardText.match(/Sold [A-Z][a-z]+/)?.[0] || null;
       condition = $el.find("[class*='SECONDARY'],[class*='subtitle'],[class*='condition']").first().text().trim() || null;
-      // Log first item for debugging
-      if (listings.length === 0) {
-        console.log("[ebay] s-card sample title:", title, "price:", price, "rawPrice:", rawPrice);
-      }
+      if (listings.length === 0) console.log("[ebay] s-card sample title:", title, "price:", price);
     } else {
       title     = ($el.find(".s-item__title span[role='heading']").text() || $el.find(".s-item__title").text()).replace("New listing","").trim();
       price     = parseFloat($el.find(".s-item__price").first().text().replace(/[^0-9.]/g,""));
@@ -355,12 +353,9 @@ app.get("/ebay", async (req, res) => {
 
     if (!title || title === "Shop on eBay" || title === "Results matching fewer words") return;
     if (!price || price < 1) return;
-    // Reject new/brand-new parts — we only want used/pre-owned
     const cond = (condition || "").toLowerCase();
     if (cond.includes("new") && !cond.includes("like new") && !cond.includes("open box")) return;
 
-    // Extract sold count from "X sold" anywhere in the card
-    const cardText = $el.text();
     const soldMatch = cardText.match(/(\d[\d,]*)\s+sold/i);
     const soldCount = soldMatch ? parseInt(soldMatch[1].replace(/,/g, "")) : 1;
 
