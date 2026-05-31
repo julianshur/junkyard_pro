@@ -83,7 +83,15 @@ async function fetchPage(url, referer = null) {
     throw new Error('All proxies failed for ' + url);
   }
 
-  // For all other domains (eBay etc) — direct request with cookie jar
+  // For ebay.com — use ScraperAPI if available, otherwise direct
+  if (domain.includes("ebay.com") && scraperKey) {
+    const proxyUrl = `http://api.scraperapi.com?api_key=${scraperKey}&url=${encodeURIComponent(url)}&render=false`;
+    console.log(`[fetch] using ScraperAPI for ${url}`);
+    const r = await http.get(proxyUrl, { timeout: 30000 });
+    return r.data;
+  }
+
+  // For all other domains — direct request with cookie jar
   if (!cookieJar[domain]) {
     try {
       const homeUrl = `https://${domain}/`;
