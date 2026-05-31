@@ -142,51 +142,48 @@ async function matchAndScoreListings(listings, yardParts) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return;
 
-  const partNames = yardParts.map(p => p.partName);
-  // Send top 40 listings to Claude (enough for good coverage, stays within token limit)
   const batch = listings.slice(0, 40);
-  const titlesStr = batch.map((l, i) => `${i}: ${l.title} [sold:${l.soldCount}x @ $${l.soldPrice}]`).join("\n");
+  if (!batch.length) return;
 
-  const prompt = `You are a junkyard parts expert. Match eBay sold listings to PYP part categories and score demand.
+  const partNames = yardParts.map(p => p.partName);
+  const titlesStr = batch.map((l, i) => `${i}: ${l.title} [$${l.soldPrice}, ${l.soldCount}x sold]`).join("\n");
 
-PYP categories: ${partNames.join(", ")}
+  const prompt = `Match these eBay used auto part listings to PYP junkyard categories. Return ONLY a JSON object, no other text.
 
-eBay sold listings (index: title [soldCount x price]):
+Categories: ${partNames.join(", ")}
+
+Listings:
 ${titlesStr}
 
-For each index return:
-- "category": best PYP category name, or "NO_MATCH" 
-- "demand": 1-5 score (5=sells fast/high volume, 1=slow/niche). Base on soldCount and price consistency.
-
-Return ONLY JSON: {"0":{"category":"Engine, 4 Cyl","demand":4}, "1":{"category":"NO_MATCH","demand":0}, ...}
-Be strict on category — a headlight washer nozzle is NOT a Headlight Assembly.`;
+JSON format: {"0":{"category":"Engine, 4 Cyl","demand":4},"1":{"category":"NO_MATCH","demand":0}}
+demand: 1-5 (5=high volume/fast selling). Use NO_MATCH if listing does not clearly match a category.`;
 
   try {
     const r = await http.post("https://api.anthropic.com/v1/messages", {
       model: "claude-haiku-4-5",
-      max_tokens: 1500,
+      max_tokens: 2000,
+      system: "You are an auto parts expert. Always respond with valid JSON only — no explanations, no markdown, no preamble.",
       messages: [{ role: "user", content: prompt }],
     }, { headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" }, timeout: 30000 });
 
-    const text = r.data.content[0].text;
-    // Find the outermost JSON object robustly
+    const text = r.data.content[0].text.trim();
     const start = text.indexOf("{");
-    const end   = text.lastIndexOf("}");
-    if (start === -1 || end === -1) throw new Error("No JSON object in response: " + text.slice(0,100));
-    const results = JSON.parse(text.slice(start, end + 1));
+    const end2  = text.lastIndexOf("}");
+    if (start === -1 || end2 === -1) throw new Error("No JSON in response: " + text.slice(0, 100));
+    const results = JSON.parse(text.slice(start, end2 + 1));
 
     let matched = 0;
     batch.forEach((l, i) => {
-      const r = results[String(i)];
-      if (r && r.category && r.category !== "NO_MATCH") {
-        const part = yardParts.find(p => p.partName === r.category);
-        l.pypCategory = r.category;
+      const res = results[String(i)];
+      if (res && res.category && res.category !== "NO_MATCH") {
+        const part = yardParts.find(p => p.partName === res.category);
+        l.pypCategory = res.category;
         l.pypPrice    = part?.price || null;
-        l.demand      = r.demand || 1;
+        l.demand      = res.demand || 1;
         matched++;
       }
     });
-    console.log(`[claude] matched ${matched}/${batch.length} listings with demand scores`);
+    console.log(`[claude] matched ${matched}/${batch.length} listings`);
   } catch(e) {
     console.log("[claude] match+score failed:", e.message);
   }
