@@ -40,6 +40,14 @@
   .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 6px; }
 
   .yard-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.5rem; }
+  .yard-option .score-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
+  .yard-option.score-green { border-color: rgba(74,222,128,0.5); }
+  .yard-option.score-green .score-badge { background: rgba(74,222,128,0.15); color: #4ade80; }
+  .yard-option.score-yellow { border-color: rgba(251,191,36,0.5); }
+  .yard-option.score-yellow .score-badge { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  .yard-option.score-red { border-color: rgba(248,113,113,0.4); }
+  .yard-option.score-red .score-badge { background: rgba(248,113,113,0.12); color: #f87171; }
+  .yard-score-loading { font-size: 11px; color: var(--muted); margin-left: 6px; }
   .yard-option { padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
   .yard-option:hover { border-color: var(--accent); }
   .yard-option strong { display: block; font-size: 14px; }
@@ -203,15 +211,40 @@ document.getElementById("search-form").addEventListener("submit", async e => {
 function renderYardPicker(yards) {
   if (yards.length === 1) { loadInventory(yards[0]); return; }
   const el = document.getElementById("yard-picker");
-  el.innerHTML = `<p style="font-size:13px;color:var(--muted);margin-bottom:10px">Multiple yards found — pick one:</p>
-    <div class="yard-list">${yards.map((y,i) => `
-      <div class="yard-option" data-i="${i}">
-        <strong>${esc(y.name)}</strong>
-        <span>${esc(y.address || y.id)}</span>
-      </div>`).join("")}
+
+  // Render yards immediately, then fetch scores in background
+  const renderList = (scoredYards) => {
+    el.innerHTML = `<p style="font-size:13px;color:var(--muted);margin-bottom:10px">Multiple yards found — sorted by profit potential:</p>
+      <div class="yard-list">${scoredYards.map((y,i) => {
+        const grade = y.grade || "";
+        const badge = y.score != null
+          ? `<span class="score-badge">${y.label || ""} ${y.score}%</span>`
+          : `<span class="yard-score-loading" id="yscore-${y.id}">scoring…</span>`;
+        return `<div class="yard-option score-${grade||'loading'}" data-id="${esc(y.id)}">
+          <strong>${esc(y.name)} ${badge}</strong>
+          <span>${esc(y.address || y.id)}</span>
+        </div>`;
+      }).join("")}
     </div>`;
-  el.querySelectorAll(".yard-option").forEach(btn => {
-    btn.addEventListener("click", () => { el.innerHTML = ""; loadInventory(yards[+btn.dataset.i]); });
+    el.querySelectorAll(".yard-option").forEach(btn => {
+      const yard = scoredYards.find(y => y.id === btn.dataset.id);
+      btn.addEventListener("click", () => { el.innerHTML = ""; loadInventory(yard); });
+    });
+  };
+
+  renderList(yards); // show immediately unsorted
+
+  // Fetch inventory for each yard to get score, then re-sort and re-render
+  Promise.all(yards.map(async y => {
+    try {
+      const r = await fetch(`${API}/inventory/${y.id}`);
+      const d = await r.json();
+      if (d.yardScore) { y.score = d.yardScore.score; y.grade = d.yardScore.grade; y.label = d.yardScore.label; }
+    } catch(e) {}
+    return y;
+  })).then(scored => {
+    scored.sort((a,b) => (b.score||0) - (a.score||0));
+    renderList(scored);
   });
 }
 
@@ -459,25 +492,36 @@ function filterRows(rows, minProfit = 0, maxProfit = Infinity) {
 // ── Match eBay listings to yard parts (eBay-first) ────────────────────────────
 function buildRows(yardParts, ebayItems) {
   const seen = {};
+
+  // Build a lookup map from PYP category name -> price
+  const yardPriceMap = {};
+  yardParts.forEach(p => { yardPriceMap[p.partName] = p.price; });
+
   ebayItems.forEach(ei => {
-    if (!ei.pypCategory || !ei.pypPrice) return;
     if (!ei.title || ei.title === "Shop on eBay") return;
-    const key = ei.pypCategory;
+
+    // Get yard price from Claude match OR fallback to yardPriceMap
+    const category = ei.pypCategory;
+    if (!category) return; // Claude hasn't matched this listing yet
+
+    const yardPrice = ei.pypPrice != null ? ei.pypPrice : yardPriceMap[category];
+    if (yardPrice == null) return; // no yard price found at all
+
+    const ebayPrice = ei.soldPrice;
+    const profit    = Math.round((ebayPrice - yardPrice) * 100) / 100;
+    const margin    = ebayPrice > 0 ? Math.round((profit / ebayPrice) * 100) : null;
+    const sc        = ei.soldCount || 1;
+    const key       = category;
+
     const existing = seen[key];
-    const sc = ei.soldCount || 1;
-    // Keep highest demand, break ties by soldCount then price
-    if (!existing || (ei.demand||1) > (existing.demand||1) ||
-        ((ei.demand||1) === (existing.demand||1) && sc > existing.soldCount) ||
-        ((ei.demand||1) === (existing.demand||1) && sc === existing.soldCount && ei.soldPrice > existing.ebayPrice)) {
-      const profit = Math.round((ei.soldPrice - ei.pypPrice) * 100) / 100;
-      const margin = ei.soldPrice > 0 ? Math.round((profit / ei.soldPrice) * 100) : null;
-      seen[key] = {
-        part: ei.pypCategory, yardPrice: ei.pypPrice, ebayPrice: ei.soldPrice,
-        profit, margin, ebayTitle: ei.title, ebayUrl: ei.url,
-        soldCount: sc, demand: ei.demand || 1,
-      };
+    if (!existing ||
+        (ei.demand || 1) > (existing.demand || 1) ||
+        ((ei.demand || 1) === (existing.demand || 1) && sc > existing.soldCount) ||
+        ((ei.demand || 1) === (existing.demand || 1) && sc === existing.soldCount && ebayPrice > existing.ebayPrice)) {
+      seen[key] = { part: category, yardPrice, ebayPrice, profit, margin, ebayTitle: ei.title, ebayUrl: ei.url, soldCount: sc, demand: ei.demand || 1 };
     }
   });
+
   return Object.values(seen);
 }
 </script>
