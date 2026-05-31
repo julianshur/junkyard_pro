@@ -123,6 +123,55 @@ async function fetchPage(url, referer = null) {
   return r.data;
 }
 
+// ── Claude-powered part matching ─────────────────────────────────────────────
+// Batch-matches eBay listings to PYP part categories using Claude
+async function matchListingsToParts(listings, yardParts) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    console.log("[claude] no ANTHROPIC_API_KEY set, skipping AI matching");
+    return null;
+  }
+
+  const partNames = yardParts.map(p => p.partName);
+  const titles = listings.map((l, i) => `${i}: ${l.title}`).join("\n");
+
+  const prompt = `You are matching eBay auto parts listings to junkyard part categories.
+
+PYP part categories:
+${partNames.join(", ")}
+
+eBay listings (index: title):
+${titles}
+
+For each listing index, return the best matching PYP category name, or "NO_MATCH" if none fits.
+Return ONLY a JSON object like: {"0": "Engine, 4 Cyl", "1": "Radiator", "2": "NO_MATCH"}
+Be strict — only match if the listing is clearly that part. A headlight washer nozzle is NOT a headlight.`;
+
+  try {
+    const r = await http.post("https://api.anthropic.com/v1/messages", {
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: prompt }],
+    }, {
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      timeout: 30000,
+    });
+
+    const text = r.data.content[0].text;
+    const json = text.match(/\{[\s\S]*\}/)?.[0];
+    const matches = JSON.parse(json);
+    console.log(`[claude] matched ${Object.values(matches).filter(v => v !== "NO_MATCH").length}/${listings.length} listings`);
+    return matches;
+  } catch(e) {
+    console.log("[claude] matching failed:", e.message);
+    return null;
+  }
+}
+
 // ── Known PYP store list ──────────────────────────────────────────────────────
 const KNOWN_STORES = [
   { id: "sun-valley-1263",               priceSlug: "sun-valley-1263",               name: "Pick Your Part - Sun Valley",      address: "Sun Valley, CA" },
@@ -272,7 +321,8 @@ app.get("/prices/:yardId", async (req, res) => {
     { partName: "Steering Column",         price: 35,  keywords: ["steering","column"],               exclude: [] },
     { partName: "Tailgate",                price: 55,  keywords: ["tailgate"],                        exclude: [] },
     { partName: "Truck Bed",               price: 150, keywords: ["bed"],                             exclude: [] },
-    { partName: "Wheel, Alloy",            price: 25,  keywords: ["wheel"],                           exclude: ["bearing","hub","well"] },
+    { partName: "Steering Wheel",           price: 20,  keywords: ["steering","wheel"],               exclude: [] },
+    { partName: "Wheel, Alloy",            price: 25,  keywords: ["wheel"],                           exclude: ["bearing","hub","well","steering"] },
     { partName: "Tire",                    price: 10,  keywords: ["tire"],                            exclude: [] },
     { partName: "Windshield",              price: 35,  keywords: ["windshield"],                      exclude: [] },
     { partName: "Door Glass",              price: 20,  keywords: ["window","glass"],                  exclude: [] },
@@ -373,7 +423,54 @@ app.get("/ebay", async (req, res) => {
 
   // Sort by soldCount desc, then price desc
   listings.sort((a, b) => (b.soldCount - a.soldCount) || (b.soldPrice - a.soldPrice));
-  console.log(`[ebay] returning ${listings.length} listings, top soldCount: ${listings[0]?.soldCount}`);
+
+  // Use Claude to match each listing to a PYP part category
+  const PYP_PARTS = [
+    { partName: "Engine, 4 Cyl", price: 275 }, { partName: "Engine, 6 Cyl", price: 325 },
+    { partName: "Engine, 8 Cyl", price: 375 }, { partName: "Transmission, Auto", price: 175 },
+    { partName: "Transmission, Manual", price: 150 }, { partName: "Transfer Case", price: 125 },
+    { partName: "Rear Axle Assembly", price: 125 }, { partName: "Front Axle Assembly", price: 125 },
+    { partName: "Differential", price: 75 }, { partName: "Drive Shaft", price: 35 },
+    { partName: "Hood", price: 50 }, { partName: "Door", price: 50 },
+    { partName: "Trunk Lid", price: 45 }, { partName: "Fender", price: 40 },
+    { partName: "Bumper", price: 35 }, { partName: "Radiator Core Support", price: 45 },
+    { partName: "Radiator", price: 35 }, { partName: "A/C Condenser", price: 35 },
+    { partName: "AC Compressor", price: 45 }, { partName: "Alternator", price: 35 },
+    { partName: "Starter", price: 25 }, { partName: "Power Steering Pump", price: 25 },
+    { partName: "Water Pump", price: 20 }, { partName: "Fuel Pump", price: 25 },
+    { partName: "Fuel Tank", price: 35 }, { partName: "Seat, Front", price: 35 },
+    { partName: "Seat, Rear", price: 25 }, { partName: "Dashboard", price: 50 },
+    { partName: "Steering Column", price: 35 }, { partName: "Steering Wheel", price: 20 },
+    { partName: "Tailgate", price: 55 }, { partName: "Truck Bed", price: 150 },
+    { partName: "Wheel, Alloy", price: 25 }, { partName: "Tire", price: 10 },
+    { partName: "Windshield", price: 35 }, { partName: "Door Glass", price: 20 },
+    { partName: "Mirror, Side", price: 15 }, { partName: "Rear View Mirror", price: 15 },
+    { partName: "Headlight Assembly", price: 20 }, { partName: "Tail Light Assembly", price: 15 },
+    { partName: "Grille", price: 25 }, { partName: "Catalytic Converter", price: 50 },
+    { partName: "Exhaust Manifold", price: 20 }, { partName: "Intake Manifold", price: 25 },
+    { partName: "Strut Assembly", price: 25 }, { partName: "Control Arm", price: 20 },
+    { partName: "Brake Caliper", price: 15 }, { partName: "Rotor", price: 10 },
+    { partName: "ECU/Computer", price: 35 }, { partName: "Instrument Cluster", price: 30 },
+    { partName: "Radio/Stereo", price: 20 }, { partName: "Air Bag", price: 50 },
+    { partName: "Sunroof", price: 35 }, { partName: "Running Board", price: 25 },
+    { partName: "Valve Cover", price: 20 }, { partName: "Power Window Motor", price: 15 },
+    { partName: "AC Compressor", price: 45 },
+  ];
+
+  const claudeMatches = await matchListingsToParts(listings, PYP_PARTS);
+
+  if (claudeMatches) {
+    listings.forEach((l, i) => {
+      const matched = claudeMatches[String(i)];
+      if (matched && matched !== "NO_MATCH") {
+        const part = PYP_PARTS.find(p => p.partName === matched);
+        l.pypCategory = matched;
+        l.pypPrice = part?.price || null;
+      }
+    });
+  }
+
+  console.log(`[ebay] returning ${listings.length} listings`);
   res.json({ listings });
 });
 
