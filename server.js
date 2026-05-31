@@ -233,38 +233,24 @@ async function fetchEbayListings(searchQueries) {
       const sel = newUI ? ".s-card" : ".s-item";
       const selCount = $(sel).length;
       console.log(`[ebay] "${q.slice(0,40)}" ui:${newUI?"s-card":"s-item"} items:${selCount} htmlLen:${typeof html === "string" ? html.length : "non-string"}`);
-      // Debug: dump full card text and find dollar amounts
-      if (selCount > 2 && allListings.length === 0) {
-        const $card = $($(sel)[2]);
-        const cardHtml = $card.html() || "";
-        const cardText = $card.text().replace(/\s+/g," ").trim();
-        console.log("[ebay] card text:", cardText.slice(0,400));
-        // Find all dollar amounts in HTML
-        const dollars = cardHtml.match(/\$[0-9,]+\.[0-9]{2}/g) || [];
-        console.log("[ebay] dollar amounts in html:", dollars.slice(0,5));
-        // Find title
-        const titleIdx = cardHtml.indexOf("s-card__title");
-        console.log("[ebay] title html:", cardHtml.slice(titleIdx, titleIdx+300).replace(/\s+/g," "));
-      }
+
       $(sel).each((_, el) => {
         const $el = $(el), ct = $el.text();
-        let title, price, href, condition;
+        let title, price, href, condition, dateSold = null;
         if (newUI) {
-          title = $el.find("h3").first().text().trim() || $el.find("[class*=card-title]").text().trim();
-          // eBay s-card uses su-styled-text for price amounts
-          const pt = [];
-          $el.find(".su-styled-text, [class*=price], [class*=Price]").each((_,p) => {
-            const t = $(p).text().trim();
-            if (t.match(/^\$[0-9]/) || t.match(/^[0-9]+\.[0-9]{2}$/)) pt.push(t);
-          });
-          // Also try extracting any $XX.XX pattern from card text
-          if (!pt.length) {
-            const priceMatch = ct.match(/\$([0-9,]+\.[0-9]{2})/);
-            if (priceMatch) pt.push(priceMatch[0]);
-          }
-          price = parseFloat((pt[0]||"").replace(/[^0-9.]/g,"")) || 0;
-          href  = $el.find("a").first().attr("href") || "";
-          condition = $el.find("[class*=SECONDARY],[class*=subtitle],[class*=condition]").first().text().trim() || null;
+          // Title is in .s-card__title .su-styled-text.primary
+          title = $el.find(".s-card__title .su-styled-text.primary").text().trim() ||
+                  $el.find(".s-card__title").text().trim();
+          // Price: extract first $XX.XX from card text
+          const priceMatch = ct.match(/\$([0-9,]+\.[0-9]{2})/);
+          price = priceMatch ? parseFloat(priceMatch[1].replace(/,/g,"")) : 0;
+          // Link
+          href = $el.find("a.s-card__link").first().attr("href") || $el.find("a").first().attr("href") || "";
+          // Condition: .s-card__subtitle .su-styled-text (secondary)
+          condition = $el.find(".s-card__subtitle .su-styled-text").first().text().trim() || null;
+          // Sold date from card text
+          const soldDateMatch = ct.match(/Sold\s+\w+\s+\d+,\s+\d{4}/);
+          dateSold = soldDateMatch ? soldDateMatch[0] : null;
         } else {
           title = ($el.find(".s-item__title span[role=heading]").text() || $el.find(".s-item__title").text()).replace("New listing","").trim();
           price = parseFloat($el.find(".s-item__price").first().text().replace(/[^0-9.]/g,""));
@@ -279,7 +265,7 @@ async function fetchEbayListings(searchQueries) {
         const cond = (condition||"").toLowerCase();
         if (cond === "new" || cond === "brand new") return;
         const sm = ct.match(/(\d[\d,]*)\s+sold/i);
-        allListings.push({ title, soldPrice: price, url: href ? href.split("?")[0] : null, category: condition, soldCount: sm ? parseInt(sm[1].replace(/,/g,"")) : 1 });
+        allListings.push({ title, soldPrice: price, url: href ? href.split("?")[0] : null, category: condition, soldCount: sm ? parseInt(sm[1].replace(/,/g,"")) : 1, dateSold });
       });
     } catch(e) {
       console.log(`[ebay] query failed "${q}":`, e.message);
