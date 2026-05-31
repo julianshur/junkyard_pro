@@ -246,6 +246,13 @@ app.get("/prices/:yardId", async (req, res) => {
   const $ = cheerio.load(html);
   const parts = [];
 
+  // Try multiple selectors for PYP price table
+  // Log snippet to find the right structure
+  const bodyIdx = html.indexOf('<body');
+  const snippet = html.slice(bodyIdx > 0 ? bodyIdx : 0, (bodyIdx > 0 ? bodyIdx : 0) + 2000);
+  console.log('[prices] HTML snippet:', snippet.replace(/\s+/g, ' ').slice(0, 800));
+
+  // Try table rows
   $("table tr").each((_, el) => {
     const cells = $(el).find("td");
     if (cells.length < 2) return;
@@ -253,6 +260,27 @@ app.get("/prices/:yardId", async (req, res) => {
     const price    = parseFloat(cells.eq(1).text().replace(/[^0-9.]/g, ""));
     if (partName && price) parts.push({ partName, price });
   });
+
+  // Try list items with prices
+  if (!parts.length) {
+    $("li, .price-item, [class*='part'], [class*='price-row'], dl dt, .pyppp_partName").each((_, el) => {
+      const $el = $(el);
+      const name = $el.text().trim();
+      // Look for sibling or next element with price
+      const priceEl = $el.next();
+      const price = parseFloat(priceEl.text().replace(/[^0-9.]/g, ""));
+      if (name && price && price > 0 && price < 5000) parts.push({ partName: name, price });
+    });
+  }
+
+  // Try any element containing dollar amounts
+  if (!parts.length) {
+    $("[class*='price'], [class*='part']").each((_, el) => {
+      const text = $(el).text().replace(/\s+/g, ' ').trim();
+      const m = text.match(/^(.{3,50}?)\s+\$\s*([0-9]+(?:\.[0-9]{2})?)/);
+      if (m) parts.push({ partName: m[1].trim(), price: parseFloat(m[2]) });
+    });
+  }
 
   console.log(`[prices] found ${parts.length} parts`);
   res.json({ parts, sourceUrl: url });
