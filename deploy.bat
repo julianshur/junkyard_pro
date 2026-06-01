@@ -28,7 +28,7 @@ echo === Creating WinSCP script ===
 echo option batch continue
 echo option confirm off
 
-echo open ftp://%FTP_USER%:%FTP_PASS%@%FTP_HOST%:21/
+echo open sftp://%FTP_USER%@%FTP_HOST%:22/ -privatekey="C:\path\to\key.ppk"
 
 echo lcd %LOCAL_DIR%
 echo cd %REMOTE_DIR%
