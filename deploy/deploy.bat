@@ -41,10 +41,11 @@ for %%I in ("%~dp0..") do set "LOCAL_DIR=%%~fI"
 (
 echo option batch continue
 echo option confirm off
-echo option transfer passive
+
 echo open ftp://%FTP_USER%:%FTP_PASS%@%FTP_HOST%:21/
+
 echo lcd "%LOCAL_DIR%"
-echo cd %REMOTE_DIR%
+echo cd /
 
 for /f "delims=" %%F in (deploy\files.txt) do (
     echo put "%%F" "/%%F"
