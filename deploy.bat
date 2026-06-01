@@ -3,10 +3,10 @@ cd /d "%~dp0"
 setlocal
 
 set FTP_USER=julianshur@junkyardpro.com
-set FTP_HOST=ftp.junkyardpro.com/home/byoq1zt2rc5qg23e/public_html/junkyardpro.com/julianshur
+set FTP_HOST=ftp.junkyardpro.com
 
 REM Enter your FTP password here or prompt for it
-set /p FTP_PASS=FTP Password:
+set FTP_PASS=b1n6b0n61!
 
 echo.
 echo === Git add ===
@@ -25,14 +25,19 @@ echo.
 echo === Creating WinSCP script ===
 
 (
-echo open ftps://%FTP_USER%:%FTP_PASS%@%FTP_HOST%/ -explicit
-echo option batch continue
-echo option confirm off
-echo echo ===== CURRENT DIRECTORY =====
-echo pwd
-echo echo ===== DIRECTORY LISTING =====
-echo ls
-echo exit
+open ftps://%FTP_USER%:%FTP_PASS%@ftp.junkyardpro.com/ -explicit
+option batch continue
+option confirm off
+
+cd ..
+pwd
+ls
+
+cd ..
+pwd
+ls
+
+exit
 ) > winscp_script.txt
 
 echo.

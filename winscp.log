@@ -125,3 +125,102 @@
 > 2026-05-31 18:00:22.275 Script: exit
 . 2026-05-31 18:00:22.275 Script: Exit code: 0
 . 2026-05-31 18:00:22.290 Disconnected from server
+. 2026-05-31 18:03:00.586 --------------------------------------------------------------------------
+. 2026-05-31 18:03:00.586 WinSCP Version 6.5.6 (Build 16502 2026-03-25) (OS 10.0.19045 – Windows 10 Pro)
+. 2026-05-31 18:03:00.586 Configuration: HKCU\Software\Martin Prikryl\WinSCP 2\
+. 2026-05-31 18:03:00.586 Log level: Normal
+. 2026-05-31 18:03:00.586 Local account: DESKTOP-D919AF9\Julian
+. 2026-05-31 18:03:00.586 Working directory: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-05-31 18:03:00.586 Process ID: 14296
+. 2026-05-31 18:03:00.598 Ancestor processes: WinSCP, cmd, explorer, ...
+. 2026-05-31 18:03:00.599 Command-line: "C:\Program Files (x86)\WinSCP\WinSCP.exe" /console=6.5.6 /consoleinstance=_6696_821 "/log=winscp.log" "/script=winscp_script.txt" 
+. 2026-05-31 18:03:00.599 Time zone: Current: GMT-7, Standard: GMT-8 (Pacific Standard Time), DST: GMT-7 (Pacific Daylight Time), DST Start: 3/8/2026, DST End: 11/1/2026
+. 2026-05-31 18:03:00.599 Login time: Sunday, May 31, 2026 6:03:00 PM
+. 2026-05-31 18:03:00.599 --------------------------------------------------------------------------
+. 2026-05-31 18:03:00.599 Script: Retrospectively logging previous script records:
+> 2026-05-31 18:03:00.599 Script: open ftps://julianshur@junkyardpro.com:***@ftp.junkyardpro.com/home/byoq1zt2rc5qg23e/public_html/junkyardpro.com/julianshur/ -explicit
+. 2026-05-31 18:03:00.599 --------------------------------------------------------------------------
+. 2026-05-31 18:03:00.599 Session name: julianshur@junkyardpro.com@ftp.junkyardpro.com (Ad-Hoc site)
+. 2026-05-31 18:03:00.599 Host name: ftp.junkyardpro.com (Port: 21)
+. 2026-05-31 18:03:00.599 User name: julianshur@junkyardpro.com (Password: Yes, Key file: No, Passphrase: No)
+. 2026-05-31 18:03:00.599 Transfer Protocol: FTP
+. 2026-05-31 18:03:00.599 Ping type: Dummy, Ping interval: 30 sec; Timeout: 15 sec
+. 2026-05-31 18:03:00.599 Disable Nagle: No
+. 2026-05-31 18:03:00.599 Proxy: None
+. 2026-05-31 18:03:00.599 Send buffer: 262144
+. 2026-05-31 18:03:00.599 UTF: Auto
+. 2026-05-31 18:03:00.599 FTPS: Explicit TLS/SSL [Client certificate: No]
+. 2026-05-31 18:03:00.599 FTP: Passive: Yes [Force IP: Auto]; MLSD: Auto [List all: Auto]; HOST: Auto
+. 2026-05-31 18:03:00.599 Session reuse: Yes
+. 2026-05-31 18:03:00.599 TLS/SSL versions: TLSv1.2-TLSv1.3
+. 2026-05-31 18:03:00.599 Local directory: default, Remote directory: /home/byoq1zt2rc5qg23e/public_html/junkyardpro.com/julianshur/, Update: Yes, Cache: Yes
+. 2026-05-31 18:03:00.599 Cache directory changes: Yes, Permanent: Yes
+. 2026-05-31 18:03:00.600 Recycle bin: Delete to: No, Overwritten to: No, Bin path: 
+. 2026-05-31 18:03:00.600 Timezone offset: 0h 0m
+. 2026-05-31 18:03:00.600 --------------------------------------------------------------------------
+< 2026-05-31 18:03:00.662 Script: Connecting to ftp.junkyardpro.com ...
+. 2026-05-31 18:03:00.662 Connecting to ftp.junkyardpro.com ...
+. 2026-05-31 18:03:00.897 Connected with ftp.junkyardpro.com, negotiating TLS connection...
+< 2026-05-31 18:03:00.979 220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------
+< 2026-05-31 18:03:00.979 220-You are user number 2 of 50 allowed.
+< 2026-05-31 18:03:00.980 220-Local time is now 18:03. Server port: 21.
+< 2026-05-31 18:03:00.980 220-This is a private system - No anonymous login
+< 2026-05-31 18:03:00.980 220-IPv6 connections are also welcome on this server.
+< 2026-05-31 18:03:00.980 220 You will be disconnected after 15 minutes of inactivity.
+> 2026-05-31 18:03:00.980 AUTH TLS
+< 2026-05-31 18:03:01.056 234 AUTH TLS OK.
+. 2026-05-31 18:03:01.139 Verifying certificate for "" with fingerprint 0f:d8:fa:ad:71:d4:1b:73:53:62:51:95:36:31:47:87:0a:b5:bb:48:66:a4:9d:33:7f:d9:75:c7:8f:02:75:c5 and 20 failures
+. 2026-05-31 18:03:01.140 Certificate for "" matches cached fingerprint and failures
+. 2026-05-31 18:03:01.140 Using TLSv1.3, cipher TLSv1.3: TLS_AES_256_GCM_SHA384, 2048 bit RSA, TLS_AES_256_GCM_SHA384         TLSv1.3 Kx=any      Au=any   Enc=AESGCM(256)            Mac=AEAD
+< 2026-05-31 18:03:01.140 Script: TLS connection established. Waiting for welcome message...
+. 2026-05-31 18:03:01.140 TLS connection established. Waiting for welcome message...
+> 2026-05-31 18:03:01.140 USER julianshur@junkyardpro.com
+< 2026-05-31 18:03:01.299 331 User julianshur@junkyardpro.com OK. Password required
+> 2026-05-31 18:03:01.299 PASS **********
+< 2026-05-31 18:03:01.415 230 OK. Current restricted directory is /
+> 2026-05-31 18:03:01.415 SYST
+< 2026-05-31 18:03:01.493 215 UNIX Type: L8
+> 2026-05-31 18:03:01.493 FEAT
+< 2026-05-31 18:03:01.573 211-Extensions supported:
+< 2026-05-31 18:03:01.573  UTF8
+< 2026-05-31 18:03:01.574  EPRT
+< 2026-05-31 18:03:01.574  IDLE
+< 2026-05-31 18:03:01.574  MDTM
+< 2026-05-31 18:03:01.574  SIZE
+< 2026-05-31 18:03:01.574  MFMT
+< 2026-05-31 18:03:01.574  REST STREAM
+< 2026-05-31 18:03:01.574  MLST type*;size*;sizd*;modify*;UNIX.mode*;UNIX.uid*;UNIX.gid*;unique*;
+< 2026-05-31 18:03:01.574  MLSD
+< 2026-05-31 18:03:01.574  PRET
+< 2026-05-31 18:03:01.574  AUTH TLS
+< 2026-05-31 18:03:01.574  PBSZ
+< 2026-05-31 18:03:01.574  PROT
+< 2026-05-31 18:03:01.574  TVFS
+< 2026-05-31 18:03:01.574  ESTA
+< 2026-05-31 18:03:01.574  PASV
+< 2026-05-31 18:03:01.575  EPSV
+< 2026-05-31 18:03:01.575 211 End.
+> 2026-05-31 18:03:01.575 OPTS UTF8 ON
+< 2026-05-31 18:03:01.652 504 Unknown command
+> 2026-05-31 18:03:01.652 PBSZ 0
+< 2026-05-31 18:03:01.735 200 PBSZ=0
+> 2026-05-31 18:03:01.735 PROT P
+< 2026-05-31 18:03:01.814 200 Data protection level set to "private"
+< 2026-05-31 18:03:01.814 Script: Connected
+. 2026-05-31 18:03:01.814 Connected
+. 2026-05-31 18:03:01.814 --------------------------------------------------------------------------
+. 2026-05-31 18:03:01.814 Using FTP protocol.
+. 2026-05-31 18:03:01.815 Doing startup conversation with host.
+< 2026-05-31 18:03:01.815 Script: Starting the session...
+> 2026-05-31 18:03:01.815 PWD
+< 2026-05-31 18:03:01.893 257 "/" is your current location
+. 2026-05-31 18:03:01.893 Changing directory to "/home/byoq1zt2rc5qg23e/public_html/junkyardpro.com/julianshur/".
+> 2026-05-31 18:03:01.894 CWD /home/byoq1zt2rc5qg23e/public_html/junkyardpro.com/julianshur/
+< 2026-05-31 18:03:01.981 550 Can't change directory to /home/byoq1zt2rc5qg23e/public_html/junkyardpro.com/julianshur/: No such file or directory
+. 2026-05-31 18:03:01.993 Getting current directory name.
+. 2026-05-31 18:03:01.995 Attempt to close connection due to fatal exception:
+* 2026-05-31 18:03:01.995 (ECommand) Error changing directory to '/home/byoq1zt2rc5qg23e/public_html/junkyardpro.com/julianshur/'.
+* 2026-05-31 18:03:01.995 Can't change directory to /home/byoq1zt2rc5qg23e/public_html/junkyardpro.com/julianshur/: No such file or directory
+< 2026-05-31 18:03:02.004 Script: Error changing directory to '/home/byoq1zt2rc5qg23e/public_html/junkyardpro.com/julianshur/'.
+< 2026-05-31 18:03:02.004 Can't change directory to /home/byoq1zt2rc5qg23e/public_html/junkyardpro.com/julianshur/: No such file or directory
+. 2026-05-31 18:03:02.010 Disconnected from server
