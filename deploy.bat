@@ -4,7 +4,7 @@ setlocal
 
 set FTP_USER=julianshur@junkyardpro.com
 set FTP_HOST=ftp.junkyardpro.com
-set REMOTE_DIR=/public_html
+set REMOTE_DIR=public_html
 
 echo Enter FTP password:
 set FTP_PASS=b1n6b0n61!
