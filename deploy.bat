@@ -7,7 +7,7 @@ set FTP_HOST=ftp.junkyardpro.com
 set FTP_PASS=b1n6b0n61!
 
 set LOCAL_DIR=%cd%
-set REMOTE_DIR=/public_html
+set REMOTE_DIR=/
 
 echo.
 echo === Git add ===
@@ -28,7 +28,7 @@ echo === Creating WinSCP script ===
 echo option batch continue
 echo option confirm off
 
-echo open sftp://%FTP_USER%@%FTP_HOST%:22/ -privatekey="C:\path\to\key.ppk"
+echo open ftp://%FTP_USER%:%FTP_PASS%@%FTP_HOST%:21/
 
 echo lcd %LOCAL_DIR%
 echo cd %REMOTE_DIR%
@@ -39,15 +39,14 @@ echo exit
 ) > winscp_script.txt
 
 echo.
-echo === Connecting to Turbify ===
+echo === Deploying to FTP ===
 
 "C:\Program Files (x86)\WinSCP\WinSCP.com" ^
   /log=winscp.log ^
   /script=winscp_script.txt
 
-echo.
-echo === WinSCP Log Saved To winscp.log ===
-
 del winscp_script.txt
 
+echo.
+echo === Done ===
 pause
