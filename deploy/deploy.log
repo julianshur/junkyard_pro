@@ -310,3 +310,55 @@
 < 2026-05-31 18:37:41.419 Script: Access denied.
 . 2026-05-31 18:37:41.420 Password prompt (last login attempt failed)
 < 2026-05-31 18:37:41.423 Script: Authentication failed.
+. 2026-05-31 18:37:57.741 --------------------------------------------------------------------------
+. 2026-05-31 18:37:57.741 WinSCP Version 6.5.6 (Build 16502 2026-03-25) (OS 10.0.19045 – Windows 10 Pro)
+. 2026-05-31 18:37:57.741 Configuration: HKCU\Software\Martin Prikryl\WinSCP 2\
+. 2026-05-31 18:37:57.742 Log level: Normal
+. 2026-05-31 18:37:57.742 Local account: DESKTOP-D919AF9\Julian
+. 2026-05-31 18:37:57.742 Working directory: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-05-31 18:37:57.742 Process ID: 748
+. 2026-05-31 18:37:57.758 Ancestor processes: WinSCP, cmd, explorer, ...
+. 2026-05-31 18:37:57.758 Command-line: "C:\Program Files (x86)\WinSCP\WinSCP.exe" /console=6.5.6 /consoleinstance=_1172_535 "/log=deploy\deploy.log" "/script=deploy\winscp_script.txt" 
+. 2026-05-31 18:37:57.758 Time zone: Current: GMT-7, Standard: GMT-8 (Pacific Standard Time), DST: GMT-7 (Pacific Daylight Time), DST Start: 3/8/2026, DST End: 11/1/2026
+. 2026-05-31 18:37:57.758 Login time: Sunday, May 31, 2026 6:37:57 PM
+. 2026-05-31 18:37:57.758 --------------------------------------------------------------------------
+. 2026-05-31 18:37:57.758 Script: Retrospectively logging previous script records:
+> 2026-05-31 18:37:57.758 Script: option batch continue
+< 2026-05-31 18:37:57.758 Script: batch           continue  
+> 2026-05-31 18:37:57.758 Script: option confirm off
+< 2026-05-31 18:37:57.758 Script: confirm         off       
+> 2026-05-31 18:37:57.758 Script: open ftp://julianshur:***@ftp.junkyardpro.com:21/
+. 2026-05-31 18:37:57.758 --------------------------------------------------------------------------
+. 2026-05-31 18:37:57.758 Session name: julianshur@ftp.junkyardpro.com (Ad-Hoc site)
+. 2026-05-31 18:37:57.758 Host name: ftp.junkyardpro.com (Port: 21)
+. 2026-05-31 18:37:57.758 User name: julianshur (Password: Yes, Key file: No, Passphrase: No)
+. 2026-05-31 18:37:57.759 Transfer Protocol: FTP
+. 2026-05-31 18:37:57.759 Ping type: Dummy, Ping interval: 30 sec; Timeout: 15 sec
+. 2026-05-31 18:37:57.759 Disable Nagle: No
+. 2026-05-31 18:37:57.759 Proxy: None
+. 2026-05-31 18:37:57.759 Send buffer: 262144
+. 2026-05-31 18:37:57.759 UTF: Auto
+. 2026-05-31 18:37:57.759 FTPS: None [Client certificate: No]
+. 2026-05-31 18:37:57.759 FTP: Passive: Yes [Force IP: Auto]; MLSD: Auto [List all: Auto]; HOST: Auto
+. 2026-05-31 18:37:57.759 Local directory: default, Remote directory: home, Update: Yes, Cache: Yes
+. 2026-05-31 18:37:57.759 Cache directory changes: Yes, Permanent: Yes
+. 2026-05-31 18:37:57.759 Recycle bin: Delete to: No, Overwritten to: No, Bin path: 
+. 2026-05-31 18:37:57.759 Timezone offset: 0h 0m
+. 2026-05-31 18:37:57.759 --------------------------------------------------------------------------
+< 2026-05-31 18:37:57.806 Script: Connecting to ftp.junkyardpro.com ...
+. 2026-05-31 18:37:57.806 Connecting to ftp.junkyardpro.com ...
+. 2026-05-31 18:37:57.892 Connected with ftp.junkyardpro.com. Waiting for welcome message...
+< 2026-05-31 18:37:57.972 220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------
+< 2026-05-31 18:37:57.972 220-You are user number 2 of 50 allowed.
+< 2026-05-31 18:37:57.972 220-Local time is now 18:37. Server port: 21.
+< 2026-05-31 18:37:57.972 220-This is a private system - No anonymous login
+< 2026-05-31 18:37:57.972 220-IPv6 connections are also welcome on this server.
+< 2026-05-31 18:37:57.972 220 You will be disconnected after 15 minutes of inactivity.
+> 2026-05-31 18:37:57.972 USER julianshur
+< 2026-05-31 18:37:58.052 331 User julianshur OK. Password required
+> 2026-05-31 18:37:58.052 PASS *********
+< 2026-05-31 18:38:02.185 530 Login authentication failed
+. 2026-05-31 18:38:02.185 Connection failed.
+< 2026-05-31 18:38:02.197 Script: Access denied.
+. 2026-05-31 18:38:02.198 Password prompt (last login attempt failed)
+< 2026-05-31 18:38:02.208 Script: Authentication failed.
