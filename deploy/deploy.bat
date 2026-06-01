@@ -52,14 +52,16 @@ echo === Building WinSCP script ===
 (
 echo option batch continue
 echo option confirm off
-echo open ftp://%FTP_USER%:%FTP_PASS%@%FTP_HOST%:21/
-echo lcd %cd%
 
-echo cd %REMOTE_DIR%
+echo open ftp://%FTP_USER%:%FTP_PASS%@%FTP_HOST%:21/ -passive=on
 
-for /f "delims=" %%F in (deploy\files.txt) do (
-    echo put "%%F" "/%%F"
-)
+echo lcd %LOCAL_DIR%
+echo cd /
+
+echo synchronize remote
+
+echo exit
+) > winscp_script.txt
 
 echo exit
 ) > deploy\winscp_script.txt
