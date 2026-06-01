@@ -42,7 +42,7 @@ for %%I in ("%~dp0..") do set "LOCAL_DIR=%%~fI"
 echo option batch continue
 echo option confirm off
 
-echo open ftp://%FTP_USER%:%FTP_PASS%@%FTP_HOST%:21/
+echo open ftpes://user:pass@host:21/
 
 echo lcd "%LOCAL_DIR%"
 echo cd /
