@@ -4,39 +4,47 @@ setlocal
 
 set FTP_USER=julianshur@junkyardpro.com
 set FTP_HOST=ftp.junkyardpro.com
-set REMOTE_DIR=public_html
 
-echo Enter FTP password:
-set FTP_PASS=b1n6b0n61!
+REM Enter your FTP password here or prompt for it
+set /p FTP_PASS=FTP Password:
 
 echo.
 echo === Git add ===
 git add .
 
+echo.
 echo === Git commit ===
-#set /p MSG="Commit message (or press enter): "
-#if "%MSG%"=="" set MSG=Auto deploy
 set MSG=Auto deploy
 git commit -m "%MSG%"
+
+echo.
+echo === Git push ===
 git push
 
 echo.
 echo === Creating WinSCP script ===
+
 (
 echo open ftps://%FTP_USER%:%FTP_PASS%@%FTP_HOST%/ -explicit
-echo option batch abort
+echo option batch continue
 echo option confirm off
-echo cd %REMOTE_DIR%
-echo synchronize remote . .
+echo echo ===== CURRENT DIRECTORY =====
+echo pwd
+echo echo ===== DIRECTORY LISTING =====
+echo ls
 echo exit
-echo ===ls===
 ) > winscp_script.txt
 
-echo === Uploading to Turbify ===
-"C:\Program Files (x86)\WinSCP\WinSCP.com" /script=winscp_script.txt
+echo.
+echo === Connecting to Turbify ===
+
+"C:\Program Files (x86)\WinSCP\WinSCP.com" ^
+  /log=winscp.log ^
+  /script=winscp_script.txt
+
+echo.
+echo === WinSCP Log Saved To winscp.log ===
 
 del winscp_script.txt
 
-echo.
-echo === DONE ===
 pause
