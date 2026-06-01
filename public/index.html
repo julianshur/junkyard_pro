@@ -492,37 +492,37 @@ function filterRows(rows, minProfit = 0, maxProfit = Infinity) {
 // ── Match eBay listings to yard parts (eBay-first) ────────────────────────────
 function buildRows(yardParts, ebayItems) {
   const seen = {};
-
-  // Build a lookup map from PYP category name -> price
   const yardPriceMap = {};
   yardParts.forEach(p => { yardPriceMap[p.partName] = p.price; });
 
+  // Debug: log first few items to see what we have
+  console.log("[buildRows] ebayItems:", ebayItems.length, "yardParts:", yardParts.length);
+  if (ebayItems.length > 0) console.log("[buildRows] sample:", JSON.stringify(ebayItems[0]).slice(0,200));
+
   ebayItems.forEach(ei => {
     if (!ei.title || ei.title === "Shop on eBay") return;
-
-    // Get yard price from Claude match OR fallback to yardPriceMap
     const category = ei.pypCategory;
-    if (!category) return; // Claude hasn't matched this listing yet
-
+    if (!category) return;
     const yardPrice = ei.pypPrice != null ? ei.pypPrice : yardPriceMap[category];
-    if (yardPrice == null) return; // no yard price found at all
+    if (yardPrice == null) return;
 
     const ebayPrice = ei.soldPrice;
     const profit    = Math.round((ebayPrice - yardPrice) * 100) / 100;
     const margin    = ebayPrice > 0 ? Math.round((profit / ebayPrice) * 100) : null;
     const sc        = ei.soldCount || 1;
-    const key       = category;
 
-    const existing = seen[key];
+    const existing = seen[category];
     if (!existing ||
         (ei.demand || 1) > (existing.demand || 1) ||
         ((ei.demand || 1) === (existing.demand || 1) && sc > existing.soldCount) ||
         ((ei.demand || 1) === (existing.demand || 1) && sc === existing.soldCount && ebayPrice > existing.ebayPrice)) {
-      seen[key] = { part: category, yardPrice, ebayPrice, profit, margin, ebayTitle: ei.title, ebayUrl: ei.url, soldCount: sc, demand: ei.demand || 1 };
+      seen[category] = { part: category, yardPrice, ebayPrice, profit, margin, ebayTitle: ei.title, ebayUrl: ei.url, soldCount: sc, demand: ei.demand || 1 };
     }
   });
 
-  return Object.values(seen);
+  const rows = Object.values(seen);
+  console.log("[buildRows] rows built:", rows.length);
+  return rows;
 }
 </script>
 </body>
