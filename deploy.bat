@@ -33,7 +33,7 @@ echo open ftp://%FTP_USER%:%FTP_PASS%@%FTP_HOST%:21/
 echo lcd %LOCAL_DIR%
 echo cd %REMOTE_DIR%
 
-echo put -r *.*
+echo synchronize remote -delete
 
 echo exit
 ) > winscp_script.txt

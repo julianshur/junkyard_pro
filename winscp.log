@@ -366,3 +366,103 @@
 > 2026-05-31 18:17:58.691 Script: exit
 . 2026-05-31 18:17:58.691 Script: Exit code: 1
 . 2026-05-31 18:17:58.698 Disconnected from server
+. 2026-05-31 18:25:01.545 --------------------------------------------------------------------------
+. 2026-05-31 18:25:01.545 WinSCP Version 6.5.6 (Build 16502 2026-03-25) (OS 10.0.19045 – Windows 10 Pro)
+. 2026-05-31 18:25:01.545 Configuration: HKCU\Software\Martin Prikryl\WinSCP 2\
+. 2026-05-31 18:25:01.545 Log level: Normal
+. 2026-05-31 18:25:01.545 Local account: DESKTOP-D919AF9\Julian
+. 2026-05-31 18:25:01.545 Working directory: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-05-31 18:25:01.545 Process ID: 16224
+. 2026-05-31 18:25:01.557 Ancestor processes: WinSCP, cmd, explorer, ...
+. 2026-05-31 18:25:01.558 Command-line: "C:\Program Files (x86)\WinSCP\WinSCP.exe" /console=6.5.6 /consoleinstance=_10652_705 "/log=winscp.log" "/script=winscp_script.txt" 
+. 2026-05-31 18:25:01.558 Time zone: Current: GMT-7, Standard: GMT-8 (Pacific Standard Time), DST: GMT-7 (Pacific Daylight Time), DST Start: 3/8/2026, DST End: 11/1/2026
+. 2026-05-31 18:25:01.558 Login time: Sunday, May 31, 2026 6:25:01 PM
+. 2026-05-31 18:25:01.558 --------------------------------------------------------------------------
+. 2026-05-31 18:25:01.558 Script: Retrospectively logging previous script records:
+> 2026-05-31 18:25:01.558 Script: option batch continue
+< 2026-05-31 18:25:01.558 Script: batch           continue  
+> 2026-05-31 18:25:01.558 Script: option confirm off
+< 2026-05-31 18:25:01.558 Script: confirm         off       
+> 2026-05-31 18:25:01.558 Script: open ftp://julianshur@junkyardpro.com:***@ftp.junkyardpro.com:21/
+. 2026-05-31 18:25:01.558 --------------------------------------------------------------------------
+. 2026-05-31 18:25:01.558 Session name: julianshur@junkyardpro.com@ftp.junkyardpro.com (Ad-Hoc site)
+. 2026-05-31 18:25:01.558 Host name: ftp.junkyardpro.com (Port: 21)
+. 2026-05-31 18:25:01.558 User name: julianshur@junkyardpro.com (Password: Yes, Key file: No, Passphrase: No)
+. 2026-05-31 18:25:01.558 Transfer Protocol: FTP
+. 2026-05-31 18:25:01.558 Ping type: Dummy, Ping interval: 30 sec; Timeout: 15 sec
+. 2026-05-31 18:25:01.558 Disable Nagle: No
+. 2026-05-31 18:25:01.558 Proxy: None
+. 2026-05-31 18:25:01.558 Send buffer: 262144
+. 2026-05-31 18:25:01.558 UTF: Auto
+. 2026-05-31 18:25:01.558 FTPS: None [Client certificate: No]
+. 2026-05-31 18:25:01.558 FTP: Passive: Yes [Force IP: Auto]; MLSD: Auto [List all: Auto]; HOST: Auto
+. 2026-05-31 18:25:01.558 Local directory: default, Remote directory: home, Update: Yes, Cache: Yes
+. 2026-05-31 18:25:01.558 Cache directory changes: Yes, Permanent: Yes
+. 2026-05-31 18:25:01.558 Recycle bin: Delete to: No, Overwritten to: No, Bin path: 
+. 2026-05-31 18:25:01.558 Timezone offset: 0h 0m
+. 2026-05-31 18:25:01.558 --------------------------------------------------------------------------
+< 2026-05-31 18:25:01.618 Script: Connecting to ftp.junkyardpro.com ...
+. 2026-05-31 18:25:01.618 Connecting to ftp.junkyardpro.com ...
+. 2026-05-31 18:25:01.709 Connected with ftp.junkyardpro.com. Waiting for welcome message...
+< 2026-05-31 18:25:01.800 220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------
+< 2026-05-31 18:25:01.800 220-You are user number 2 of 50 allowed.
+< 2026-05-31 18:25:01.800 220-Local time is now 18:25. Server port: 21.
+< 2026-05-31 18:25:01.800 220-This is a private system - No anonymous login
+< 2026-05-31 18:25:01.800 220-IPv6 connections are also welcome on this server.
+< 2026-05-31 18:25:01.800 220 You will be disconnected after 15 minutes of inactivity.
+> 2026-05-31 18:25:01.800 USER julianshur@junkyardpro.com
+< 2026-05-31 18:25:01.880 331 User julianshur@junkyardpro.com OK. Password required
+> 2026-05-31 18:25:01.880 PASS **********
+< 2026-05-31 18:25:02.002 230 OK. Current restricted directory is /
+> 2026-05-31 18:25:02.003 SYST
+< 2026-05-31 18:25:02.082 215 UNIX Type: L8
+> 2026-05-31 18:25:02.082 FEAT
+< 2026-05-31 18:25:02.159 211-Extensions supported:
+< 2026-05-31 18:25:02.159  UTF8
+< 2026-05-31 18:25:02.159  EPRT
+< 2026-05-31 18:25:02.159  IDLE
+< 2026-05-31 18:25:02.159  MDTM
+< 2026-05-31 18:25:02.159  SIZE
+< 2026-05-31 18:25:02.159  MFMT
+< 2026-05-31 18:25:02.159  REST STREAM
+< 2026-05-31 18:25:02.159  MLST type*;size*;sizd*;modify*;UNIX.mode*;UNIX.uid*;UNIX.gid*;unique*;
+< 2026-05-31 18:25:02.159  MLSD
+< 2026-05-31 18:25:02.159  PRET
+< 2026-05-31 18:25:02.159  AUTH TLS
+< 2026-05-31 18:25:02.159  PBSZ
+< 2026-05-31 18:25:02.159  PROT
+< 2026-05-31 18:25:02.159  TVFS
+< 2026-05-31 18:25:02.160  ESTA
+< 2026-05-31 18:25:02.160  PASV
+< 2026-05-31 18:25:02.160  EPSV
+< 2026-05-31 18:25:02.160 211 End.
+> 2026-05-31 18:25:02.160 OPTS UTF8 ON
+< 2026-05-31 18:25:02.237 504 Unknown command
+< 2026-05-31 18:25:02.238 Script: Connected
+. 2026-05-31 18:25:02.238 Connected
+. 2026-05-31 18:25:02.238 --------------------------------------------------------------------------
+. 2026-05-31 18:25:02.238 Using FTP protocol.
+. 2026-05-31 18:25:02.238 Doing startup conversation with host.
+< 2026-05-31 18:25:02.238 Script: Starting the session...
+> 2026-05-31 18:25:02.239 PWD
+< 2026-05-31 18:25:02.314 257 "/" is your current location
+. 2026-05-31 18:25:02.314 Getting current directory name.
+. 2026-05-31 18:25:02.314 Startup conversation with host finished.
+< 2026-05-31 18:25:02.314 Script: Session started.
+< 2026-05-31 18:25:02.314 Script: Active session: [1] julianshur@junkyardpro.com@ftp.junkyardpro.com
+> 2026-05-31 18:25:02.316 Script: lcd C:\Users\Julian\Documents\git\junkyard_pro
+< 2026-05-31 18:25:02.316 Script: C:\Users\Julian\Documents\git\junkyard_pro
+> 2026-05-31 18:25:02.316 Script: cd /
+. 2026-05-31 18:25:02.316 Changing directory to "/".
+> 2026-05-31 18:25:02.316 CWD /
+< 2026-05-31 18:25:02.396 250 OK. Current directory is /
+. 2026-05-31 18:25:02.396 Getting current directory name.
+> 2026-05-31 18:25:02.396 PWD
+< 2026-05-31 18:25:02.475 257 "/" is your current location
+< 2026-05-31 18:25:02.475 Script: /
+> 2026-05-31 18:25:02.480 Script: put -r *.*
+< 2026-05-31 18:25:02.488 Script: Unknown switch 'r'.
+. 2026-05-31 18:25:02.488 Script: Failed
+> 2026-05-31 18:25:02.489 Script: exit
+. 2026-05-31 18:25:02.489 Script: Exit code: 1
+. 2026-05-31 18:25:02.493 Disconnected from server
