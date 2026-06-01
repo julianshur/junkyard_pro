@@ -3,7 +3,7 @@ cd /d "%~dp0"
 setlocal
 
 set FTP_USER=julianshur@junkyardpro.com
-set FTP_HOST=ftp.junkyardpro.com
+set FTP_HOST=.../public_html/junkyardpro.com
 
 REM Enter your FTP password here or prompt for it
 set FTP_PASS=b1n6b0n61!
