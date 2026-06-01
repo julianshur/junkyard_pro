@@ -1,0 +1,7 @@
+option batch continue
+option confirm off
+open ftp://julianshur@junkyardpro.com:b1n6b0n61!@ftp.junkyardpro.com:21/
+lcd C:\Users\Julian\Documents\git\junkyard_pro
+cd /
+synchronize remote -delete
+exit
