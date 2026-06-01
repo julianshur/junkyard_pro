@@ -25,13 +25,13 @@ echo.
 echo === Creating WinSCP script ===
 
 (
-echo open ftps://%FTP_USER%:%FTP_PASS%@%FTP_HOST%/
 echo option batch continue
 echo option confirm off
 
-echo cd %REMOTE_DIR%
+echo open ftp://%FTP_USER%:%FTP_PASS%@%FTP_HOST%:21/
 
 echo lcd %LOCAL_DIR%
+echo cd %REMOTE_DIR%
 
 echo put -r *.*
 
