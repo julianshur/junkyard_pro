@@ -1,0 +1,52 @@
+. 2026-05-31 18:30:44.693 --------------------------------------------------------------------------
+. 2026-05-31 18:30:44.693 WinSCP Version 6.5.6 (Build 16502 2026-03-25) (OS 10.0.19045 – Windows 10 Pro)
+. 2026-05-31 18:30:44.693 Configuration: HKCU\Software\Martin Prikryl\WinSCP 2\
+. 2026-05-31 18:30:44.695 Log level: Normal
+. 2026-05-31 18:30:44.695 Local account: DESKTOP-D919AF9\Julian
+. 2026-05-31 18:30:44.695 Working directory: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-05-31 18:30:44.695 Process ID: 5180
+. 2026-05-31 18:30:44.708 Ancestor processes: WinSCP, cmd, explorer, ...
+. 2026-05-31 18:30:44.709 Command-line: "C:\Program Files (x86)\WinSCP\WinSCP.exe" /console=6.5.6 /consoleinstance=_16068_883 "/log=deploy\deploy.log" "/script=deploy\winscp_script.txt" 
+. 2026-05-31 18:30:44.709 Time zone: Current: GMT-7, Standard: GMT-8 (Pacific Standard Time), DST: GMT-7 (Pacific Daylight Time), DST Start: 3/8/2026, DST End: 11/1/2026
+. 2026-05-31 18:30:44.709 Login time: Sunday, May 31, 2026 6:30:44 PM
+. 2026-05-31 18:30:44.709 --------------------------------------------------------------------------
+. 2026-05-31 18:30:44.709 Script: Retrospectively logging previous script records:
+> 2026-05-31 18:30:44.709 Script: option batch continue
+< 2026-05-31 18:30:44.709 Script: batch           continue  
+> 2026-05-31 18:30:44.709 Script: option confirm off
+< 2026-05-31 18:30:44.709 Script: confirm         off       
+> 2026-05-31 18:30:44.709 Script: open ftp://julianshur@junkyardpro.com:***@ftp.junkyardpro.com:21/
+. 2026-05-31 18:30:44.709 --------------------------------------------------------------------------
+. 2026-05-31 18:30:44.709 Session name: julianshur@junkyardpro.com@ftp.junkyardpro.com (Ad-Hoc site)
+. 2026-05-31 18:30:44.709 Host name: ftp.junkyardpro.com (Port: 21)
+. 2026-05-31 18:30:44.709 User name: julianshur@junkyardpro.com (Password: Yes, Key file: No, Passphrase: No)
+. 2026-05-31 18:30:44.709 Transfer Protocol: FTP
+. 2026-05-31 18:30:44.709 Ping type: Dummy, Ping interval: 30 sec; Timeout: 15 sec
+. 2026-05-31 18:30:44.709 Disable Nagle: No
+. 2026-05-31 18:30:44.709 Proxy: None
+. 2026-05-31 18:30:44.709 Send buffer: 262144
+. 2026-05-31 18:30:44.709 UTF: Auto
+. 2026-05-31 18:30:44.709 FTPS: None [Client certificate: No]
+. 2026-05-31 18:30:44.709 FTP: Passive: Yes [Force IP: Auto]; MLSD: Auto [List all: Auto]; HOST: Auto
+. 2026-05-31 18:30:44.709 Local directory: default, Remote directory: home, Update: Yes, Cache: Yes
+. 2026-05-31 18:30:44.709 Cache directory changes: Yes, Permanent: Yes
+. 2026-05-31 18:30:44.709 Recycle bin: Delete to: No, Overwritten to: No, Bin path: 
+. 2026-05-31 18:30:44.709 Timezone offset: 0h 0m
+. 2026-05-31 18:30:44.709 --------------------------------------------------------------------------
+< 2026-05-31 18:30:44.776 Script: Connecting to ftp.junkyardpro.com ...
+. 2026-05-31 18:30:44.776 Connecting to ftp.junkyardpro.com ...
+. 2026-05-31 18:30:45.054 Connected with ftp.junkyardpro.com. Waiting for welcome message...
+< 2026-05-31 18:30:45.135 220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------
+< 2026-05-31 18:30:45.135 220-You are user number 2 of 50 allowed.
+< 2026-05-31 18:30:45.135 220-Local time is now 18:30. Server port: 21.
+< 2026-05-31 18:30:45.135 220-This is a private system - No anonymous login
+< 2026-05-31 18:30:45.135 220-IPv6 connections are also welcome on this server.
+< 2026-05-31 18:30:45.135 220 You will be disconnected after 15 minutes of inactivity.
+> 2026-05-31 18:30:45.135 USER julianshur@junkyardpro.com
+< 2026-05-31 18:30:45.213 331 User julianshur@junkyardpro.com OK. Password required
+> 2026-05-31 18:30:45.213 PASS *********
+< 2026-05-31 18:30:50.929 530 Login authentication failed
+. 2026-05-31 18:30:50.929 Connection failed.
+< 2026-05-31 18:30:50.932 Script: Access denied.
+. 2026-05-31 18:30:50.932 Password prompt (last login attempt failed)
+< 2026-05-31 18:30:50.935 Script: Authentication failed.
