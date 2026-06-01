@@ -1,77 +1,78 @@
 @echo off
 setlocal enabledelayedexpansion
+
 cd /d "%~dp0.."
 
-set FTP_USER=julianshur@junkyardpro.com
-set FTP_HOST=ftp.junkyardpro.com
-set FTP_PASS=b1n6b0n61!
-
-set REMOTE_DIR=/
-set STATE_FILE=deploy\state.txt
-
-echo ================================
-echo   MINI CI/CD DEPLOY SYSTEM
-echo ================================
+set "FTP_USER=julianshur@junkyardpro.com"
+set "FTP_HOST=ftp.junkyardpro.com"
+set "FTP_PASS=b1n6b0n61!"
+set "REMOTE_DIR=/"
 
 echo.
-echo === Git commit check ===
+echo === Git add / commit / push ===
 git add .
 
 git diff --cached --quiet
-if %errorlevel%==0 (
-    echo No changes to commit. Continuing deploy...
-) else (
+if errorlevel 1 (
     git commit -m "Auto deploy"
 )
 
-echo.
-echo === Git push ===
 git push
 
 echo.
 echo === Determining changed files ===
 
-if not exist %STATE_FILE% (
-    echo First deploy - using HEAD
-    git rev-parse HEAD > %STATE_FILE%
-)
+for /f %%i in ('git rev-parse HEAD~1') do set "LAST=%%i"
+for /f %%i in ('git rev-parse HEAD') do set "CURRENT=%%i"
 
-set /p LAST_DEPLOY=<%STATE_FILE%
-
-echo Last deployed commit: %LAST_DEPLOY%
-for /f %%i in ('git rev-parse HEAD') do set მიმდინარე=%%i
-set CURRENT=!მიმდინარე!
-
+echo Last deployed commit: !LAST!
 echo Current commit: !CURRENT!
 
-git diff --name-only %LAST_DEPLOY% !CURRENT! > deploy\files.txt
+if not exist deploy mkdir deploy
+
+git diff --name-only !LAST! !CURRENT! > deploy\files.txt
 
 echo.
 echo === Building WinSCP script ===
 
-echo option batch continue > deploy\winscp_script.txt
-echo option confirm off >> deploy\winscp_script.txt
-echo open ftp://%FTP_USER%:%FTP_PASS%@%FTP_HOST%:21/ -passive=on >> deploy\winscp_script.txt
-echo lcd %LOCAL_DIR% >> deploy\winscp_script.txt
-echo cd / >> deploy\winscp_script.txt
-echo synchronize remote >> deploy\winscp_script.txt
-echo exit >> deploy\winscp_script.txt
+REM Get absolute path safely
+for %%I in ("%~dp0..") do set "LOCAL_DIR=%%~fI"
+
+(
+echo option batch continue
+echo option confirm off
+echo option transfer passive
+echo open ftp://%FTP_USER%:%FTP_PASS%@%FTP_HOST%:21/
+echo lcd "%LOCAL_DIR%"
+echo cd %REMOTE_DIR%
+
+for /f "delims=" %%F in (deploy\files.txt) do (
+    echo put "%%F" "/%%F"
+)
+
+echo exit
+) > deploy\winscp_script.txt
+
+if not exist deploy\winscp_script.txt (
+    echo ERROR: WinSCP script was not created!
+    exit /b 1
+)
 
 echo.
 echo === Deploying via WinSCP ===
 
 "C:\Program Files (x86)\WinSCP\WinSCP.com" ^
- /log=deploy.log ^
+ /log=deploy\winscp.log ^
  /script=deploy\winscp_script.txt
 
 echo.
-echo === Updating deploy state ===
-echo !CURRENT! > %STATE_FILE%
+echo === Updating state ===
+echo !CURRENT! > deploy\state.txt
 
 echo.
-echo === CLEANUP ===
-del deploy\winscp_script.txt
+echo === Cleanup ===
 del deploy\files.txt
+del deploy\winscp_script.txt
 
 echo.
 echo === DEPLOY COMPLETE ===
