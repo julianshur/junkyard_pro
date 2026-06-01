@@ -49,28 +49,19 @@ git diff --name-only %LAST_DEPLOY% !CURRENT! > deploy\files.txt
 echo.
 echo === Building WinSCP script ===
 
-(
-echo option batch continue
-echo option confirm off
-
-echo open ftp://%FTP_USER%:%FTP_PASS%@%FTP_HOST%:21/ -passive=on
-
-echo lcd %LOCAL_DIR%
-echo cd /
-
-echo synchronize remote
-
-echo exit
-) > winscp_script.txt
-
-echo exit
-) > deploy\winscp_script.txt
+echo option batch continue > deploy\winscp_script.txt
+echo option confirm off >> deploy\winscp_script.txt
+echo open ftp://%FTP_USER%:%FTP_PASS%@%FTP_HOST%:21/ -passive=on >> deploy\winscp_script.txt
+echo lcd %LOCAL_DIR% >> deploy\winscp_script.txt
+echo cd / >> deploy\winscp_script.txt
+echo synchronize remote >> deploy\winscp_script.txt
+echo exit >> deploy\winscp_script.txt
 
 echo.
 echo === Deploying via WinSCP ===
 
 "C:\Program Files (x86)\WinSCP\WinSCP.com" ^
- /log=deploy\deploy.log ^
+ /log=deploy.log ^
  /script=deploy\winscp_script.txt
 
 echo.
