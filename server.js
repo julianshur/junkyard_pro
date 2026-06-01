@@ -184,36 +184,35 @@ async function matchAndScoreListings(listings, yardParts) {
   const partNames = yardParts.map(p => p.partName);
   const titlesStr = batch.map((l, i) => `${i}: ${l.title} [$${l.soldPrice}, ${l.soldCount}x sold]`).join("\n");
 
-  try {
-    const text = await claudePost(
-      `Match these eBay used auto part listings to PYP junkyard categories.
-Categories: ${partNames.join(", ")}
-Listings:\n${titlesStr}
-JSON format: {"0":{"category":"Engine, 4 Cyl","demand":4},"1":{"category":"NO_MATCH","demand":0}}
-demand: 1-5 (5=high volume/fast selling). NO_MATCH if unclear.`,
-      "You are an auto parts expert. Respond with valid JSON only — no explanations, no markdown.",
-      2000
-    );
-    if (!text) return;
-    const start = text.indexOf("{"), end = text.lastIndexOf("}");
-    if (start === -1 || end === -1) throw new Error("No JSON: " + text.slice(0, 80));
-    const results = JSON.parse(text.slice(start, end + 1));
-    let matched = 0;
-    batch.forEach((l, i) => {
-      const res = results[String(i)];
-      if (res?.category && res.category !== "NO_MATCH") {
-        // Case-insensitive match in case Claude returns different casing
-        const part = yardParts.find(p => p.partName.toLowerCase() === res.category.toLowerCase()) ||
-                     yardParts.find(p => p.partName.toLowerCase().includes(res.category.toLowerCase().split(",")[0]));
-        l.pypCategory = part ? part.partName : res.category; // normalize to exact PYP name
-        l.pypPrice    = part?.price ?? null;
-        l.demand      = res.demand || 1;
-        matched++;
-      }
-    });
-    console.log(`[claude] matched ${matched}/${batch.length}`);
-  } catch(e) {
-    console.log("[claude] match failed:", e.message);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 3000));
+      const text = await claudePost(
+        `Match these eBay used auto part listings to PYP junkyard categories.\nCategories: ${partNames.join(", ")}\nListings:\n${titlesStr}\nJSON format: {"0":{"category":"Engine, 4 Cyl","demand":4},"1":{"category":"NO_MATCH","demand":0}}\ndemand: 1-5 (5=high volume). NO_MATCH if unclear.`,
+        "You are an auto parts expert. Respond with valid JSON only — no explanations, no markdown.",
+        2000
+      );
+      if (!text) throw new Error("null response");
+      const start = text.indexOf("{"), end2 = text.lastIndexOf("}");
+      if (start === -1 || end2 === -1) throw new Error("No JSON: " + text.slice(0, 80));
+      const results = JSON.parse(text.slice(start, end2 + 1));
+      let matched = 0;
+      batch.forEach((l, i) => {
+        const res = results[String(i)];
+        if (res?.category && res.category !== "NO_MATCH") {
+          const part = yardParts.find(p => p.partName.toLowerCase() === res.category.toLowerCase()) ||
+                       yardParts.find(p => p.partName.toLowerCase().includes(res.category.toLowerCase().split(",")[0]));
+          l.pypCategory = part ? part.partName : res.category;
+          l.pypPrice    = part?.price ?? null;
+          l.demand      = res.demand || 1;
+          matched++;
+        }
+      });
+      console.log(`[claude] matched ${matched}/${batch.length}`);
+      return;
+    } catch(e) {
+      console.log(`[claude] match attempt ${attempt+1} failed:`, e.message);
+    }
   }
 }
 
@@ -448,7 +447,7 @@ app.get("/cache-clear", async (_, res) => {
   // Flush Redis if connected
   if (redisUrl && redisToken) {
     try {
-      await axios.post(`${redisUrl}/flushall`, {}, { headers: { Authorization: `Bearer ${redisToken}` }, timeout: 5000 });
+      await axios.get(`${redisUrl}/flushall`, { headers: { Authorization: `Bearer ${redisToken}` }, timeout: 5000 });
       res.json({ ok: true, message: "memory + Redis cache cleared" });
     } catch(e) { res.json({ ok: true, message: "memory cleared, Redis flush failed: " + e.message }); }
   } else {
