@@ -404,7 +404,7 @@ function renderProfitTable(i, vehicle, yardParts, ebayItems, sourceUrl) {
             <th data-col="soldCount" data-i="${i}" class="td-num">× Sold <span class="sort-arrow"></span></th>
             <th data-col="yardPrice" data-i="${i}" class="td-num">Yard Price <span class="sort-arrow"></span></th>
             <th data-col="ebayPrice" data-i="${i}" class="td-num">eBay Sold <span class="sort-arrow"></span></th>
-            <th data-col="demand" data-i="${i}" class="td-num sorted">Demand <span class="sort-arrow">▾</span></th>
+            <th data-col="soldCount" data-i="${i}" class="td-num sorted">× Sold <span class="sort-arrow">▾</span></th>
             <th data-col="profit" data-i="${i}" class="td-num">Profit <span class="sort-arrow"></span></th>
             <th data-col="margin" data-i="${i}" class="td-num">Margin <span class="sort-arrow"></span></th>
           </tr>
@@ -456,10 +456,9 @@ function renderTableRows(i, rows) {
         ${r.ebayUrl ? `<a href="${esc(r.ebayUrl)}" target="_blank" rel="noopener">${esc(r.part)}</a>` : esc(r.part)}
         ${r.ebayTitle ? `<div class="part-sub">${esc(r.ebayTitle.slice(0, 60))}${r.ebayTitle.length > 60 ? "…" : ""}</div>` : ""}
       </td>
-      <td class="td-num">${"★".repeat(r.demand||0)}${"☆".repeat(5-(r.demand||0))}</td>
-      <td class="td-num" style="color:var(--muted)">${r.soldCount > 1 ? r.soldCount + "×" : "—"}</td>
       <td class="td-num td-yard">${r.yardPrice != null ? fmt(r.yardPrice) : "<span style='color:var(--muted)'>—</span>"}</td>
       <td class="td-num td-ebay">${r.ebayPrice != null ? fmt(r.ebayPrice) : "<span style='color:var(--muted)'>—</span>"}</td>
+      <td class="td-num" style="color:var(--muted)">${r.soldCount > 1 ? r.soldCount + "×" : "—"}</td>
       <td class="td-num td-profit ${r.profit > 0 ? 'pos' : r.profit < 0 ? 'neg' : ''}">${r.profit != null ? fmt(r.profit) : "<span style='color:var(--muted)'>—</span>"}</td>
       <td class="td-num td-margin">${r.margin != null ? r.margin + "%" : "<span style='color:var(--muted)'>—</span>"}</td>
     </tr>`).join("");
