@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 cd /d "%~dp0.."
 
-set FTP_USER=julianshur@junkyardpro.com
+set FTP_USER=julianshur
 set FTP_HOST=ftp.junkyardpro.com
 set FTP_PASS=b1n6b0n61!
 
