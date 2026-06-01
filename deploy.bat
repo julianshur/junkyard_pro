@@ -29,6 +29,7 @@ echo option confirm off
 echo cd %REMOTE_DIR%
 echo synchronize remote . .
 echo exit
+echo dir
 ) > winscp_script.txt
 
 echo === Uploading to Turbify ===
