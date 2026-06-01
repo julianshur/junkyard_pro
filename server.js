@@ -193,9 +193,11 @@ demand: 1-5 (5=high volume/fast selling). NO_MATCH if unclear.`,
     batch.forEach((l, i) => {
       const res = results[String(i)];
       if (res?.category && res.category !== "NO_MATCH") {
-        const part = yardParts.find(p => p.partName === res.category);
-        l.pypCategory = res.category;
-        l.pypPrice    = part?.price || null;
+        // Case-insensitive match in case Claude returns different casing
+        const part = yardParts.find(p => p.partName.toLowerCase() === res.category.toLowerCase()) ||
+                     yardParts.find(p => p.partName.toLowerCase().includes(res.category.toLowerCase().split(",")[0]));
+        l.pypCategory = part ? part.partName : res.category; // normalize to exact PYP name
+        l.pypPrice    = part?.price ?? null;
         l.demand      = res.demand || 1;
         matched++;
       }
