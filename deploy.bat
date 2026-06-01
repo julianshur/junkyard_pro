@@ -20,17 +20,7 @@ echo === WinSCP deploy ===
 
 "C:\Program Files (x86)\WinSCP\WinSCP.com" ^
  /log=deploy.log ^
- /loglevel=1 ^
- /command ^
- "open junkyard_ftp" ^
- "option batch on" ^
- "option confirm off" ^
- "lcd %REPO%" ^
- "cd /" ^
- "put server.js /server.js" ^
- "put package.json /package.json" ^
- "put public/index.html /index.html" ^
- "exit"
+ /script=winscp.txt
 
 echo.
 echo === DONE ===

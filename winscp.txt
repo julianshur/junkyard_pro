@@ -1,0 +1,11 @@
+open junkyard_ftp
+option batch on
+option confirm off
+lcd C:\Users\Julian\Documents\git\junkyard_pro
+cd /
+
+put server.js /server.js
+put package.json /package.json
+put public/index.html /index.html
+
+exit
