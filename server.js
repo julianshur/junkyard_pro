@@ -150,21 +150,30 @@ async function getSearchQueries(year, make, model) {
   const cached = await cacheGet(cacheKey);
   if (cached) return cached;
 
-  try {
-    const text = await claudePost(
-      `For a ${year} ${make} ${model} at a self-service junkyard, list the 3 most valuable parts commonly resold on eBay. Focus on high-value items: engine, transmission, popular body parts for this specific model.
+  const fallback = [`${year} ${make} ${model} engine`, `${year} ${make} ${model} transmission`, `${year} ${make} ${model} door`];
+
+  // Try up to 2 times with a short delay
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 2000));
+      const text = await claudePost(
+        `For a ${year} ${make} ${model} at a self-service junkyard, list the 3 most valuable parts commonly resold on eBay. Focus on high-value items: engine, transmission, popular body parts for this specific model.
 Return ONLY a JSON array of 3 eBay search strings. Example: ["2003 Honda Accord engine","2003 Honda Accord transmission","2003 Honda Accord door"]`,
-      "You are an auto parts expert. Respond with a JSON array only — no explanation.",
-      300
-    );
-    const arr = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0]);
-    console.log(`[claude] queries for ${year} ${make} ${model}:`, arr);
-    await cacheSet(cacheKey, arr, TTL.queries);
-    return arr;
-  } catch(e) {
-    console.log("[claude] query gen failed:", e.message);
-    return [`${year} ${make} ${model} engine`, `${year} ${make} ${model} transmission`, `${year} ${make} ${model} door`];
+        "You are an auto parts expert. Respond with a JSON array only — no explanation.",
+        300
+      );
+      if (!text) throw new Error("empty response");
+      const arr = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0]);
+      if (!Array.isArray(arr) || !arr.length) throw new Error("invalid array");
+      console.log(`[claude] queries for ${year} ${make} ${model}:`, arr);
+      await cacheSet(cacheKey, arr, TTL.queries);
+      return arr;
+    } catch(e) {
+      console.log(`[claude] query gen attempt ${attempt+1} failed:`, e.message);
+    }
   }
+  console.log(`[claude] using fallback queries for ${year} ${make} ${model}`);
+  return fallback;
 }
 
 async function matchAndScoreListings(listings, yardParts) {
@@ -434,6 +443,18 @@ app.get("/prefetch/:yardId", async (req, res) => {
 // Debug routes
 app.get("/stores",      (_, res) => res.json({ stores: KNOWN_STORES }));
 app.get("/cache-stats", (_, res) => res.json({ memCacheSize: memCache.size, redis: !!(redisUrl && redisToken) }));
+app.get("/cache-clear", async (_, res) => {
+  memCache.clear();
+  // Flush Redis if connected
+  if (redisUrl && redisToken) {
+    try {
+      await axios.post(`${redisUrl}/flushall`, {}, { headers: { Authorization: `Bearer ${redisToken}` }, timeout: 5000 });
+      res.json({ ok: true, message: "memory + Redis cache cleared" });
+    } catch(e) { res.json({ ok: true, message: "memory cleared, Redis flush failed: " + e.message }); }
+  } else {
+    res.json({ ok: true, message: "memory cache cleared" });
+  }
+});
 
 // Static files
 const publicDir = path.join(__dirname, "public");
