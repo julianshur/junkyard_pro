@@ -224,3 +224,43 @@
 < 2026-05-31 18:03:02.004 Script: Error changing directory to '/home/byoq1zt2rc5qg23e/public_html/junkyardpro.com/julianshur/'.
 < 2026-05-31 18:03:02.004 Can't change directory to /home/byoq1zt2rc5qg23e/public_html/junkyardpro.com/julianshur/: No such file or directory
 . 2026-05-31 18:03:02.010 Disconnected from server
+. 2026-05-31 18:16:08.229 --------------------------------------------------------------------------
+. 2026-05-31 18:16:08.229 WinSCP Version 6.5.6 (Build 16502 2026-03-25) (OS 10.0.19045 – Windows 10 Pro)
+. 2026-05-31 18:16:08.229 Configuration: HKCU\Software\Martin Prikryl\WinSCP 2\
+. 2026-05-31 18:16:08.229 Log level: Normal
+. 2026-05-31 18:16:08.229 Local account: DESKTOP-D919AF9\Julian
+. 2026-05-31 18:16:08.229 Working directory: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-05-31 18:16:08.229 Process ID: 3080
+. 2026-05-31 18:16:08.240 Ancestor processes: WinSCP, cmd, explorer, ...
+. 2026-05-31 18:16:08.241 Command-line: "C:\Program Files (x86)\WinSCP\WinSCP.exe" /console=6.5.6 /consoleinstance=_17788_853 "/log=winscp.log" "/script=winscp_script.txt" 
+. 2026-05-31 18:16:08.241 Time zone: Current: GMT-7, Standard: GMT-8 (Pacific Standard Time), DST: GMT-7 (Pacific Daylight Time), DST Start: 3/8/2026, DST End: 11/1/2026
+. 2026-05-31 18:16:08.241 Login time: Sunday, May 31, 2026 6:16:08 PM
+. 2026-05-31 18:16:08.241 --------------------------------------------------------------------------
+. 2026-05-31 18:16:08.241 Script: Retrospectively logging previous script records:
+> 2026-05-31 18:16:08.241 Script: open ftps://julianshur@junkyardpro.com:***@ftp.junkyardpro.com/
+. 2026-05-31 18:16:08.241 --------------------------------------------------------------------------
+. 2026-05-31 18:16:08.241 Session name: julianshur@junkyardpro.com@ftp.junkyardpro.com (Ad-Hoc site)
+. 2026-05-31 18:16:08.241 Host name: ftp.junkyardpro.com (Port: 990)
+. 2026-05-31 18:16:08.241 User name: julianshur@junkyardpro.com (Password: Yes, Key file: No, Passphrase: No)
+. 2026-05-31 18:16:08.241 Transfer Protocol: FTP
+. 2026-05-31 18:16:08.241 Ping type: Dummy, Ping interval: 30 sec; Timeout: 15 sec
+. 2026-05-31 18:16:08.241 Disable Nagle: No
+. 2026-05-31 18:16:08.241 Proxy: None
+. 2026-05-31 18:16:08.241 Send buffer: 262144
+. 2026-05-31 18:16:08.241 UTF: Auto
+. 2026-05-31 18:16:08.241 FTPS: Implicit TLS/SSL [Client certificate: No]
+. 2026-05-31 18:16:08.241 FTP: Passive: Yes [Force IP: Auto]; MLSD: Auto [List all: Auto]; HOST: Auto
+. 2026-05-31 18:16:08.241 Session reuse: Yes
+. 2026-05-31 18:16:08.241 TLS/SSL versions: TLSv1.2-TLSv1.3
+. 2026-05-31 18:16:08.241 Local directory: default, Remote directory: home, Update: Yes, Cache: Yes
+. 2026-05-31 18:16:08.241 Cache directory changes: Yes, Permanent: Yes
+. 2026-05-31 18:16:08.241 Recycle bin: Delete to: No, Overwritten to: No, Bin path: 
+. 2026-05-31 18:16:08.241 Timezone offset: 0h 0m
+. 2026-05-31 18:16:08.241 --------------------------------------------------------------------------
+< 2026-05-31 18:16:08.292 Script: Connecting to ftp.junkyardpro.com:990 ...
+. 2026-05-31 18:16:08.292 Connecting to ftp.junkyardpro.com:990 ...
+. 2026-05-31 18:16:23.329 Timeout detected. (control connection)
+. 2026-05-31 18:16:23.329 Connection failed.
+< 2026-05-31 18:16:23.340 Script: Connection failed.
+< 2026-05-31 18:16:23.340 Timeout detected. (control connection)
+< 2026-05-31 18:16:23.340 Connection failed.
