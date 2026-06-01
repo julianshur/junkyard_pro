@@ -3,10 +3,11 @@ cd /d "%~dp0"
 setlocal
 
 set FTP_USER=julianshur@junkyardpro.com
-set FTP_HOST=.../public_html/junkyardpro.com
-
-REM Enter your FTP password here or prompt for it
+set FTP_HOST=ftp.junkyardpro.com
 set FTP_PASS=b1n6b0n61!
+
+set LOCAL_DIR=%cd%
+set REMOTE_DIR=/public_html
 
 echo.
 echo === Git add ===
@@ -14,8 +15,7 @@ git add .
 
 echo.
 echo === Git commit ===
-set MSG=Auto deploy
-git commit -m "%MSG%"
+git commit -m "Auto deploy"
 
 echo.
 echo === Git push ===
@@ -25,19 +25,17 @@ echo.
 echo === Creating WinSCP script ===
 
 (
-open ftps://%FTP_USER%:%FTP_PASS%@ftp.junkyardpro.com/ -explicit
-option batch continue
-option confirm off
+echo open ftps://%FTP_USER%:%FTP_PASS%@%FTP_HOST%/
+echo option batch continue
+echo option confirm off
 
-cd ..
-pwd
-ls
+echo cd %REMOTE_DIR%
 
-cd ..
-pwd
-ls
+echo lcd %LOCAL_DIR%
 
-exit
+echo put -r *.*
+
+echo exit
 ) > winscp_script.txt
 
 echo.
