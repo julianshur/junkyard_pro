@@ -1,0 +1,127 @@
+. 2026-05-31 18:00:20.309 --------------------------------------------------------------------------
+. 2026-05-31 18:00:20.310 WinSCP Version 6.5.6 (Build 16502 2026-03-25) (OS 10.0.19045 – Windows 10 Pro)
+. 2026-05-31 18:00:20.310 Configuration: HKCU\Software\Martin Prikryl\WinSCP 2\
+. 2026-05-31 18:00:20.310 Log level: Normal
+. 2026-05-31 18:00:20.310 Local account: DESKTOP-D919AF9\Julian
+. 2026-05-31 18:00:20.310 Working directory: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-05-31 18:00:20.310 Process ID: 12868
+. 2026-05-31 18:00:20.343 Ancestor processes: WinSCP, cmd, explorer, ...
+. 2026-05-31 18:00:20.343 Command-line: "C:\Program Files (x86)\WinSCP\WinSCP.exe" /console=6.5.6 /consoleinstance=_11704_899 "/log=winscp.log" "/script=winscp_script.txt" 
+. 2026-05-31 18:00:20.343 Time zone: Current: GMT-7, Standard: GMT-8 (Pacific Standard Time), DST: GMT-7 (Pacific Daylight Time), DST Start: 3/8/2026, DST End: 11/1/2026
+. 2026-05-31 18:00:20.343 Login time: Sunday, May 31, 2026 6:00:20 PM
+. 2026-05-31 18:00:20.343 --------------------------------------------------------------------------
+. 2026-05-31 18:00:20.343 Script: Retrospectively logging previous script records:
+> 2026-05-31 18:00:20.343 Script: open ftps://julianshur@junkyardpro.com:***@ftp.junkyardpro.com/ -explicit
+. 2026-05-31 18:00:20.343 --------------------------------------------------------------------------
+. 2026-05-31 18:00:20.343 Session name: julianshur@junkyardpro.com@ftp.junkyardpro.com (Ad-Hoc site)
+. 2026-05-31 18:00:20.343 Host name: ftp.junkyardpro.com (Port: 21)
+. 2026-05-31 18:00:20.343 User name: julianshur@junkyardpro.com (Password: Yes, Key file: No, Passphrase: No)
+. 2026-05-31 18:00:20.343 Transfer Protocol: FTP
+. 2026-05-31 18:00:20.344 Ping type: Dummy, Ping interval: 30 sec; Timeout: 15 sec
+. 2026-05-31 18:00:20.344 Disable Nagle: No
+. 2026-05-31 18:00:20.344 Proxy: None
+. 2026-05-31 18:00:20.344 Send buffer: 262144
+. 2026-05-31 18:00:20.344 UTF: Auto
+. 2026-05-31 18:00:20.344 FTPS: Explicit TLS/SSL [Client certificate: No]
+. 2026-05-31 18:00:20.344 FTP: Passive: Yes [Force IP: Auto]; MLSD: Auto [List all: Auto]; HOST: Auto
+. 2026-05-31 18:00:20.344 Session reuse: Yes
+. 2026-05-31 18:00:20.344 TLS/SSL versions: TLSv1.2-TLSv1.3
+. 2026-05-31 18:00:20.344 Local directory: default, Remote directory: home, Update: Yes, Cache: Yes
+. 2026-05-31 18:00:20.344 Cache directory changes: Yes, Permanent: Yes
+. 2026-05-31 18:00:20.344 Recycle bin: Delete to: No, Overwritten to: No, Bin path: 
+. 2026-05-31 18:00:20.344 Timezone offset: 0h 0m
+. 2026-05-31 18:00:20.344 --------------------------------------------------------------------------
+< 2026-05-31 18:00:20.406 Script: Connecting to ftp.junkyardpro.com ...
+. 2026-05-31 18:00:20.406 Connecting to ftp.junkyardpro.com ...
+. 2026-05-31 18:00:20.595 Connected with ftp.junkyardpro.com, negotiating TLS connection...
+< 2026-05-31 18:00:20.673 220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------
+< 2026-05-31 18:00:20.673 220-You are user number 2 of 50 allowed.
+< 2026-05-31 18:00:20.674 220-Local time is now 18:00. Server port: 21.
+< 2026-05-31 18:00:20.674 220-This is a private system - No anonymous login
+< 2026-05-31 18:00:20.674 220-IPv6 connections are also welcome on this server.
+< 2026-05-31 18:00:20.674 220 You will be disconnected after 15 minutes of inactivity.
+> 2026-05-31 18:00:20.674 AUTH TLS
+< 2026-05-31 18:00:20.755 234 AUTH TLS OK.
+. 2026-05-31 18:00:20.842 Verifying certificate for "" with fingerprint 0f:d8:fa:ad:71:d4:1b:73:53:62:51:95:36:31:47:87:0a:b5:bb:48:66:a4:9d:33:7f:d9:75:c7:8f:02:75:c5 and 20 failures
+. 2026-05-31 18:00:20.842 Certificate for "" matches cached fingerprint and failures
+. 2026-05-31 18:00:20.842 Using TLSv1.3, cipher TLSv1.3: TLS_AES_256_GCM_SHA384, 2048 bit RSA, TLS_AES_256_GCM_SHA384         TLSv1.3 Kx=any      Au=any   Enc=AESGCM(256)            Mac=AEAD
+< 2026-05-31 18:00:20.842 Script: TLS connection established. Waiting for welcome message...
+. 2026-05-31 18:00:20.842 TLS connection established. Waiting for welcome message...
+> 2026-05-31 18:00:20.842 USER julianshur@junkyardpro.com
+< 2026-05-31 18:00:21.005 331 User julianshur@junkyardpro.com OK. Password required
+> 2026-05-31 18:00:21.005 PASS **********
+< 2026-05-31 18:00:21.130 230 OK. Current restricted directory is /
+> 2026-05-31 18:00:21.130 SYST
+< 2026-05-31 18:00:21.206 215 UNIX Type: L8
+> 2026-05-31 18:00:21.207 FEAT
+< 2026-05-31 18:00:21.291 211-Extensions supported:
+< 2026-05-31 18:00:21.291  UTF8
+< 2026-05-31 18:00:21.292  EPRT
+< 2026-05-31 18:00:21.292  IDLE
+< 2026-05-31 18:00:21.292  MDTM
+< 2026-05-31 18:00:21.292  SIZE
+< 2026-05-31 18:00:21.292  MFMT
+< 2026-05-31 18:00:21.292  REST STREAM
+< 2026-05-31 18:00:21.292  MLST type*;size*;sizd*;modify*;UNIX.mode*;UNIX.uid*;UNIX.gid*;unique*;
+< 2026-05-31 18:00:21.292  MLSD
+< 2026-05-31 18:00:21.292  PRET
+< 2026-05-31 18:00:21.292  AUTH TLS
+< 2026-05-31 18:00:21.292  PBSZ
+< 2026-05-31 18:00:21.292  PROT
+< 2026-05-31 18:00:21.292  TVFS
+< 2026-05-31 18:00:21.292  ESTA
+< 2026-05-31 18:00:21.292  PASV
+< 2026-05-31 18:00:21.292  EPSV
+< 2026-05-31 18:00:21.293 211 End.
+> 2026-05-31 18:00:21.293 OPTS UTF8 ON
+< 2026-05-31 18:00:21.370 504 Unknown command
+> 2026-05-31 18:00:21.370 PBSZ 0
+< 2026-05-31 18:00:21.448 200 PBSZ=0
+> 2026-05-31 18:00:21.448 PROT P
+< 2026-05-31 18:00:21.525 200 Data protection level set to "private"
+< 2026-05-31 18:00:21.525 Script: Connected
+. 2026-05-31 18:00:21.526 Connected
+. 2026-05-31 18:00:21.526 --------------------------------------------------------------------------
+. 2026-05-31 18:00:21.526 Using FTP protocol.
+. 2026-05-31 18:00:21.526 Doing startup conversation with host.
+< 2026-05-31 18:00:21.526 Script: Starting the session...
+> 2026-05-31 18:00:21.527 PWD
+< 2026-05-31 18:00:21.606 257 "/" is your current location
+. 2026-05-31 18:00:21.606 Getting current directory name.
+. 2026-05-31 18:00:21.606 Startup conversation with host finished.
+< 2026-05-31 18:00:21.606 Script: Session started.
+< 2026-05-31 18:00:21.606 Script: Active session: [1] julianshur@junkyardpro.com@ftp.junkyardpro.com
+> 2026-05-31 18:00:21.607 Script: option batch continue
+< 2026-05-31 18:00:21.607 Script: batch           continue  
+> 2026-05-31 18:00:21.607 Script: option confirm off
+< 2026-05-31 18:00:21.607 Script: confirm         off       
+> 2026-05-31 18:00:21.610 Script: echo ===== CURRENT DIRECTORY =====
+< 2026-05-31 18:00:21.610 Script: ===== CURRENT DIRECTORY =====
+> 2026-05-31 18:00:21.611 Script: pwd
+< 2026-05-31 18:00:21.612 Script: /
+> 2026-05-31 18:00:21.614 Script: echo ===== DIRECTORY LISTING =====
+< 2026-05-31 18:00:21.614 Script: ===== DIRECTORY LISTING =====
+> 2026-05-31 18:00:21.615 Script: ls
+. 2026-05-31 18:00:21.619 Retrieving directory listing...
+> 2026-05-31 18:00:21.620 TYPE A
+< 2026-05-31 18:00:21.696 200 TYPE is now ASCII
+> 2026-05-31 18:00:21.700 PASV
+< 2026-05-31 18:00:21.778 227 Entering Passive Mode (40,90,253,12,205,195)
+> 2026-05-31 18:00:21.778 MLSD
+. 2026-05-31 18:00:21.779 Connecting to 40.90.253.12:52675 ...
+< 2026-05-31 18:00:21.954 150 Accepted data connection
+. 2026-05-31 18:00:21.962 Session ID reused
+. 2026-05-31 18:00:21.962 Using TLSv1.3, cipher TLSv1.3: TLS_AES_256_GCM_SHA384, 2048 bit RSA, TLS_AES_256_GCM_SHA384         TLSv1.3 Kx=any      Au=any   Enc=AESGCM(256)            Mac=AEAD
+. 2026-05-31 18:00:21.963 TLS connection established
+. 2026-05-31 18:00:22.044 type=cdir;sizd=23;modify=20260531035550;UNIX.mode=0755;UNIX.uid=3142;UNIX.gid=3147;unique=801g340406ae; .
+. 2026-05-31 18:00:22.044 type=pdir;sizd=23;modify=20260531035550;UNIX.mode=0755;UNIX.uid=3142;UNIX.gid=3147;unique=801g340406ae; ..
+. 2026-05-31 18:00:22.045 type=file;size=4;modify=20260531035550;UNIX.mode=0600;UNIX.uid=3142;UNIX.gid=3147;unique=801g34a14d8f; .ftpquota
+< 2026-05-31 18:00:22.261 226 3 matches total
+. 2026-05-31 18:00:22.261 Directory listing successful
+. 2026-05-31 18:00:22.262 ..;D;0;1899-12-30T08:00:00.000Z;0;"" [0];"" [0];---------;0
+. 2026-05-31 18:00:22.262 .ftpquota;-;4;2026-05-31T03:55:50.000Z;4;"3142" [0];"3147" [0];rw-------;2
+< 2026-05-31 18:00:22.262 Script: D---------   0                           0              ..
+< 2026-05-31 18:00:22.264 Script: -rw-------   0 3142     3147             4 May 30 20:55:50 2026 .ftpquota
+> 2026-05-31 18:00:22.275 Script: exit
+. 2026-05-31 18:00:22.275 Script: Exit code: 0
+. 2026-05-31 18:00:22.290 Disconnected from server
