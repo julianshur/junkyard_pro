@@ -34,7 +34,7 @@ const http = axios.create({
 // TTLs
 const TTL = {
   inventory: 4  * 60 * 60,  // 4 hours
-  ebay:      24 * 60 * 60,  // 24 hours
+  ebay:      72 * 60 * 60,  // 72 hours
   queries:   7  * 24 * 60 * 60, // 7 days (same car = same queries)
 };
 
