@@ -2,12 +2,11 @@
 cd /d "%~dp0"
 setlocal
 
-set FTP_USER=julianshur
-set FTP_HOST=ftp.junkyardpro.com
-set REMOTE_DIR=/home/byoq1zt2rc5qg23e/public_html
+set FTP_USER=julianshur@junkyardpro.comset FTP_HOST=ftp.junkyardpro.com
+set REMOTE_DIR=/public_html
 
 echo Enter FTP password:
-set /p FTP_PASS= b1n6b0n61!
+set FTP_PASS=b1n6b0n61!
 
 echo.
 echo === Git add ===
