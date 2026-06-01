@@ -102,3 +102,55 @@
 < 2026-05-31 18:34:24.204 Script: Access denied.
 . 2026-05-31 18:34:24.205 Password prompt (last login attempt failed)
 < 2026-05-31 18:34:24.207 Script: Authentication failed.
+. 2026-05-31 18:35:03.867 --------------------------------------------------------------------------
+. 2026-05-31 18:35:03.867 WinSCP Version 6.5.6 (Build 16502 2026-03-25) (OS 10.0.19045 – Windows 10 Pro)
+. 2026-05-31 18:35:03.867 Configuration: HKCU\Software\Martin Prikryl\WinSCP 2\
+. 2026-05-31 18:35:03.867 Log level: Normal
+. 2026-05-31 18:35:03.867 Local account: DESKTOP-D919AF9\Julian
+. 2026-05-31 18:35:03.867 Working directory: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-05-31 18:35:03.867 Process ID: 17536
+. 2026-05-31 18:35:03.882 Ancestor processes: WinSCP, cmd, explorer, ...
+. 2026-05-31 18:35:03.883 Command-line: "C:\Program Files (x86)\WinSCP\WinSCP.exe" /console=6.5.6 /consoleinstance=_17208_627 "/log=deploy\deploy.log" "/script=deploy\winscp_script.txt" 
+. 2026-05-31 18:35:03.883 Time zone: Current: GMT-7, Standard: GMT-8 (Pacific Standard Time), DST: GMT-7 (Pacific Daylight Time), DST Start: 3/8/2026, DST End: 11/1/2026
+. 2026-05-31 18:35:03.883 Login time: Sunday, May 31, 2026 6:35:03 PM
+. 2026-05-31 18:35:03.883 --------------------------------------------------------------------------
+. 2026-05-31 18:35:03.883 Script: Retrospectively logging previous script records:
+> 2026-05-31 18:35:03.883 Script: option batch continue
+< 2026-05-31 18:35:03.883 Script: batch           continue  
+> 2026-05-31 18:35:03.883 Script: option confirm off
+< 2026-05-31 18:35:03.883 Script: confirm         off       
+> 2026-05-31 18:35:03.883 Script: open ftp://julianshur@junkyardpro.com:***@ftp.junkyardpro.com:21/
+. 2026-05-31 18:35:03.883 --------------------------------------------------------------------------
+. 2026-05-31 18:35:03.883 Session name: julianshur@junkyardpro.com@ftp.junkyardpro.com (Ad-Hoc site)
+. 2026-05-31 18:35:03.883 Host name: ftp.junkyardpro.com (Port: 21)
+. 2026-05-31 18:35:03.883 User name: julianshur@junkyardpro.com (Password: Yes, Key file: No, Passphrase: No)
+. 2026-05-31 18:35:03.883 Transfer Protocol: FTP
+. 2026-05-31 18:35:03.883 Ping type: Dummy, Ping interval: 30 sec; Timeout: 15 sec
+. 2026-05-31 18:35:03.883 Disable Nagle: No
+. 2026-05-31 18:35:03.883 Proxy: None
+. 2026-05-31 18:35:03.883 Send buffer: 262144
+. 2026-05-31 18:35:03.883 UTF: Auto
+. 2026-05-31 18:35:03.883 FTPS: None [Client certificate: No]
+. 2026-05-31 18:35:03.883 FTP: Passive: Yes [Force IP: Auto]; MLSD: Auto [List all: Auto]; HOST: Auto
+. 2026-05-31 18:35:03.883 Local directory: default, Remote directory: home, Update: Yes, Cache: Yes
+. 2026-05-31 18:35:03.883 Cache directory changes: Yes, Permanent: Yes
+. 2026-05-31 18:35:03.883 Recycle bin: Delete to: No, Overwritten to: No, Bin path: 
+. 2026-05-31 18:35:03.883 Timezone offset: 0h 0m
+. 2026-05-31 18:35:03.883 --------------------------------------------------------------------------
+< 2026-05-31 18:35:03.951 Script: Connecting to ftp.junkyardpro.com ...
+. 2026-05-31 18:35:03.952 Connecting to ftp.junkyardpro.com ...
+. 2026-05-31 18:35:04.040 Connected with ftp.junkyardpro.com. Waiting for welcome message...
+< 2026-05-31 18:35:04.121 220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------
+< 2026-05-31 18:35:04.121 220-You are user number 2 of 50 allowed.
+< 2026-05-31 18:35:04.121 220-Local time is now 18:35. Server port: 21.
+< 2026-05-31 18:35:04.121 220-This is a private system - No anonymous login
+< 2026-05-31 18:35:04.121 220-IPv6 connections are also welcome on this server.
+< 2026-05-31 18:35:04.121 220 You will be disconnected after 15 minutes of inactivity.
+> 2026-05-31 18:35:04.121 USER julianshur@junkyardpro.com
+< 2026-05-31 18:35:04.200 331 User julianshur@junkyardpro.com OK. Password required
+> 2026-05-31 18:35:04.200 PASS *********
+< 2026-05-31 18:35:07.696 530 Login authentication failed
+. 2026-05-31 18:35:07.696 Connection failed.
+< 2026-05-31 18:35:07.699 Script: Access denied.
+. 2026-05-31 18:35:07.699 Password prompt (last login attempt failed)
+< 2026-05-31 18:35:07.702 Script: Authentication failed.
