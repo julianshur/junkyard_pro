@@ -735,3 +735,69 @@
 < 2026-06-02 20:50:41.502 Script: Access denied.
 . 2026-06-02 20:50:41.502 Password prompt (last login attempt failed)
 < 2026-06-02 20:50:41.505 Script: Authentication failed.
+. 2026-06-02 20:52:51.391 --------------------------------------------------------------------------
+. 2026-06-02 20:52:51.391 WinSCP Version 6.5.6 (Build 16502 2026-03-25) (OS 10.0.19045 – Windows 10 Pro)
+. 2026-06-02 20:52:51.391 Configuration: HKCU\Software\Martin Prikryl\WinSCP 2\
+. 2026-06-02 20:52:51.391 Log level: Debug 1
+. 2026-06-02 20:52:51.391 Local account: DESKTOP-D919AF9\Julian
+. 2026-06-02 20:52:51.391 Working directory: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-06-02 20:52:51.391 Process ID: 14640
+. 2026-06-02 20:52:51.401 Ancestor processes: WinSCP, cmd, explorer, ...
+. 2026-06-02 20:52:51.401 Command-line: "C:\Program Files (x86)\WinSCP\WinSCP.exe" /console=6.5.6 /consoleinstance=_18140_113 "/log=deploy.log" "/loglevel=1" "/command" "open junkyard_ftp" "option batch on" "option confirm off" "lcd C:\Users\Julian\Documents\git\junkyard_pro" "cd /" "put server.js /server.js" "put package.json /package.json" "put public/index.html /index.html" "exit" 
+. 2026-06-02 20:52:51.401 Switch:    /console=6.5.6
+. 2026-06-02 20:52:51.401 Switch:    /consoleinstance=_18140_113
+. 2026-06-02 20:52:51.401 Switch:    /log=deploy.log
+. 2026-06-02 20:52:51.401 Switch:    /loglevel=1
+. 2026-06-02 20:52:51.401 Switch:    /command
+. 2026-06-02 20:52:51.401 Parameter: open junkyard_ftp
+. 2026-06-02 20:52:51.401 Parameter: option batch on
+. 2026-06-02 20:52:51.401 Parameter: option confirm off
+. 2026-06-02 20:52:51.401 Parameter: lcd C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-06-02 20:52:51.401 Parameter: cd /
+. 2026-06-02 20:52:51.401 Parameter: put server.js /server.js
+. 2026-06-02 20:52:51.401 Parameter: put package.json /package.json
+. 2026-06-02 20:52:51.401 Parameter: put public/index.html /index.html
+. 2026-06-02 20:52:51.401 Parameter: exit
+. 2026-06-02 20:52:51.401 Time zone: Current: GMT-7, Standard: GMT-8 (Pacific Standard Time), DST: GMT-7 (Pacific Daylight Time), DST Start: 3/8/2026, DST End: 11/1/2026
+. 2026-06-02 20:52:51.401 Login time: Tuesday, June 2, 2026 8:52:51 PM
+. 2026-06-02 20:52:51.402 --------------------------------------------------------------------------
+. 2026-06-02 20:52:51.402 Script: Retrospectively logging previous script records:
+> 2026-06-02 20:52:51.402 Script: open junkyard_ftp
+> 2026-06-02 20:52:51.402 Script: Parameter: junkyard_ftp
+< 2026-06-02 20:52:51.402 Script: In scripting you should not rely on saved sites, use this command instead:
+< 2026-06-02 20:52:51.402 Script: open ftp://julianshur%40junkyardpro.com:***@ftp.junkyardpro.com/
+. 2026-06-02 20:52:51.402 --------------------------------------------------------------------------
+. 2026-06-02 20:52:51.402 Session name: junkyard_ftp (Site)
+. 2026-06-02 20:52:51.402 Host name: ftp.junkyardpro.com (Port: 21)
+. 2026-06-02 20:52:51.402 User name: julianshur@junkyardpro.com (Password: Yes, Key file: No, Passphrase: No)
+. 2026-06-02 20:52:51.402 Transfer Protocol: FTP
+. 2026-06-02 20:52:51.402 Ping type: Dummy, Ping interval: 30 sec; Timeout: 15 sec
+. 2026-06-02 20:52:51.402 Disable Nagle: No
+. 2026-06-02 20:52:51.402 Proxy: None
+. 2026-06-02 20:52:51.402 Send buffer: 262144
+. 2026-06-02 20:52:51.402 UTF: Auto
+. 2026-06-02 20:52:51.402 FTPS: None [Client certificate: No]
+. 2026-06-02 20:52:51.402 FTP: Passive: Yes [Force IP: Auto]; MLSD: Auto [List all: Auto]; HOST: Auto
+. 2026-06-02 20:52:51.402 Local directory: C:\Users\Julian\Documents, Remote directory: /, Update: Yes, Cache: Yes
+. 2026-06-02 20:52:51.402 Cache directory changes: Yes, Permanent: Yes
+. 2026-06-02 20:52:51.402 Recycle bin: Delete to: No, Overwritten to: No, Bin path: 
+. 2026-06-02 20:52:51.402 Timezone offset: 0h 0m
+. 2026-06-02 20:52:51.402 --------------------------------------------------------------------------
+< 2026-06-02 20:52:51.425 Script: Connecting to ftp.junkyardpro.com ...
+. 2026-06-02 20:52:51.425 Connecting to ftp.junkyardpro.com ...
+. 2026-06-02 20:52:51.604 Connected with ftp.junkyardpro.com. Waiting for welcome message...
+< 2026-06-02 20:52:51.686 220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------
+< 2026-06-02 20:52:51.686 220-You are user number 2 of 50 allowed.
+< 2026-06-02 20:52:51.686 220-Local time is now 20:52. Server port: 21.
+< 2026-06-02 20:52:51.686 220-This is a private system - No anonymous login
+< 2026-06-02 20:52:51.686 220-IPv6 connections are also welcome on this server.
+< 2026-06-02 20:52:51.687 220 You will be disconnected after 15 minutes of inactivity.
+> 2026-06-02 20:52:51.687 USER julianshur@junkyardpro.com
+< 2026-06-02 20:52:51.763 331 User julianshur@junkyardpro.com OK. Password required
+> 2026-06-02 20:52:51.763 PASS **********
+< 2026-06-02 20:52:56.863 530 Login authentication failed
+. 2026-06-02 20:52:56.863 Connection failed.
+. 2026-06-02 20:52:56.863 Got reply 3004 to the command 1
+< 2026-06-02 20:52:56.873 Script: Access denied.
+. 2026-06-02 20:52:56.874 Password prompt (last login attempt failed)
+< 2026-06-02 20:52:56.882 Script: Authentication failed.

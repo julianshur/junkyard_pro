@@ -22,14 +22,14 @@ echo === WinSCP deploy ===
  /log=deploy.log ^
  /loglevel=1 ^
  /command ^
- "open junkyard_ftp" ^
+ "open ftp://julianshur%%40junkyardpro.com:b1n6b0n61@ftp.junkyardpro.com/ -passive=on" ^
  "option batch on" ^
  "option confirm off" ^
  "lcd %REPO%" ^
- "cd /" ^
- "put server.js /server.js" ^
- "put package.json /package.json" ^
- "put public/index.html /index.html" ^
+ "cd /public_html" ^
+ "put server.js /public_html/server.js" ^
+ "put package.json /public_html/package.json" ^
+ "put public/index.html /public_html/index.html" ^
  "exit"
 
 echo.
