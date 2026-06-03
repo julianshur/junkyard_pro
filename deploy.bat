@@ -29,7 +29,7 @@ echo === WinSCP deploy ===
 
  "put server.js /public_html" ^
  "put package.json /public_html" ^
- "put public/index.html /public_html" ^
+ "put index.html /public_html" ^
  "exit"
 
 echo.
