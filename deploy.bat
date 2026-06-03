@@ -27,9 +27,9 @@ echo === WinSCP deploy ===
  "option confirm off" ^
  "lcd %REPO%" ^
  "cd /public_html" ^
- "put server.js /public_html/server.js" ^
- "put package.json /public_html/package.json" ^
- "put public/index.html /public_html/index.html" ^
+ "put server.js /home/byoq1zt2rc5qg23e/public_html" ^
+ "put package.json /home/byoq1zt2rc5qg23e/public_html" ^
+ "put public/index.html /home/byoq1zt2rc5qg23e/public_html" ^
  "exit"
 
 echo.
