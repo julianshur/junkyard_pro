@@ -1,7 +1,6 @@
 {
   "name": "junkyard-scraper",
   "version": "1.0.0",
-  "type": "module",
   "scripts": {
     "scrape": "node index.js"
   },
@@ -10,6 +9,9 @@
     "@libsql/client": "^0.14.0",
     "axios": "^1.7.0",
     "axios-cookiejar-support": "^5.0.0",
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.0",
     "playwright": "^1.48.0",
     "tough-cookie": "^5.0.0"
   }
