@@ -1,9 +1,12 @@
 // v6 - Redis cache, hardcoded stores + prices, extended TTLs
-const express = require("express");
-const axios   = require("axios");
-const cheerio = require("cheerio");
-const cors    = require("cors");
-const path    = require("path");
+import express from "express";
+import axios   from "axios";
+import * as cheerio from "cheerio";
+import cors    from "cors";
+import path    from "path";
+import fs      from "fs";
+import { fileURLToPath } from "url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app  = express();
 const PORT = process.env.PORT || 5180;
@@ -469,7 +472,7 @@ app.get("/cache-clear", async (_, res) => {
 
 // Static files
 const publicDir = path.join(__dirname, "public");
-if (require("fs").existsSync(publicDir)) app.use(express.static(publicDir));
+if (fs.existsSync(publicDir)) app.use(express.static(publicDir));
 
 app.use((err, req, res, next) => res.status(500).json({ error: err.message }));
 app.use((req, res) => res.status(404).json({ error: "Not found: " + req.path }));
