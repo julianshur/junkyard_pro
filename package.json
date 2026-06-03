@@ -1,6 +1,7 @@
 {
   "name": "junkyard-scraper",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "scrape": "node index.js"
   },
