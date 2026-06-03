@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Junkyard Profit Finder</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Junkyard Profit Finder</h1>
+    <p>Find cars at nearby self-service junkyards and see what their parts sell for on eBay.</p>
+  </header>
+
+  <main>
+    <form id="search-form">
+      <input id="location" type="text" placeholder="City, State — e.g. Los Angeles CA" autocomplete="off" required />
+      <button type="submit">Search</button>
+    </form>
+
+    <div id="status" hidden></div>
+
+    <section id="summary" hidden>
+      <p>
+        <strong id="yard-name"></strong> yards within 50 miles &mdash;
+        <a id="yard-link" href="#" target="_blank" rel="noreferrer">Open nearest inventory</a>
+      </p>
+      <p><span id="car-count"></span> vehicles &bull; <span id="listing-count"></span> sold comps</p>
+    </section>
+
+    <div id="results"></div>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
