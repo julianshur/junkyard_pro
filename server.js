@@ -1,7 +1,7 @@
 // v6 - Redis cache, hardcoded stores + prices, extended TTLs
 import express from "express";
 import axios   from "axios";
-import * as cheerio from "cheerio";
+import { load as cheerioLoad } from "cheerio";
 import cors    from "cors";
 import path    from "path";
 import fs      from "fs";
@@ -251,7 +251,7 @@ async function fetchEbayListings(searchQueries) {
     const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=60`;
     try {
       const html = await fetchPage(url, "https://www.ebay.com/");
-      const $ = cheerio.load(html);
+      const $ = cheerioLoad(html);
       const newUI = $(".s-card").length > 0;
       const sel = newUI ? ".s-card" : ".s-item";
       const selCount = $(sel).length;
@@ -377,7 +377,7 @@ app.get("/inventory/:yardId", async (req, res) => {
   try { html = await fetchPage(`https://www.pyp.com/inventory/${yardId}/`, "https://www.pyp.com/"); }
   catch(e) { return res.json({ error: "Failed to load inventory: " + e.message }); }
 
-  const $ = cheerio.load(html);
+  const $ = cheerioLoad(html);
   const vehicles = [];
   $(".pypvi_resultRow").each((_, el) => {
     if (vehicles.length >= 20) return false;
