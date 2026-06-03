@@ -470,8 +470,8 @@ app.get("/cache-clear", async (_, res) => {
   }
 });
 
-// Static files — serve root dir (index.html lives there now)
-app.use(express.static(__dirname));
+// Static files
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use((err, req, res, next) => res.status(500).json({ error: err.message }));
 app.use((req, res) => res.status(404).json({ error: "Not found: " + req.path }));
