@@ -1,274 +1,176 @@
-const form = document.querySelector("#search-form");
-const input = document.querySelector("#location");
-const statusBand = document.querySelector("#status");
-const summary = document.querySelector("#summary");
-const results = document.querySelector("#results");
-const yardName = document.querySelector("#yard-name");
-const yardLink = document.querySelector("#yard-link");
-const carCount = document.querySelector("#car-count");
-const listingCount = document.querySelector("#listing-count");
-const submitButton = form.querySelector("button");
+const form        = document.querySelector("#search-form");
+const input       = document.querySelector("#location");
+const statusBand  = document.querySelector("#status");
+const summary     = document.querySelector("#summary");
+const results     = document.querySelector("#results");
+const yardNameEl  = document.querySelector("#yard-name");
+const yardLinkEl  = document.querySelector("#yard-link");
+const carCountEl  = document.querySelector("#car-count");
+const submitBtn   = form.querySelector("button");
 
-function setStatus(message, isError = false) {
-  statusBand.hidden = !message;
-  statusBand.textContent = message || "";
+function setStatus(msg, isError = false) {
+  statusBand.hidden = !msg;
+  statusBand.textContent = msg || "";
   statusBand.classList.toggle("error", isError);
 }
 
-function formatMoney(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: value % 1 ? 2 : 0,
-  }).format(value);
+function money(n) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: n % 1 ? 2 : 0 }).format(n);
 }
 
-function formatDate(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString();
+async function api(path) {
+  const r = await fetch(path);
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || "Request failed");
+  return data;
 }
 
-function renderItemMeta(item) {
-  const parts = [
-    item.condition,
-    item.partName ? `LKQ part: ${item.partName}` : "",
-    item.soldDate ? `Sold ${formatDate(item.soldDate)}` : "",
-  ].filter(Boolean);
-
-  return parts.length ? `<div class="listing-meta">${parts.join(" | ")}</div>` : "";
-}
-
-function renderTopItems(items, priceList) {
-  const card = document.createElement("article");
-  card.className = "car-card top-card";
-
-  const header = document.createElement("header");
-  header.className = "car-header";
-  header.innerHTML = `
-    <div>
-      <p class="section-kicker">Best flips across nearby yards</p>
-      <h2 class="car-title">Top 20 estimated profit parts</h2>
-    </div>
-    <div class="car-actions">
-      <span>${items.length} ranked profit comps</span>
-      ${
-        priceList?.priceUrl
-          ? `<a href="${priceList.priceUrl}" target="_blank" rel="noreferrer">LKQ price list</a>`
-          : ""
-      }
-    </div>
-  `;
-  card.append(header);
-
-  if (!items.length) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent =
-      "No profit-ranked items were returned yet. The app needs sold eBay items and a matched LKQ part price.";
-    card.append(empty);
-    return card;
+function renderYardPicker(yards, onSelect) {
+  results.innerHTML = "";
+  const heading = document.createElement("h2");
+  heading.textContent = "Select a yard:";
+  results.append(heading);
+  for (const yard of yards) {
+    const btn = document.createElement("button");
+    btn.className = "yard-btn";
+    btn.innerHTML = `<strong>${yard.name}</strong><br><small>${yard.address || ""}</small>`;
+    btn.onclick = () => onSelect(yard);
+    results.append(btn);
   }
-
-  const table = document.createElement("table");
-  table.className = "listing-table";
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>Rank</th>
-        <th>Sold item</th>
-        <th>Source car</th>
-        <th>Yard</th>
-        <th>LKQ cost</th>
-        <th>Sold price</th>
-        <th>Profit</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  `;
-
-  const tbody = table.querySelector("tbody");
-  items.forEach((item, index) => {
-    const car = item.car || {};
-    const sourceCar = [car.year, car.make, car.model].filter(Boolean).join(" ");
-    const yard = item.yard || car.yard || {};
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td class="rank">${index + 1}</td>
-      <td>
-        <a href="${item.url}" target="_blank" rel="noreferrer">${item.title}</a>
-        ${renderItemMeta(item)}
-      </td>
-      <td>${sourceCar || "Unknown"}</td>
-      <td>${yard.name || "Unknown"}</td>
-      <td>${formatMoney(item.partCost || 0)}</td>
-      <td class="price">${formatMoney(item.price)}</td>
-      <td class="profit">${formatMoney(item.profit || 0)}</td>
-    `;
-    tbody.append(row);
-  });
-
-  card.append(table);
-  return card;
 }
 
-function renderResults(data) {
-  summary.hidden = false;
-  const yards = data.yards || [];
-  yardName.textContent = yards.length ? yards.length.toString() : "No yards matched";
-  yardLink.href = data.yard?.url || "#";
-  yardLink.textContent = data.yard ? "Open nearest inventory" : "Open inventory";
-  carCount.textContent = data.cars.length.toString();
-
-  const totalListings = data.results.reduce(
-    (total, result) => total + result.items.length,
-    0,
-  );
-  listingCount.textContent = totalListings.toString();
-
+function renderInventory(yard, vehicles, ebayMap) {
   results.innerHTML = "";
 
-  if (!data.yard) {
-    results.innerHTML =
-      '<div class="empty">No LKQ yards were found within 50 miles. Try a city and state, like "Denver CO" or "Santa Fe Springs CA".</div>';
+  yardNameEl.textContent = yard.name;
+  yardLinkEl.href = `https://www.pyp.com/inventory/${yard.id}/`;
+  yardLinkEl.textContent = "Open full inventory";
+  carCountEl.textContent = vehicles.length;
+  summary.hidden = false;
+
+  if (!vehicles.length) {
+    results.innerHTML = '<div class="empty">No vehicles found in this yard\'s inventory.</div>';
     return;
   }
 
-  if (!data.cars.length) {
-    results.innerHTML =
-      '<div class="empty">The yard matched, but no recent vehicles could be read from its inventory page.</div>';
-    return;
-  }
-
-  if (data.results.some((result) => /status 403|forbidden/i.test(result.error || ""))) {
-    setStatus(
-      "LKQ inventory loaded, but eBay is blocking automated sold-listing reads. Use the eBay search links on each vehicle to open the completed listings directly.",
-      true,
-    );
-  }
-
-  const fragment = document.createDocumentFragment();
-  fragment.append(renderTopItems(data.topItems || [], data.priceList));
-
-  for (const result of data.results) {
-    if (!result.car) {
-      const card = document.createElement("article");
-      card.className = "car-card";
-      const header = document.createElement("header");
-      header.className = "car-header";
-      header.innerHTML = `
-        <div>
-          <h2 class="car-title">${result.yard?.name || "Yard lookup"}</h2>
-        </div>
-      `;
-      card.append(header);
-      const empty = document.createElement("div");
-      empty.className = "empty";
-      empty.textContent = result.error || "Inventory lookup failed.";
-      card.append(empty);
-      fragment.append(card);
-      continue;
-    }
-
+  for (const v of vehicles) {
     const card = document.createElement("article");
     card.className = "car-card";
 
-    const car = result.car;
-    const topValue = result.items[0]?.price || 0;
-    const header = document.createElement("header");
-    header.className = "car-header";
-    header.innerHTML = `
-      <div>
-        <h2 class="car-title">${car.year} ${car.make} ${car.model}</h2>
-        <div class="listing-meta">${car.yard?.name || result.yard?.name || ""}</div>
-      </div>
-      <div class="car-actions">
-        <span>${result.items.length} sold comps</span>
-        ${topValue ? `<span>Top sale ${formatMoney(topValue)}</span>` : ""}
-        ${
-          result.ebayUrl
-            ? `<a href="${result.ebayUrl}" target="_blank" rel="noreferrer">Open eBay search</a>`
-            : ""
-        }
-      </div>
+    const listings = ebayMap[`${v.year}:${v.make}:${v.model}`] || [];
+    const topListings = listings.slice(0, 8);
+
+    card.innerHTML = `
+      <header class="car-header">
+        <div>
+          <h2 class="car-title">${v.year} ${v.make} ${v.model}</h2>
+          <div class="listing-meta">
+            ${[v.color, v.section && "Section " + v.section, v.row && "Row " + v.row].filter(Boolean).join(" · ")}
+          </div>
+        </div>
+        <div class="car-actions">
+          <span>${listings.length} sold comps</span>
+          ${listings.length ? `<a href="https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(v.year + " " + v.make + " " + v.model + " parts")}&LH_Sold=1&LH_Complete=1" target="_blank" rel="noreferrer">eBay search</a>` : ""}
+        </div>
+      </header>
     `;
-    card.append(header);
 
-    if (result.error) {
+    if (!topListings.length) {
       const empty = document.createElement("div");
       empty.className = "empty";
-      empty.textContent = /status 403|forbidden/i.test(result.error)
-        ? "eBay blocked the automated lookup for this vehicle. Open the eBay search link to view sold completed listings in your browser."
-        : `eBay lookup failed: ${result.error}`;
+      empty.textContent = "No sold eBay listings found.";
       card.append(empty);
-      fragment.append(card);
-      continue;
-    }
-
-    if (!result.items.length) {
-      const empty = document.createElement("div");
-      empty.className = "empty";
-      empty.textContent = "No sold completed listings were found for this vehicle.";
-      card.append(empty);
-      fragment.append(card);
-      continue;
-    }
-
-    const table = document.createElement("table");
-    table.className = "listing-table";
-    table.innerHTML = `
-      <thead>
-        <tr>
+    } else {
+      const table = document.createElement("table");
+      table.className = "listing-table";
+      table.innerHTML = `
+        <thead><tr>
           <th>Sold item</th>
-          <th>Price</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    `;
-
-    const tbody = table.querySelector("tbody");
-    for (const item of result.items) {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>
-          <a href="${item.url}" target="_blank" rel="noreferrer">${item.title}</a>
-          ${renderItemMeta(item)}
-        </td>
-        <td class="price">${formatMoney(item.price)}</td>
+          <th>Sold price</th>
+          <th>PYP cost</th>
+          <th>Profit</th>
+        </tr></thead>
+        <tbody>${topListings.map(l => `
+          <tr>
+            <td><a href="${l.url || "#"}" target="_blank" rel="noreferrer">${l.title}</a>
+              ${l.category ? `<div class="listing-meta">${l.category}</div>` : ""}
+            </td>
+            <td class="price">${money(l.soldPrice)}</td>
+            <td>${l.pypPrice != null ? money(l.pypPrice) : "—"}</td>
+            <td class="${l.profit > 0 ? "profit" : ""}">${l.profit != null ? money(l.profit) : "—"}</td>
+          </tr>`).join("")}
+        </tbody>
       `;
-      tbody.append(row);
+      card.append(table);
     }
 
-    card.append(table);
-    fragment.append(card);
+    results.append(card);
   }
-
-  results.append(fragment);
 }
 
-form.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const location = input.value.trim();
-  if (!location) return;
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const q = input.value.trim();
+  if (!q) return;
 
-  submitButton.disabled = true;
-  submitButton.textContent = "Searching";
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Searching…";
   summary.hidden = true;
   results.innerHTML = "";
-  setStatus("Finding LKQ yards within 50 miles, reading recent inventory, then checking eBay sold listings...");
+  setStatus("Finding yards…");
 
   try {
-    const response = await fetch(`/api/analyze?location=${encodeURIComponent(location)}`);
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || "Search failed.");
+    // 1. Find yards
+    const { yards } = await api(`/yards?q=${encodeURIComponent(q)}`);
+    if (!yards?.length) throw new Error("No yards found near that location.");
+
+    if (yards.length === 1) {
+      await loadYard(yards[0]);
+    } else {
+      setStatus("");
+      renderYardPicker(yards, loadYard);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Search";
     }
-    setStatus("");
-    renderResults(data);
-  } catch (error) {
-    setStatus(error.message || "Something went wrong.", true);
-  } finally {
-    submitButton.disabled = false;
-    submitButton.textContent = "Search";
+  } catch (err) {
+    setStatus(err.message, true);
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Search";
   }
 });
+
+async function loadYard(yard) {
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Loading…";
+  summary.hidden = true;
+  results.innerHTML = "";
+  setStatus("Loading inventory…");
+
+  try {
+    // 2. Inventory
+    const inv = await api(`/inventory/${yard.id}`);
+    if (inv.error) throw new Error(inv.error);
+    const vehicles = inv.vehicles || [];
+
+    setStatus(`Loading eBay sold listings for ${vehicles.length} vehicles…`);
+
+    // 3. eBay listings for each vehicle (parallel, best-effort)
+    const ebayMap = {};
+    await Promise.all(vehicles.map(async (v) => {
+      try {
+        const data = await api(`/ebay?year=${v.year}&make=${encodeURIComponent(v.make)}&model=${encodeURIComponent(v.model)}`);
+        ebayMap[`${v.year}:${v.make}:${v.model}`] = data.listings || [];
+      } catch (_) {
+        ebayMap[`${v.year}:${v.make}:${v.model}`] = [];
+      }
+    }));
+
+    setStatus("");
+    renderInventory(yard, vehicles, ebayMap);
+  } catch (err) {
+    setStatus(err.message, true);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Search";
+  }
+}
