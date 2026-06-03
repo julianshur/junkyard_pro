@@ -22,7 +22,7 @@ echo === WinSCP deploy ===
  /log=deploy.log ^
  /loglevel=1 ^
  /command ^
- "open ftp://julianshur%40junkyardpro.com:***@ftp.junkyardpro.com/" ^
+ "open junkyard_ftp" ^
  "option batch on" ^
  "option confirm off" ^
  "lcd %REPO%" ^

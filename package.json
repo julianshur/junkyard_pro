@@ -1,16 +1,16 @@
 {
-  "name": "junkyard-profit-finder",
+  "name": "junkyard-scraper",
   "version": "1.0.0",
-  "description": "LKQ Pick Your Part inventory + eBay sold comps",
-  "main": "server.js",
+  "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "scrape": "node index.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "axios": "^1.6.0",
-    "cheerio": "^1.0.0-rc.12",
-    "cors": "^2.8.5"
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@libsql/client": "^0.14.0",
+    "axios": "^1.7.0",
+    "axios-cookiejar-support": "^5.0.0",
+    "playwright": "^1.48.0",
+    "tough-cookie": "^5.0.0"
   }
 }

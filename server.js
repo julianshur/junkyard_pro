@@ -77,26 +77,21 @@ async function cacheSet(key, data, ttlSec) {
   }
 }
 
-// ── fetchPage via ScraperAPI ──────────────────────────────────────────────────
+// ── fetchPage (free, no third-party scraper API) ─────────────────────────────
 const cookieJar = {};
-const scraperKey = () => process.env.SCRAPER_API_KEY;
+
+const BROWSER_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.9",
+  "Accept-Encoding": "gzip, deflate, br",
+  "Cache-Control": "no-cache",
+};
 
 async function fetchPage(url, referer = null) {
   const domain = new URL(url).hostname;
-  const key = scraperKey();
 
-  if (domain.includes("pyp.com") && key) {
-    const r = await http.get(`http://api.scraperapi.com?api_key=${key}&url=${encodeURIComponent(url)}&render=false`,
-      { timeout: 30000 });
-    return r.data;
-  }
-  if (domain.includes("ebay.com") && key) {
-    const r = await http.get(`http://api.scraperapi.com?api_key=${key}&url=${encodeURIComponent(url)}&render=true&country_code=us`,
-      { timeout: 60000 });
-    return r.data;
-  }
-
-  // Free proxies for pyp.com without key
+  // Free proxies for pyp.com (blocks direct requests)
   if (domain.includes("pyp.com")) {
     for (const proxy of [
       `https://thingproxy.freeboard.io/fetch/${url}`,
@@ -112,15 +107,15 @@ async function fetchPage(url, referer = null) {
     throw new Error("All proxies failed for " + url);
   }
 
-  // Direct request with cookie jar
+  // Direct request with browser headers + cookie jar
   if (!cookieJar[domain]) {
     try {
-      const r = await http.get(`https://${domain}/`, { maxRedirects: 5 });
+      const r = await http.get(`https://${domain}/`, { headers: BROWSER_HEADERS, maxRedirects: 5 });
       const sc = r.headers["set-cookie"];
       cookieJar[domain] = sc ? sc.map(c => c.split(";")[0]).join("; ") : "";
     } catch(_) { cookieJar[domain] = ""; }
   }
-  const headers = {};
+  const headers = { ...BROWSER_HEADERS };
   if (cookieJar[domain]) headers["Cookie"] = cookieJar[domain];
   if (referer) headers["Referer"] = referer;
   const r = await http.get(url, { headers, maxRedirects: 5 });
