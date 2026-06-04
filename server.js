@@ -95,13 +95,18 @@ const BROWSER_HEADERS = {
 async function fetchPage(url, referer = null) {
   const domain = new URL(url).hostname;
 
-  // pyp.com: direct fetch with browser headers
+  // pyp.com: use Playwright (JS-rendered, blocks plain HTTP)
   if (domain.includes("pyp.com")) {
-    const r = await http.get(url, {
-      headers: { ...BROWSER_HEADERS, "Referer": referer || "https://www.pyp.com/" },
-      timeout: 25000,
-    });
-    return typeof r.data === "string" ? r.data : JSON.stringify(r.data);
+    const browser = await chromium.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
+    try {
+      const page = await browser.newPage();
+      await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+      await page.waitForSelector(".pypvi_resultRow", { timeout: 10000 }).catch(() => {});
+      return await page.content();
+    } finally {
+      await browser.close();
+    }
   }
 
   // Direct request with browser headers + cookie jar
