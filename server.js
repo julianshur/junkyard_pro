@@ -97,6 +97,7 @@ async function fetchPage(url, referer = null) {
 
   // pyp.com: use Playwright (page is JS-rendered)
   if (domain.includes("pyp.com")) {
+    process.env.PLAYWRIGHT_BROWSERS_PATH = "0";
     const browser = await chromium.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
     try {
       const page = await browser.newPage();
