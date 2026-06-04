@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "scrape": "node index.js"
+    "scrape": "node index.js",
+    "postinstall": "npx playwright install --with-deps chromium"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",
