@@ -354,11 +354,20 @@ app.get("/yards", async (req, res) => {
 app.get("/debug-pyp/:yardId", async (req, res) => {
   const url = `https://www.pyp.com/inventory/${req.params.yardId}/`;
   try {
-    const r = await http.get(url, { headers: BROWSER_HEADERS, timeout: 25000 });
-    const html = typeof r.data === "string" ? r.data : JSON.stringify(r.data);
+    process.env.PLAYWRIGHT_BROWSERS_PATH = "/opt/render/project/src/.playwright";
+    const { chromium } = await import("playwright");
+    const browser = await chromium.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await new Promise(r => setTimeout(r, 3000));
+    const html = await page.content();
+    await browser.close();
     res.setHeader("Content-Type", "text/plain");
-    res.send(html.slice(0, 8000));
-  } catch(e) { res.status(500).send(e.message); }
+    // Show classes used in the page to find correct selectors
+    const classes = [...html.matchAll(/class="([^"]+)"/g)]
+      .map(m => m[1]).join("\n").slice(0, 5000);
+    res.send(`URL: ${url}\nHTML length: ${html.length}\n\nCLASSES FOUND:\n${classes}\n\nHTML SNIPPET:\n${html.slice(0, 4000)}`);
+  } catch(e) { res.status(500).send(e.message + "\n" + e.stack); }
 });
 
 app.get("/inventory/:yardId", async (req, res) => {
