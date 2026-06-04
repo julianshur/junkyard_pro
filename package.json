@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node server.js",
     "scrape": "node index.js",
-    "postinstall": "npx playwright install --with-deps chromium"
+    "postinstall": "node node_modules/playwright/cli.js install --with-deps chromium"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",
