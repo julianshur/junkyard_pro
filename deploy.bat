@@ -25,7 +25,6 @@ echo === WinSCP deploy ===
  "open ftp://julianshur%%40junkyardpro.com:***REDACTED***@ftp.junkyardpro.com/ -passive=on" ^
  "option batch on" ^
  "option confirm off" ^
- "cd public_html" ^
  "lcd %REPO%" ^
  "put server.js" ^
  "put package.json" ^
