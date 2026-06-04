@@ -1,0 +1,11 @@
+open ftp://julianshur%40junkyardpro.com:b1n6b0n61!@ftp.junkyardpro.com/ -passive=on
+option batch on
+option confirm off
+lcd C:\Users\Julian\Documents\git\junkyard_pro
+put server.js
+put package.json
+lcd C:\Users\Julian\Documents\git\junkyard_pro\public
+put index.html
+put app.js
+put styles.css
+exit

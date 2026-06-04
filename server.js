@@ -6,6 +6,7 @@ import cors    from "cors";
 import path    from "path";
 import fs      from "fs";
 import { fileURLToPath } from "url";
+import { chromium } from "playwright";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app  = express();
@@ -94,35 +95,18 @@ const BROWSER_HEADERS = {
 async function fetchPage(url, referer = null) {
   const domain = new URL(url).hostname;
 
-  // pyp.com: try direct first, then free proxies
+  // pyp.com: use Playwright (page is JS-rendered)
   if (domain.includes("pyp.com")) {
-    // Direct attempt with full browser headers
+    const browser = await chromium.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
     try {
-      const r = await http.get(url, {
-        headers: {
-          ...BROWSER_HEADERS,
-          "Referer": referer || "https://www.pyp.com/",
-          "sec-fetch-site": "same-origin",
-        },
-        timeout: 25000,
-      });
-      if (typeof r.data === "string" && r.data.length > 1000) return r.data;
-    } catch(_) {}
-
-    // CORS proxy fallbacks
-    for (const proxy of [
-      `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-      `https://corsproxy.io/?${encodeURIComponent(url)}`,
-      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-      `https://thingproxy.freeboard.io/fetch/${url}`,
-    ]) {
-      try {
-        const r = await http.get(proxy, { timeout: 25000 });
-        const html = r.data?.contents || r.data;
-        if (typeof html === "string" && html.length > 1000) return html;
-      } catch(_) {}
+      const page = await browser.newPage();
+      await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+      await page.waitForSelector(".pypvi_resultRow, .inventory-row, [class*='result']", { timeout: 10000 }).catch(() => {});
+      return await page.content();
+    } finally {
+      await browser.close();
     }
-    throw new Error("All proxies failed for " + url);
   }
 
   // Direct request with browser headers + cookie jar
