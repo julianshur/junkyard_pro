@@ -469,6 +469,9 @@ app.get("/prices/:yardId", async (req, res) => {
   res.json({ parts: PYP_PRICES, sourceUrl: `https://www.pyp.com/prices/${req.params.yardId}/` });
 });
 
+const ebayJobs = new Map(); // cacheKey -> "running"
+let ebayBrowserBusy = false; // only one Playwright browser at a time
+
 app.get("/ebay", async (req, res) => {
   const { year, make, model } = req.query;
   if (!year || !make || !model) return res.json({ error: "Missing params" });
@@ -477,15 +480,24 @@ app.get("/ebay", async (req, res) => {
   const cached = await cacheGet(cacheKey);
   if (cached) { console.log(`[ebay] cache hit: ${year} ${make} ${model}`); return res.json({ listings: cached }); }
 
-  const queries = await getSearchQueries(year, make, model);
-  console.log(`[ebay] fetching ${queries.length} queries: ${year} ${make} ${model}`);
-  const listings = await fetchEbayListings(queries);
-  await matchAndScoreListings(listings, PYP_PRICES);
-  const withPrices = listings.filter(l => l.pypPrice != null).length;
-  console.log(`[ebay] withPypPrice: ${withPrices}/${listings.length}`);
-  await cacheSet(cacheKey, listings, TTL.ebay);
-  console.log(`[ebay] cached ${listings.length} for ${year} ${make} ${model}`);
-  res.json({ listings });
+  if (ebayJobs.get(cacheKey) === "running") return res.json({ status: "scraping" });
+  if (ebayBrowserBusy) return res.json({ status: "scraping" });
+
+  ebayJobs.set(cacheKey, "running");
+  ebayBrowserBusy = true;
+  res.json({ status: "scraping" });
+
+  try {
+    const queries = await getSearchQueries(year, make, model);
+    console.log(`[ebay] fetching ${queries.length} queries: ${year} ${make} ${model}`);
+    const listings = await fetchEbayListings(queries);
+    await matchAndScoreListings(listings, PYP_PRICES);
+    console.log(`[ebay] cached ${listings.length} for ${year} ${make} ${model}`);
+    await cacheSet(cacheKey, listings, TTL.ebay);
+  } finally {
+    ebayJobs.delete(cacheKey);
+    ebayBrowserBusy = false;
+  }
 });
 
 app.get("/prefetch/:yardId", async (req, res) => {

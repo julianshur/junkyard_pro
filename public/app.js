@@ -173,18 +173,23 @@ async function loadYard(yard) {
     const inv = await apiPoll(`/inventory/${yard.id}`, "Loading inventory from pyp.com (this takes ~30s the first time)…");
     const vehicles = inv.vehicles || [];
 
-    setStatus(`Loading eBay sold listings for ${vehicles.length} vehicles…`);
-
-    // 3. eBay listings for each vehicle (parallel, best-effort)
+    // 3. eBay listings — sequential to avoid launching multiple browsers at once
     const ebayMap = {};
-    await Promise.all(vehicles.map(async (v) => {
+    for (let i = 0; i < vehicles.length; i++) {
+      const v = vehicles[i];
+      const key = `${v.year}:${v.make}:${v.model}`;
+      setStatus(`Loading eBay sold listings… (${i + 1}/${vehicles.length}: ${v.year} ${v.make} ${v.model})`);
       try {
-        const data = await api(`/ebay?year=${v.year}&make=${encodeURIComponent(v.make)}&model=${encodeURIComponent(v.model)}`);
-        ebayMap[`${v.year}:${v.make}:${v.model}`] = data.listings || [];
+        const data = await apiPoll(
+          `/ebay?year=${v.year}&make=${encodeURIComponent(v.make)}&model=${encodeURIComponent(v.model)}`,
+          `Scraping eBay for ${v.year} ${v.make} ${v.model}…`,
+          4000, 90000
+        );
+        ebayMap[key] = data.listings || [];
       } catch (_) {
-        ebayMap[`${v.year}:${v.make}:${v.model}`] = [];
+        ebayMap[key] = [];
       }
-    }));
+    }
 
     setStatus("");
     renderInventory(yard, vehicles, ebayMap);
