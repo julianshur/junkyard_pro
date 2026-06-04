@@ -244,15 +244,14 @@ function scoreYard(vehicles) {
   return { score: n, grade: n >= 70 ? "green" : n >= 40 ? "yellow" : "red", label: n >= 70 ? "High" : n >= 40 ? "Medium" : "Low" };
 }
 
-// ── eBay scraping helper (Playwright — eBay blocks plain HTTP on server IPs) ──
-async function fetchEbayListings(searchQueries) {
+// ── eBay scraping helper (Playwright — fresh browser per query to avoid OOM) ──
+async function scrapeEbayQuery(q) {
   process.env.PLAYWRIGHT_BROWSERS_PATH = "/opt/render/project/src/.playwright";
   const { chromium } = await import("playwright");
   const browser = await chromium.launch({
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled"],
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled", "--single-process"],
   });
-  const allListings = [];
   try {
     const ctx = await browser.newContext({
       userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -262,54 +261,52 @@ async function fetchEbayListings(searchQueries) {
       Object.defineProperty(navigator, "webdriver", { get: () => undefined });
       window.chrome = { runtime: {} };
     });
-
-    for (const q of searchQueries) {
-      const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=60`;
-      try {
-        const page = await ctx.newPage();
-        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-        await page.waitForSelector(".s-item, .s-card", { timeout: 10000 }).catch(() => {});
-        const listings = await page.evaluate(() => {
-          const results = [];
-          const cards = document.querySelectorAll(".s-item, .s-card");
-          for (const card of cards) {
-            const text = card.textContent || "";
-            const titleEl = card.querySelector(".s-item__title, .s-card__title");
-            const title = (titleEl?.textContent || "").replace("New listing","").replace(/Opens in a new window or tab/gi,"").trim();
-            if (!title || title === "Shop on eBay") continue;
-            const priceEl = card.querySelector(".s-item__price, .s-card__price");
-            const priceText = priceEl?.textContent || text.match(/\$[\d,]+\.\d{2}/)?.[0] || "";
-            const priceMatch = priceText.match(/\$([\d,]+\.\d{2})/);
-            if (!priceMatch) continue;
-            const price = parseFloat(priceMatch[1].replace(/,/g,""));
-            if (!price || price < 1) continue;
-            const linkEl = card.querySelector("a.s-item__link, a.s-card__link, a[href*='ebay.com/itm']");
-            const href = linkEl?.href || "";
-            if (!href || href.includes("rover.ebay.com")) continue;
-            const condEl = card.querySelector(".SECONDARY_INFO, .s-item__subtitle, .s-card__subtitle");
-            const condition = condEl?.textContent?.trim() || null;
-            const cond = (condition||"").toLowerCase();
-            if (cond === "new" || cond === "brand new") continue;
-            const soldMatch = text.match(/(\d[\d,]*)\s+sold/i);
-            results.push({
-              title, soldPrice: price,
-              url: href.split("?")[0],
-              category: condition,
-              soldCount: soldMatch ? parseInt(soldMatch[1].replace(/,/g,"")) : 1,
-            });
-          }
-          return results;
-        });
-        console.log(`[ebay] "${q.slice(0,40)}" items:${listings.length}`);
-        allListings.push(...listings);
-        await page.close();
-        await new Promise(r => setTimeout(r, 1000));
-      } catch(e) {
-        console.log(`[ebay] query failed "${q}":`, e.message);
+    const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=60`;
+    const page = await ctx.newPage();
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.waitForSelector(".s-item, .s-card", { timeout: 10000 }).catch(() => {});
+    const listings = await page.evaluate(() => {
+      const results = [];
+      for (const card of document.querySelectorAll(".s-item, .s-card")) {
+        const text = card.textContent || "";
+        const titleEl = card.querySelector(".s-item__title, .s-card__title");
+        const title = (titleEl?.textContent || "").replace("New listing","").replace(/Opens in a new window or tab/gi,"").trim();
+        if (!title || title === "Shop on eBay") continue;
+        const priceEl = card.querySelector(".s-item__price, .s-card__price");
+        const priceText = priceEl?.textContent || "";
+        const priceMatch = (priceText || text).match(/\$([\d,]+\.\d{2})/);
+        if (!priceMatch) continue;
+        const price = parseFloat(priceMatch[1].replace(/,/g,""));
+        if (!price || price < 1) continue;
+        const linkEl = card.querySelector("a.s-item__link, a.s-card__link, a[href*='ebay.com/itm']");
+        const href = linkEl?.href || "";
+        if (!href || href.includes("rover.ebay.com")) continue;
+        const condEl = card.querySelector(".SECONDARY_INFO, .s-item__subtitle, .s-card__subtitle");
+        const condition = condEl?.textContent?.trim() || null;
+        if (/^new$|^brand new$/i.test(condition||"")) continue;
+        const soldMatch = text.match(/(\d[\d,]*)\s+sold/i);
+        results.push({ title, soldPrice: price, url: href.split("?")[0], category: condition,
+          soldCount: soldMatch ? parseInt(soldMatch[1].replace(/,/g,"")) : 1 });
       }
-    }
+      return results;
+    });
+    console.log(`[ebay] "${q.slice(0,40)}" items:${listings.length}`);
+    return listings;
   } finally {
     await browser.close();
+  }
+}
+
+async function fetchEbayListings(searchQueries) {
+  const allListings = [];
+  for (const q of searchQueries) {
+    try {
+      const listings = await scrapeEbayQuery(q);
+      allListings.push(...listings);
+      await new Promise(r => setTimeout(r, 1500));
+    } catch(e) {
+      console.log(`[ebay] query failed "${q}":`, e.message);
+    }
   }
   const seen = new Set();
   return allListings.filter(l => { if (!l.url || seen.has(l.url)) return false; seen.add(l.url); return true; })
