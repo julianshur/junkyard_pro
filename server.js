@@ -244,56 +244,72 @@ function scoreYard(vehicles) {
   return { score: n, grade: n >= 70 ? "green" : n >= 40 ? "yellow" : "red", label: n >= 70 ? "High" : n >= 40 ? "Medium" : "Low" };
 }
 
-// ── eBay scraping helper ──────────────────────────────────────────────────────
+// ── eBay scraping helper (Playwright — eBay blocks plain HTTP on server IPs) ──
 async function fetchEbayListings(searchQueries) {
+  process.env.PLAYWRIGHT_BROWSERS_PATH = "/opt/render/project/src/.playwright";
+  const { chromium } = await import("playwright");
+  const browser = await chromium.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled"],
+  });
   const allListings = [];
-  for (const q of searchQueries) {
-    const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=60`;
-    try {
-      const html = await fetchPage(url, "https://www.ebay.com/");
-      const $ = cheerioLoad(html);
-      const newUI = $(".s-card").length > 0;
-      const sel = newUI ? ".s-card" : ".s-item";
-      const selCount = $(sel).length;
-      console.log(`[ebay] "${q.slice(0,40)}" ui:${newUI?"s-card":"s-item"} items:${selCount} htmlLen:${typeof html === "string" ? html.length : "non-string"}`);
+  try {
+    const ctx = await browser.newContext({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      locale: "en-US",
+    });
+    await ctx.addInitScript(() => {
+      Object.defineProperty(navigator, "webdriver", { get: () => undefined });
+      window.chrome = { runtime: {} };
+    });
 
-      $(sel).each((_, el) => {
-        const $el = $(el), ct = $el.text();
-        let title, price, href, condition, dateSold = null;
-        if (newUI) {
-          // Title is in .s-card__title .su-styled-text.primary
-          title = $el.find(".s-card__title .su-styled-text.primary").text().trim() ||
-                  $el.find(".s-card__title").text().trim();
-          // Price: extract first $XX.XX from card text
-          const priceMatch = ct.match(/\$([0-9,]+\.[0-9]{2})/);
-          price = priceMatch ? parseFloat(priceMatch[1].replace(/,/g,"")) : 0;
-          // Link
-          href = $el.find("a.s-card__link").first().attr("href") || $el.find("a").first().attr("href") || "";
-          // Condition: .s-card__subtitle .su-styled-text (secondary)
-          condition = $el.find(".s-card__subtitle .su-styled-text").first().text().trim() || null;
-          // Sold date from card text
-          const soldDateMatch = ct.match(/Sold\s+\w+\s+\d+,\s+\d{4}/);
-          dateSold = soldDateMatch ? soldDateMatch[0] : null;
-        } else {
-          title = ($el.find(".s-item__title span[role=heading]").text() || $el.find(".s-item__title").text()).replace("New listing","").trim();
-          price = parseFloat($el.find(".s-item__price").first().text().replace(/[^0-9.]/g,""));
-          href  = $el.find(".s-item__link").attr("href") || "";
-          condition = $el.find(".SECONDARY_INFO,.s-item__subtitle").first().text().trim() || null;
-        }
-        title = (title||"").replace(/Opens in a new window or tab/gi,"").replace(/\s+/g," ").trim();
-        if (!title || title === "Shop on eBay" || !price || price < 1) return;
-        // Skip promo/placeholder cards
-        if (!href || href.includes("rover.ebay.com")) return;
-        // Only reject if condition field (not title) says "New" — avoids rejecting used items with "New" in part name
-        const cond = (condition||"").toLowerCase();
-        if (cond === "new" || cond === "brand new") return;
-        const sm = ct.match(/(\d[\d,]*)\s+sold/i);
-        allListings.push({ title, soldPrice: price, url: href ? href.split("?")[0] : null, category: condition, soldCount: sm ? parseInt(sm[1].replace(/,/g,"")) : 1, dateSold });
-      });
-    } catch(e) {
-      console.log(`[ebay] query failed "${q}":`, e.message);
-      if (e.response?.status === 429) break;
+    for (const q of searchQueries) {
+      const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=60`;
+      try {
+        const page = await ctx.newPage();
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+        await page.waitForSelector(".s-item, .s-card", { timeout: 10000 }).catch(() => {});
+        const listings = await page.evaluate(() => {
+          const results = [];
+          const cards = document.querySelectorAll(".s-item, .s-card");
+          for (const card of cards) {
+            const text = card.textContent || "";
+            const titleEl = card.querySelector(".s-item__title, .s-card__title");
+            const title = (titleEl?.textContent || "").replace("New listing","").replace(/Opens in a new window or tab/gi,"").trim();
+            if (!title || title === "Shop on eBay") continue;
+            const priceEl = card.querySelector(".s-item__price, .s-card__price");
+            const priceText = priceEl?.textContent || text.match(/\$[\d,]+\.\d{2}/)?.[0] || "";
+            const priceMatch = priceText.match(/\$([\d,]+\.\d{2})/);
+            if (!priceMatch) continue;
+            const price = parseFloat(priceMatch[1].replace(/,/g,""));
+            if (!price || price < 1) continue;
+            const linkEl = card.querySelector("a.s-item__link, a.s-card__link, a[href*='ebay.com/itm']");
+            const href = linkEl?.href || "";
+            if (!href || href.includes("rover.ebay.com")) continue;
+            const condEl = card.querySelector(".SECONDARY_INFO, .s-item__subtitle, .s-card__subtitle");
+            const condition = condEl?.textContent?.trim() || null;
+            const cond = (condition||"").toLowerCase();
+            if (cond === "new" || cond === "brand new") continue;
+            const soldMatch = text.match(/(\d[\d,]*)\s+sold/i);
+            results.push({
+              title, soldPrice: price,
+              url: href.split("?")[0],
+              category: condition,
+              soldCount: soldMatch ? parseInt(soldMatch[1].replace(/,/g,"")) : 1,
+            });
+          }
+          return results;
+        });
+        console.log(`[ebay] "${q.slice(0,40)}" items:${listings.length}`);
+        allListings.push(...listings);
+        await page.close();
+        await new Promise(r => setTimeout(r, 1000));
+      } catch(e) {
+        console.log(`[ebay] query failed "${q}":`, e.message);
+      }
     }
+  } finally {
+    await browser.close();
   }
   const seen = new Set();
   return allListings.filter(l => { if (!l.url || seen.has(l.url)) return false; seen.add(l.url); return true; })
