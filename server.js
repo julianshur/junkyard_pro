@@ -100,7 +100,7 @@ async function fetchPage(url, referer = null) {
     const { chromium } = await import("playwright");
     const browser = await chromium.launch({
       headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled"],
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled", "--disable-dev-shm-usage", "--disable-gpu"],
     });
     try {
       const ctx = await browser.newContext({
@@ -250,7 +250,7 @@ async function scrapeEbayQuery(q) {
   const { chromium } = await import("playwright");
   const browser = await chromium.launch({
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled", "--single-process"],
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled", "--disable-dev-shm-usage", "--disable-gpu"],
   });
   try {
     const ctx = await browser.newContext({
