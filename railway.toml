@@ -1,5 +1,5 @@
 [deploy]
-startCommand = "node server.js"
+startCommand = "PLAYWRIGHT_BROWSERS_PATH=0 node server.js"
 healthcheckPath = "/health"
 healthcheckTimeout = 60
 restartPolicyType = "never"
