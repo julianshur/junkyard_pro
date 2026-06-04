@@ -26,11 +26,12 @@ echo === WinSCP deploy ===
  "option batch on" ^
  "option confirm off" ^
  "lcd %REPO%" ^
-
- "put server.js /public_html" ^
- "put package.json /public_html" ^
- "cd /public" ^
- "put index.html /public_html" ^
+ "put server.js /public_html/server.js" ^
+ "put package.json /public_html/package.json" ^
+ "lcd %REPO%\public" ^
+ "put index.html /public_html/index.html" ^
+ "put app.js /public_html/app.js" ^
+ "put styles.css /public_html/styles.css" ^
  "exit"
 
 echo.
