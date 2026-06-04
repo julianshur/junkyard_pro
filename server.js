@@ -6,7 +6,6 @@ import cors    from "cors";
 import path    from "path";
 import fs      from "fs";
 import { fileURLToPath } from "url";
-import { chromium } from "playwright";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app  = express();
@@ -97,6 +96,8 @@ async function fetchPage(url, referer = null) {
 
   // pyp.com: use Playwright (JS-rendered, blocks plain HTTP)
   if (domain.includes("pyp.com")) {
+    process.env.PLAYWRIGHT_BROWSERS_PATH = "/opt/render/project/src/.playwright";
+    const { chromium } = await import("playwright");
     const browser = await chromium.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
     try {
       const page = await browser.newPage();
