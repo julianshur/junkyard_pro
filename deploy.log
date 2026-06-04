@@ -3878,3 +3878,308 @@
 . 2026-06-03 19:58:18.174 Script: Max roundtrip: 15
 . 2026-06-03 19:58:18.174 Got reply 1004 to the command 4
 . 2026-06-03 19:58:18.174 Disconnected from server
+. 2026-06-03 19:59:12.835 --------------------------------------------------------------------------
+. 2026-06-03 19:59:12.835 WinSCP Version 6.5.6 (Build 16502 2026-03-25) (OS 10.0.19045 – Windows 10 Pro)
+. 2026-06-03 19:59:12.835 Configuration: HKCU\Software\Martin Prikryl\WinSCP 2\
+. 2026-06-03 19:59:12.835 Log level: Debug 1
+. 2026-06-03 19:59:12.835 Local account: DESKTOP-D919AF9\Julian
+. 2026-06-03 19:59:12.835 Working directory: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-06-03 19:59:12.835 Process ID: 11268
+. 2026-06-03 19:59:12.850 Ancestor processes: WinSCP, cmd, explorer, ...
+. 2026-06-03 19:59:12.850 Command-line: "C:\Program Files (x86)\WinSCP\WinSCP.exe" /console=6.5.6 /consoleinstance=_11048_336 "/log=deploy.log" "/loglevel=1" "/command" "open ftp://julianshur%40junkyardpro.com:***@ftp.junkyardpro.com/ -passive=on" "option batch on" "option confirm off" "lcd C:\Users\Julian\Documents\git\junkyard_pro" "put server.js /public_html/server.js" "put package.json /public_html/package.json" "lcd C:\Users\Julian\Documents\git\junkyard_pro\public" "put index.html /public_html/index.html" "put app.js /public_html/app.js" "put styles.css /public_html/styles.css" "exit"
+. 2026-06-03 19:59:12.850 Switch:    /console=6.5.6
+. 2026-06-03 19:59:12.850 Switch:    /consoleinstance=_11048_336
+. 2026-06-03 19:59:12.850 Switch:    /log=deploy.log
+. 2026-06-03 19:59:12.850 Switch:    /loglevel=1
+. 2026-06-03 19:59:12.850 Switch:    /command
+. 2026-06-03 19:59:12.850 Parameter: open ftp://julianshur%40junkyardpro.com:b1n6b0n61!@ftp.junkyardpro.com/ -passive=on
+. 2026-06-03 19:59:12.850 Parameter: option batch on
+. 2026-06-03 19:59:12.850 Parameter: option confirm off
+. 2026-06-03 19:59:12.850 Parameter: lcd C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-06-03 19:59:12.850 Parameter: put server.js /public_html/server.js
+. 2026-06-03 19:59:12.850 Parameter: put package.json /public_html/package.json
+. 2026-06-03 19:59:12.850 Parameter: lcd C:\Users\Julian\Documents\git\junkyard_pro\public
+. 2026-06-03 19:59:12.850 Parameter: put index.html /public_html/index.html
+. 2026-06-03 19:59:12.850 Parameter: put app.js /public_html/app.js
+. 2026-06-03 19:59:12.850 Parameter: put styles.css /public_html/styles.css
+. 2026-06-03 19:59:12.850 Parameter: exit
+. 2026-06-03 19:59:12.850 Time zone: Current: GMT-7, Standard: GMT-8 (Pacific Standard Time), DST: GMT-7 (Pacific Daylight Time), DST Start: 3/8/2026, DST End: 11/1/2026
+. 2026-06-03 19:59:12.850 Login time: Wednesday, June 3, 2026 7:59:12 PM
+. 2026-06-03 19:59:12.850 --------------------------------------------------------------------------
+. 2026-06-03 19:59:12.850 Script: Retrospectively logging previous script records:
+> 2026-06-03 19:59:12.850 Script: open ftp://julianshur%40junkyardpro.com:***@ftp.junkyardpro.com/ -passive=on
+> 2026-06-03 19:59:12.850 Script: Parameter: ftp://julianshur%40junkyardpro.com:***@ftp.junkyardpro.com/
+> 2026-06-03 19:59:12.850 Script: Switch:    -passive=on
+. 2026-06-03 19:59:12.850 --------------------------------------------------------------------------
+. 2026-06-03 19:59:12.850 Session name: julianshur@junkyardpro.com@ftp.junkyardpro.com (Ad-Hoc site)
+. 2026-06-03 19:59:12.850 Host name: ftp.junkyardpro.com (Port: 21)
+. 2026-06-03 19:59:12.850 User name: julianshur@junkyardpro.com (Password: Yes, Key file: No, Passphrase: No)
+. 2026-06-03 19:59:12.850 Transfer Protocol: FTP
+. 2026-06-03 19:59:12.850 Ping type: Dummy, Ping interval: 30 sec; Timeout: 15 sec
+. 2026-06-03 19:59:12.850 Disable Nagle: No
+. 2026-06-03 19:59:12.850 Proxy: None
+. 2026-06-03 19:59:12.850 Send buffer: 262144
+. 2026-06-03 19:59:12.850 UTF: Auto
+. 2026-06-03 19:59:12.850 FTPS: None [Client certificate: No]
+. 2026-06-03 19:59:12.850 FTP: Passive: Yes [Force IP: Auto]; MLSD: Auto [List all: Auto]; HOST: Auto
+. 2026-06-03 19:59:12.850 Local directory: default, Remote directory: home, Update: Yes, Cache: Yes
+. 2026-06-03 19:59:12.850 Cache directory changes: Yes, Permanent: Yes
+. 2026-06-03 19:59:12.850 Recycle bin: Delete to: No, Overwritten to: No, Bin path: 
+. 2026-06-03 19:59:12.850 Timezone offset: 0h 0m
+. 2026-06-03 19:59:12.850 --------------------------------------------------------------------------
+< 2026-06-03 19:59:12.866 Script: Connecting to ftp.junkyardpro.com ...
+. 2026-06-03 19:59:12.866 Connecting to ftp.junkyardpro.com ...
+. 2026-06-03 19:59:12.944 Connected with ftp.junkyardpro.com. Waiting for welcome message...
+< 2026-06-03 19:59:13.022 220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------
+< 2026-06-03 19:59:13.022 220-You are user number 1 of 50 allowed.
+< 2026-06-03 19:59:13.022 220-Local time is now 19:59. Server port: 21.
+< 2026-06-03 19:59:13.022 220-This is a private system - No anonymous login
+< 2026-06-03 19:59:13.022 220-IPv6 connections are also welcome on this server.
+< 2026-06-03 19:59:13.022 220 You will be disconnected after 15 minutes of inactivity.
+> 2026-06-03 19:59:13.022 USER julianshur@junkyardpro.com
+< 2026-06-03 19:59:13.103 331 User julianshur@junkyardpro.com OK. Password required
+> 2026-06-03 19:59:13.103 PASS **********
+< 2026-06-03 19:59:13.213 230 OK. Current restricted directory is /
+> 2026-06-03 19:59:13.213 SYST
+< 2026-06-03 19:59:13.300 215 UNIX Type: L8
+> 2026-06-03 19:59:13.300 FEAT
+< 2026-06-03 19:59:13.379 211-Extensions supported:
+< 2026-06-03 19:59:13.379  UTF8
+< 2026-06-03 19:59:13.379  EPRT
+< 2026-06-03 19:59:13.379  IDLE
+< 2026-06-03 19:59:13.379  MDTM
+< 2026-06-03 19:59:13.379  SIZE
+< 2026-06-03 19:59:13.379  MFMT
+< 2026-06-03 19:59:13.379  REST STREAM
+< 2026-06-03 19:59:13.379  MLST type*;size*;sizd*;modify*;UNIX.mode*;UNIX.uid*;UNIX.gid*;unique*;
+< 2026-06-03 19:59:13.379  MLSD
+< 2026-06-03 19:59:13.379  PRET
+< 2026-06-03 19:59:13.379  AUTH TLS
+< 2026-06-03 19:59:13.379  PBSZ
+< 2026-06-03 19:59:13.379  PROT
+< 2026-06-03 19:59:13.379  TVFS
+< 2026-06-03 19:59:13.379  ESTA
+< 2026-06-03 19:59:13.379  PASV
+< 2026-06-03 19:59:13.379  EPSV
+< 2026-06-03 19:59:13.379 211 End.
+> 2026-06-03 19:59:13.379 OPTS UTF8 ON
+< 2026-06-03 19:59:13.457 504 Unknown command
+< 2026-06-03 19:59:13.457 Script: Connected
+. 2026-06-03 19:59:13.457 Connected
+. 2026-06-03 19:59:13.457 Got reply 1 to the command 1
+. 2026-06-03 19:59:13.457 --------------------------------------------------------------------------
+. 2026-06-03 19:59:13.457 Using FTP protocol.
+. 2026-06-03 19:59:13.457 Doing startup conversation with host.
+< 2026-06-03 19:59:13.457 Script: Starting the session...
+> 2026-06-03 19:59:13.457 PWD
+< 2026-06-03 19:59:13.535 257 "/" is your current location
+. 2026-06-03 19:59:13.535 Got reply 1 to the command 16
+. 2026-06-03 19:59:13.535 Getting current directory name.
+. 2026-06-03 19:59:13.535 Startup conversation with host finished.
+< 2026-06-03 19:59:13.535 Script: Session started.
+< 2026-06-03 19:59:13.535 Script: Active session: [1] julianshur@junkyardpro.com@ftp.junkyardpro.com
+. 2026-06-03 19:59:13.535 Session upkeep
+> 2026-06-03 19:59:13.535 Script: option batch on
+> 2026-06-03 19:59:13.535 Script: Parameter: batch
+> 2026-06-03 19:59:13.535 Script: Parameter: on
+< 2026-06-03 19:59:13.535 Script: batch           on        
+. 2026-06-03 19:59:13.535 Session upkeep
+> 2026-06-03 19:59:13.535 Script: option confirm off
+> 2026-06-03 19:59:13.535 Script: Parameter: confirm
+> 2026-06-03 19:59:13.535 Script: Parameter: off
+< 2026-06-03 19:59:13.535 Script: confirm         off       
+. 2026-06-03 19:59:13.535 Session upkeep
+> 2026-06-03 19:59:13.535 Script: lcd C:\Users\Julian\Documents\git\junkyard_pro
+> 2026-06-03 19:59:13.535 Script: Parameter: C:\Users\Julian\Documents\git\junkyard_pro
+< 2026-06-03 19:59:13.535 Script: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-06-03 19:59:13.535 Session upkeep
+> 2026-06-03 19:59:13.535 Script: put server.js /public_html/server.js
+> 2026-06-03 19:59:13.535 Script: Parameter: server.js
+> 2026-06-03 19:59:13.535 Script: Parameter: /public_html/server.js
+. 2026-06-03 19:59:13.535 Size of 1 local files/folders calculated as 24862
+. 2026-06-03 19:59:13.535 Copying 1 files/directories to remote directory "/public_html/" - total size: 24,862
+. 2026-06-03 19:59:13.535   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: server.js
+. 2026-06-03 19:59:13.535   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 19:59:13.535   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 19:59:13.535 File: 'server.js' [2026-06-03T04:39:01.563Z] [24862]
+. 2026-06-03 19:59:13.535 Copying "server.js" to remote directory started.
+. 2026-06-03 19:59:13.535 Binary transfer mode selected.
+. 2026-06-03 19:59:13.535 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\server.js
+> 2026-06-03 19:59:13.535 CWD /public_html
+< 2026-06-03 19:59:13.616 550 Can't change directory to /public_html: Not a directory
+> 2026-06-03 19:59:13.616 CWD /
+< 2026-06-03 19:59:13.703 250 OK. Current directory is /
+> 2026-06-03 19:59:13.703 MKD public_html
+< 2026-06-03 19:59:13.773 550 Can't create directory: File exists
+> 2026-06-03 19:59:13.773 CWD /public_html
+< 2026-06-03 19:59:13.851 550 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:13.851 Copying files to remote side failed.
+. 2026-06-03 19:59:13.851 Got reply 2004 to the command 4
+* 2026-06-03 19:59:13.867 (ExtException) **Copying files to remote side failed.**
+* 2026-06-03 19:59:13.867 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:13.867 Asking user:
+. 2026-06-03 19:59:13.867 Error transferring file 'server.js'. ("Copying files to remote side failed.","Can't change directory to /public_html: Not a directory")
+< 2026-06-03 19:59:13.867 Script: Error transferring file 'server.js'.
+< 2026-06-03 19:59:13.867 Script: Copying files to remote side failed.
+< 2026-06-03 19:59:13.867 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:13.867 Answer: Abort
+* 2026-06-03 19:59:13.882 (ESkipFile) Error transferring file 'server.js'.
+* 2026-06-03 19:59:13.882 Copying files to remote side failed.
+* 2026-06-03 19:59:13.882 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:13.882 Copying finished: Transferred: 0, Elapsed: 0:00:00, CPS: 0/s
+. 2026-06-03 19:59:13.882 Script: Failed
+. 2026-06-03 19:59:13.882 Session upkeep
+> 2026-06-03 19:59:13.882 Script: put package.json /public_html/package.json
+> 2026-06-03 19:59:13.882 Script: Parameter: package.json
+> 2026-06-03 19:59:13.882 Script: Parameter: /public_html/package.json
+. 2026-06-03 19:59:13.882 Size of 1 local files/folders calculated as 445
+. 2026-06-03 19:59:13.882 Copying 1 files/directories to remote directory "/public_html/" - total size: 445
+. 2026-06-03 19:59:13.882   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: package.json
+. 2026-06-03 19:59:13.882   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 19:59:13.882   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 19:59:13.882 File: 'package.json' [2026-06-03T04:38:52.148Z] [445]
+. 2026-06-03 19:59:13.882 Copying "package.json" to remote directory started.
+. 2026-06-03 19:59:13.882 Binary transfer mode selected.
+. 2026-06-03 19:59:13.882 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\package.json
+> 2026-06-03 19:59:13.882 CWD /public_html
+< 2026-06-03 19:59:14.054 550 Can't change directory to /public_html: Not a directory
+> 2026-06-03 19:59:14.054 CWD /
+< 2026-06-03 19:59:14.148 250 OK. Current directory is /
+> 2026-06-03 19:59:14.148 MKD public_html
+< 2026-06-03 19:59:14.226 550 Can't create directory: File exists
+> 2026-06-03 19:59:14.226 CWD /public_html
+< 2026-06-03 19:59:14.304 550 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:14.304 Copying files to remote side failed.
+. 2026-06-03 19:59:14.304 Got reply 2004 to the command 4
+* 2026-06-03 19:59:14.304 (ExtException) **Copying files to remote side failed.**
+* 2026-06-03 19:59:14.304 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:14.304 Asking user:
+. 2026-06-03 19:59:14.304 Error transferring file 'package.json'. ("Copying files to remote side failed.","Can't change directory to /public_html: Not a directory")
+< 2026-06-03 19:59:14.304 Script: Error transferring file 'package.json'.
+< 2026-06-03 19:59:14.304 Script: Copying files to remote side failed.
+< 2026-06-03 19:59:14.304 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:14.304 Answer: Abort
+* 2026-06-03 19:59:14.319 (ESkipFile) Error transferring file 'package.json'.
+* 2026-06-03 19:59:14.319 Copying files to remote side failed.
+* 2026-06-03 19:59:14.319 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:14.319 Copying finished: Transferred: 0, Elapsed: 0:00:00, CPS: 0/s
+. 2026-06-03 19:59:14.319 Script: Failed
+. 2026-06-03 19:59:14.319 Session upkeep
+> 2026-06-03 19:59:14.319 Script: lcd C:\Users\Julian\Documents\git\junkyard_pro\public
+> 2026-06-03 19:59:14.319 Script: Parameter: C:\Users\Julian\Documents\git\junkyard_pro\public
+< 2026-06-03 19:59:14.320 Script: C:\Users\Julian\Documents\git\junkyard_pro\public
+. 2026-06-03 19:59:14.321 Session upkeep
+> 2026-06-03 19:59:14.321 Script: put index.html /public_html/index.html
+> 2026-06-03 19:59:14.321 Script: Parameter: index.html
+> 2026-06-03 19:59:14.321 Script: Parameter: /public_html/index.html
+. 2026-06-03 19:59:14.322 Size of 1 local files/folders calculated as 1080
+. 2026-06-03 19:59:14.322 Copying 1 files/directories to remote directory "/public_html/" - total size: 1,080
+. 2026-06-03 19:59:14.322   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: index.html
+. 2026-06-03 19:59:14.322   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 19:59:14.322   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 19:59:14.322 File: 'index.html' [2026-06-03T04:26:37.993Z] [1080]
+. 2026-06-03 19:59:14.324 Copying "index.html" to remote directory started.
+. 2026-06-03 19:59:14.324 Binary transfer mode selected.
+. 2026-06-03 19:59:14.324 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\public\index.html
+> 2026-06-03 19:59:14.324 CWD /public_html
+< 2026-06-03 19:59:14.501 550 Can't change directory to /public_html: Not a directory
+> 2026-06-03 19:59:14.501 CWD /
+< 2026-06-03 19:59:14.570 250 OK. Current directory is /
+> 2026-06-03 19:59:14.570 MKD public_html
+< 2026-06-03 19:59:14.653 550 Can't create directory: File exists
+> 2026-06-03 19:59:14.653 CWD /public_html
+< 2026-06-03 19:59:14.732 550 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:14.732 Copying files to remote side failed.
+. 2026-06-03 19:59:14.732 Got reply 2004 to the command 4
+* 2026-06-03 19:59:14.736 (ExtException) **Copying files to remote side failed.**
+* 2026-06-03 19:59:14.736 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:14.736 Asking user:
+. 2026-06-03 19:59:14.736 Error transferring file 'index.html'. ("Copying files to remote side failed.","Can't change directory to /public_html: Not a directory")
+< 2026-06-03 19:59:14.736 Script: Error transferring file 'index.html'.
+< 2026-06-03 19:59:14.737 Script: Copying files to remote side failed.
+< 2026-06-03 19:59:14.737 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:14.737 Answer: Abort
+* 2026-06-03 19:59:14.737 (ESkipFile) Error transferring file 'index.html'.
+* 2026-06-03 19:59:14.737 Copying files to remote side failed.
+* 2026-06-03 19:59:14.737 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:14.737 Copying finished: Transferred: 0, Elapsed: 0:00:00, CPS: 0/s
+. 2026-06-03 19:59:14.737 Script: Failed
+. 2026-06-03 19:59:14.737 Session upkeep
+> 2026-06-03 19:59:14.737 Script: put app.js /public_html/app.js
+> 2026-06-03 19:59:14.737 Script: Parameter: app.js
+> 2026-06-03 19:59:14.737 Script: Parameter: /public_html/app.js
+. 2026-06-03 19:59:14.737 Size of 1 local files/folders calculated as 5852
+. 2026-06-03 19:59:14.737 Copying 1 files/directories to remote directory "/public_html/" - total size: 5,852
+. 2026-06-03 19:59:14.737   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: app.js
+. 2026-06-03 19:59:14.737   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 19:59:14.737   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 19:59:14.737 File: 'app.js' [2026-06-04T02:51:36.281Z] [5852]
+. 2026-06-03 19:59:14.737 Copying "app.js" to remote directory started.
+. 2026-06-03 19:59:14.737 Binary transfer mode selected.
+. 2026-06-03 19:59:14.737 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\public\app.js
+> 2026-06-03 19:59:14.737 CWD /public_html
+< 2026-06-03 19:59:14.920 550 Can't change directory to /public_html: Not a directory
+> 2026-06-03 19:59:14.920 CWD /
+< 2026-06-03 19:59:15.004 250 OK. Current directory is /
+> 2026-06-03 19:59:15.004 MKD public_html
+< 2026-06-03 19:59:15.087 550 Can't create directory: File exists
+> 2026-06-03 19:59:15.087 CWD /public_html
+< 2026-06-03 19:59:15.166 550 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:15.166 Copying files to remote side failed.
+. 2026-06-03 19:59:15.166 Got reply 2004 to the command 4
+* 2026-06-03 19:59:15.183 (ExtException) **Copying files to remote side failed.**
+* 2026-06-03 19:59:15.183 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:15.183 Asking user:
+. 2026-06-03 19:59:15.183 Error transferring file 'app.js'. ("Copying files to remote side failed.","Can't change directory to /public_html: Not a directory")
+< 2026-06-03 19:59:15.183 Script: Error transferring file 'app.js'.
+< 2026-06-03 19:59:15.183 Script: Copying files to remote side failed.
+< 2026-06-03 19:59:15.183 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:15.183 Answer: Abort
+* 2026-06-03 19:59:15.199 (ESkipFile) Error transferring file 'app.js'.
+* 2026-06-03 19:59:15.199 Copying files to remote side failed.
+* 2026-06-03 19:59:15.199 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:15.199 Copying finished: Transferred: 0, Elapsed: 0:00:00, CPS: 0/s
+. 2026-06-03 19:59:15.199 Script: Failed
+. 2026-06-03 19:59:15.199 Session upkeep
+> 2026-06-03 19:59:15.199 Script: put styles.css /public_html/styles.css
+> 2026-06-03 19:59:15.199 Script: Parameter: styles.css
+> 2026-06-03 19:59:15.199 Script: Parameter: /public_html/styles.css
+. 2026-06-03 19:59:15.199 Size of 1 local files/folders calculated as 5248
+. 2026-06-03 19:59:15.199 Copying 1 files/directories to remote directory "/public_html/" - total size: 5,248
+. 2026-06-03 19:59:15.199   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: styles.css
+. 2026-06-03 19:59:15.199   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 19:59:15.199   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 19:59:15.199 File: 'styles.css' [2026-05-30T21:12:16.057Z] [5248]
+. 2026-06-03 19:59:15.216 Copying "styles.css" to remote directory started.
+. 2026-06-03 19:59:15.216 Binary transfer mode selected.
+. 2026-06-03 19:59:15.216 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\public\styles.css
+> 2026-06-03 19:59:15.216 CWD /public_html
+< 2026-06-03 19:59:15.399 550 Can't change directory to /public_html: Not a directory
+> 2026-06-03 19:59:15.399 CWD /
+< 2026-06-03 19:59:15.483 250 OK. Current directory is /
+> 2026-06-03 19:59:15.483 MKD public_html
+< 2026-06-03 19:59:15.549 550 Can't create directory: File exists
+> 2026-06-03 19:59:15.549 CWD /public_html
+< 2026-06-03 19:59:15.634 550 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:15.634 Copying files to remote side failed.
+. 2026-06-03 19:59:15.634 Got reply 2004 to the command 4
+* 2026-06-03 19:59:15.634 (ExtException) **Copying files to remote side failed.**
+* 2026-06-03 19:59:15.634 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:15.634 Asking user:
+. 2026-06-03 19:59:15.634 Error transferring file 'styles.css'. ("Copying files to remote side failed.","Can't change directory to /public_html: Not a directory")
+< 2026-06-03 19:59:15.634 Script: Error transferring file 'styles.css'.
+< 2026-06-03 19:59:15.634 Script: Copying files to remote side failed.
+< 2026-06-03 19:59:15.634 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:15.634 Answer: Abort
+* 2026-06-03 19:59:15.649 (ESkipFile) Error transferring file 'styles.css'.
+* 2026-06-03 19:59:15.649 Copying files to remote side failed.
+* 2026-06-03 19:59:15.649 Can't change directory to /public_html: Not a directory
+. 2026-06-03 19:59:15.649 Copying finished: Transferred: 0, Elapsed: 0:00:00, CPS: 0/s
+. 2026-06-03 19:59:15.649 Script: Failed
+. 2026-06-03 19:59:15.649 Session upkeep
+> 2026-06-03 19:59:15.649 Script: exit
+. 2026-06-03 19:59:15.649 Session upkeep
+. 2026-06-03 19:59:15.649 Script: Exit code: 1
+. 2026-06-03 19:59:15.649 Script: Max roundtrip: 0
+. 2026-06-03 19:59:15.649 Got reply 1004 to the command 4
+. 2026-06-03 19:59:15.649 Disconnected from server
