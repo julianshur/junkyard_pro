@@ -351,6 +351,17 @@ const PYP_PRICES = [
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.get("/health", (_, res) => res.json({ status: "ok", redis: !!(redisUrl && redisToken) }));
 
+app.get("/debug-ebay", async (req, res) => {
+  const url = `https://www.ebay.com/sch/i.html?_nkw=2003+Ford+Expedition+engine&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=60`;
+  try {
+    const html = await fetchPage(url, "https://www.ebay.com/");
+    const $ = cheerioLoad(html);
+    const classes = [...html.matchAll(/class="([^"]+)"/g)].map(m => m[1]).slice(0, 60).join("\n");
+    res.setHeader("Content-Type", "text/plain");
+    res.send(`HTML length: ${html.length}\n.s-item count: ${$(".s-item").length}\n.s-card count: ${$(".s-card").length}\n\nCLASSES:\n${classes}\n\nSNIPPET:\n${html.slice(0, 3000)}`);
+  } catch(e) { res.status(500).send(e.message); }
+});
+
 app.get("/yards", async (req, res) => {
   const q = (req.query.q || "").trim().toLowerCase();
   if (!q) return res.json({ error: "Missing location query" });
