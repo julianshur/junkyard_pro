@@ -412,16 +412,25 @@ app.get("/debug-pyp/:yardId", async (req, res) => {
   } catch(e) { res.status(500).send(e.message + "\n" + e.stack); }
 });
 
+const scrapeJobs = new Map(); // yardId -> "running" | Error
+
 app.get("/inventory/:yardId", async (req, res) => {
   const { yardId } = req.params;
   const cacheKey = `inv:${yardId}`;
   const cached = await cacheGet(cacheKey);
   if (cached) { console.log(`[inv] cache hit: ${yardId}`); return res.json(cached); }
 
+  // If already scraping, tell client to poll
+  if (scrapeJobs.get(yardId) === "running") return res.json({ status: "scraping" });
+
+  // Start scrape in background, respond immediately
+  scrapeJobs.set(yardId, "running");
+  res.json({ status: "scraping" });
+
   console.log(`[inv] fetching: ${yardId}`);
   let html;
   try { html = await fetchPage(`https://www.pyp.com/inventory/${yardId}/`, "https://www.pyp.com/"); }
-  catch(e) { return res.json({ error: "Failed to load inventory: " + e.message }); }
+  catch(e) { scrapeJobs.set(yardId, new Error(e.message)); return; }
 
   const $ = cheerioLoad(html);
   const vehicles = [];
@@ -447,12 +456,12 @@ app.get("/inventory/:yardId", async (req, res) => {
     vehicles.push({ year: parseInt(year), make, model, section, row, color, vin, stockNo, dateAdded, img: $el.find("img").first().attr("src") || null });
   });
 
-  if (!vehicles.length) return res.json({ error: `No vehicles found for "${yardId}"` });
+  if (!vehicles.length) { scrapeJobs.delete(yardId); return; }
 
   const yardScore = scoreYard(vehicles);
   const result = { vehicles, yardScore };
   await cacheSet(cacheKey, result, TTL.inventory);
-  res.json(result);
+  scrapeJobs.delete(yardId);
 });
 
 app.get("/prices/:yardId", async (req, res) => {

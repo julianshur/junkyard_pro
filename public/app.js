@@ -1,14 +1,15 @@
 const API = "https://junkyard-pro.onrender.com";
 
-const form        = document.querySelector("#search-form");
-const input       = document.querySelector("#location");
-const statusBand  = document.querySelector("#status");
-const summary     = document.querySelector("#summary");
-const results     = document.querySelector("#results");
-const yardNameEl  = document.querySelector("#yard-name");
-const yardLinkEl  = document.querySelector("#yard-link");
-const carCountEl  = document.querySelector("#car-count");
-const submitBtn   = form.querySelector("button");
+const form       = document.querySelector("#search-form");
+const input      = document.querySelector("#location");
+const statusBand = document.querySelector("#status");
+const summary    = document.querySelector("#summary");
+const results    = document.querySelector("#results");
+const yardNameEl = document.querySelector("#yard-name");
+const yardLinkEl = document.querySelector("#yard-link");
+const carCountEl = document.querySelector("#car-count");
+const compCountEl = document.querySelector("#comp-count");
+const submitBtn  = form.querySelector("button");
 
 function setStatus(msg, isError = false) {
   statusBand.hidden = !msg;
@@ -30,6 +31,21 @@ async function api(path) {
   return data;
 }
 
+async function apiPoll(path, statusMsg, intervalMs = 4000, maxWaitMs = 120000) {
+  const deadline = Date.now() + maxWaitMs;
+  while (true) {
+    const data = await api(path);
+    if (data.status === "scraping") {
+      if (Date.now() > deadline) throw new Error("Timed out waiting for scrape to complete.");
+      setStatus(statusMsg);
+      await new Promise(r => setTimeout(r, intervalMs));
+      continue;
+    }
+    if (data.error) throw new Error(data.error);
+    return data;
+  }
+}
+
 function renderYardPicker(yards, onSelect) {
   results.innerHTML = "";
   const heading = document.createElement("h2");
@@ -49,8 +65,9 @@ function renderInventory(yard, vehicles, ebayMap) {
 
   yardNameEl.textContent = yard.name;
   yardLinkEl.href = `https://www.pyp.com/inventory/${yard.id}/`;
-  yardLinkEl.textContent = "Open full inventory";
   carCountEl.textContent = vehicles.length;
+  const totalComps = Object.values(ebayMap).reduce((n, l) => n + l.length, 0);
+  compCountEl.textContent = totalComps;
   summary.hidden = false;
 
   if (!vehicles.length) {
@@ -152,9 +169,8 @@ async function loadYard(yard) {
   setStatus("Loading inventory…");
 
   try {
-    // 2. Inventory
-    const inv = await api(`/inventory/${yard.id}`);
-    if (inv.error) throw new Error(inv.error);
+    // 2. Inventory (polls until scraped)
+    const inv = await apiPoll(`/inventory/${yard.id}`, "Loading inventory from pyp.com (this takes ~30s the first time)…");
     const vehicles = inv.vehicles || [];
 
     setStatus(`Loading eBay sold listings for ${vehicles.length} vehicles…`);
