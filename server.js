@@ -116,9 +116,9 @@ async function fetchPage(url, referer = null) {
         Object.defineProperty(navigator, "plugins", { get: () => [1, 2, 3] });
         Object.defineProperty(navigator, "languages", { get: () => ["en-US", "en"] });
       });
-      await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
-      // Wait for Cloudflare challenge to complete and real content to appear
-      await page.waitForSelector(".pypvi_resultRow", { timeout: 20000 }).catch(() => {});
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+      // Wait for Cloudflare to pass and real inventory to appear
+      await page.waitForSelector(".pypvi_resultRow", { timeout: 25000 }).catch(() => {});
       return await page.content();
     } finally {
       await browser.close();
@@ -401,7 +401,7 @@ app.get("/debug-pyp/:yardId", async (req, res) => {
     const browser = await chromium.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-    await new Promise(r => setTimeout(r, 3000));
+    await page.waitForSelector(".pypvi_resultRow", { timeout: 25000 }).catch(() => {});
     const html = await page.content();
     await browser.close();
     res.setHeader("Content-Type", "text/plain");
