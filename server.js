@@ -94,16 +94,31 @@ const BROWSER_HEADERS = {
 async function fetchPage(url, referer = null) {
   const domain = new URL(url).hostname;
 
-  // pyp.com: use Playwright (JS-rendered, blocks plain HTTP)
+  // pyp.com: use Playwright with stealth patches to bypass Cloudflare
   if (domain.includes("pyp.com")) {
     process.env.PLAYWRIGHT_BROWSERS_PATH = "/opt/render/project/src/.playwright";
     const { chromium } = await import("playwright");
-    const browser = await chromium.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
+    const browser = await chromium.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled"],
+    });
     try {
-      const page = await browser.newPage();
-      await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
-      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-      await page.waitForSelector(".pypvi_resultRow", { timeout: 10000 }).catch(() => {});
+      const ctx = await browser.newContext({
+        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        locale: "en-US",
+        extraHTTPHeaders: { "Accept-Language": "en-US,en;q=0.9" },
+      });
+      const page = await ctx.newPage();
+      // Hide webdriver fingerprint that Cloudflare checks
+      await page.addInitScript(() => {
+        Object.defineProperty(navigator, "webdriver", { get: () => undefined });
+        window.chrome = { runtime: {} };
+        Object.defineProperty(navigator, "plugins", { get: () => [1, 2, 3] });
+        Object.defineProperty(navigator, "languages", { get: () => ["en-US", "en"] });
+      });
+      await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
+      // Wait for Cloudflare challenge to complete and real content to appear
+      await page.waitForSelector(".pypvi_resultRow", { timeout: 20000 }).catch(() => {});
       return await page.content();
     } finally {
       await browser.close();
