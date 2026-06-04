@@ -22,7 +22,10 @@ function money(n) {
 
 async function api(path) {
   const r = await fetch(API + path);
-  const data = await r.json();
+  const text = await r.text();
+  let data;
+  try { data = JSON.parse(text); }
+  catch(_) { throw new Error(`Server returned non-JSON (status ${r.status}): ${text.slice(0, 120)}`); }
   if (!r.ok) throw new Error(data.error || "Request failed");
   return data;
 }
