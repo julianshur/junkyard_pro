@@ -4750,3 +4750,717 @@
 . 2026-06-03 20:19:05.749 Script: Max roundtrip: 16
 . 2026-06-03 20:19:05.749 Got reply 1004 to the command 4
 . 2026-06-03 20:19:05.751 Disconnected from server
+. 2026-06-03 20:47:21.578 --------------------------------------------------------------------------
+. 2026-06-03 20:47:21.578 WinSCP Version 6.5.6 (Build 16502 2026-03-25) (OS 10.0.19045 – Windows 10 Pro)
+. 2026-06-03 20:47:21.579 Configuration: HKCU\Software\Martin Prikryl\WinSCP 2\
+. 2026-06-03 20:47:21.579 Log level: Debug 1
+. 2026-06-03 20:47:21.579 Local account: DESKTOP-D919AF9\Julian
+. 2026-06-03 20:47:21.579 Working directory: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-06-03 20:47:21.579 Process ID: 2952
+. 2026-06-03 20:47:21.594 Ancestor processes: WinSCP, powershell, claude, Code, Code, ...
+. 2026-06-03 20:47:21.595 Command-line: "C:\Program Files (x86)\WinSCP\WinSCP.exe" /console=6.5.6 /consoleinstance=_14276_719 "/script=C:\Users\Julian\Documents\git\junkyard_pro\winscp_deploy.txt" "/log=C:\Users\Julian\Documents\git\junkyard_pro\deploy.log" "/loglevel=1" 
+. 2026-06-03 20:47:21.595 Switch:    /console=6.5.6
+. 2026-06-03 20:47:21.595 Switch:    /consoleinstance=_14276_719
+. 2026-06-03 20:47:21.595 Switch:    /script=C:\Users\Julian\Documents\git\junkyard_pro\winscp_deploy.txt
+. 2026-06-03 20:47:21.595 Switch:    /log=C:\Users\Julian\Documents\git\junkyard_pro\deploy.log
+. 2026-06-03 20:47:21.595 Switch:    /loglevel=1
+. 2026-06-03 20:47:21.595 Time zone: Current: GMT-7, Standard: GMT-8 (Pacific Standard Time), DST: GMT-7 (Pacific Daylight Time), DST Start: 3/8/2026, DST End: 11/1/2026
+. 2026-06-03 20:47:21.595 Login time: Wednesday, June 3, 2026 8:47:21 PM
+. 2026-06-03 20:47:21.595 --------------------------------------------------------------------------
+. 2026-06-03 20:47:21.595 Script: Retrospectively logging previous script records:
+> 2026-06-03 20:47:21.595 Script: open ftp://julianshur%40junkyardpro.com:***@ftp.junkyardpro.com/ -passive=on
+> 2026-06-03 20:47:21.595 Script: Parameter: ftp://julianshur%40junkyardpro.com:***@ftp.junkyardpro.com/
+> 2026-06-03 20:47:21.595 Script: Switch:    -passive=on
+. 2026-06-03 20:47:21.595 --------------------------------------------------------------------------
+. 2026-06-03 20:47:21.595 Session name: julianshur@junkyardpro.com@ftp.junkyardpro.com (Ad-Hoc site)
+. 2026-06-03 20:47:21.595 Host name: ftp.junkyardpro.com (Port: 21)
+. 2026-06-03 20:47:21.595 User name: julianshur@junkyardpro.com (Password: Yes, Key file: No, Passphrase: No)
+. 2026-06-03 20:47:21.595 Transfer Protocol: FTP
+. 2026-06-03 20:47:21.595 Ping type: Dummy, Ping interval: 30 sec; Timeout: 15 sec
+. 2026-06-03 20:47:21.595 Disable Nagle: No
+. 2026-06-03 20:47:21.595 Proxy: None
+. 2026-06-03 20:47:21.595 Send buffer: 262144
+. 2026-06-03 20:47:21.595 UTF: Auto
+. 2026-06-03 20:47:21.595 FTPS: None [Client certificate: No]
+. 2026-06-03 20:47:21.595 FTP: Passive: Yes [Force IP: Auto]; MLSD: Auto [List all: Auto]; HOST: Auto
+. 2026-06-03 20:47:21.595 Local directory: default, Remote directory: home, Update: Yes, Cache: Yes
+. 2026-06-03 20:47:21.595 Cache directory changes: Yes, Permanent: Yes
+. 2026-06-03 20:47:21.595 Recycle bin: Delete to: No, Overwritten to: No, Bin path: 
+. 2026-06-03 20:47:21.595 Timezone offset: 0h 0m
+. 2026-06-03 20:47:21.595 --------------------------------------------------------------------------
+< 2026-06-03 20:47:21.622 Script: Connecting to ftp.junkyardpro.com ...
+. 2026-06-03 20:47:21.622 Connecting to ftp.junkyardpro.com ...
+. 2026-06-03 20:47:21.808 Connected with ftp.junkyardpro.com. Waiting for welcome message...
+< 2026-06-03 20:47:21.892 220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------
+< 2026-06-03 20:47:21.892 220-You are user number 1 of 50 allowed.
+< 2026-06-03 20:47:21.892 220-Local time is now 20:47. Server port: 21.
+< 2026-06-03 20:47:21.892 220-This is a private system - No anonymous login
+< 2026-06-03 20:47:21.892 220-IPv6 connections are also welcome on this server.
+< 2026-06-03 20:47:21.892 220 You will be disconnected after 15 minutes of inactivity.
+> 2026-06-03 20:47:21.892 USER julianshur@junkyardpro.com
+< 2026-06-03 20:47:21.982 331 User julianshur@junkyardpro.com OK. Password required
+> 2026-06-03 20:47:21.982 PASS **********
+< 2026-06-03 20:47:22.108 230 OK. Current restricted directory is /
+> 2026-06-03 20:47:22.108 SYST
+< 2026-06-03 20:47:22.189 215 UNIX Type: L8
+> 2026-06-03 20:47:22.189 FEAT
+< 2026-06-03 20:47:22.270 211-Extensions supported:
+< 2026-06-03 20:47:22.270  UTF8
+< 2026-06-03 20:47:22.270  EPRT
+< 2026-06-03 20:47:22.270  IDLE
+< 2026-06-03 20:47:22.270  MDTM
+< 2026-06-03 20:47:22.270  SIZE
+< 2026-06-03 20:47:22.270  MFMT
+< 2026-06-03 20:47:22.270  REST STREAM
+< 2026-06-03 20:47:22.270  MLST type*;size*;sizd*;modify*;UNIX.mode*;UNIX.uid*;UNIX.gid*;unique*;
+< 2026-06-03 20:47:22.270  MLSD
+< 2026-06-03 20:47:22.270  PRET
+< 2026-06-03 20:47:22.270  AUTH TLS
+< 2026-06-03 20:47:22.270  PBSZ
+< 2026-06-03 20:47:22.270  PROT
+< 2026-06-03 20:47:22.270  TVFS
+< 2026-06-03 20:47:22.270  ESTA
+< 2026-06-03 20:47:22.270  PASV
+< 2026-06-03 20:47:22.270  EPSV
+< 2026-06-03 20:47:22.270 211 End.
+> 2026-06-03 20:47:22.270 OPTS UTF8 ON
+< 2026-06-03 20:47:22.360 504 Unknown command
+< 2026-06-03 20:47:22.360 Script: Connected
+. 2026-06-03 20:47:22.360 Connected
+. 2026-06-03 20:47:22.360 Got reply 1 to the command 1
+. 2026-06-03 20:47:22.360 --------------------------------------------------------------------------
+. 2026-06-03 20:47:22.360 Using FTP protocol.
+. 2026-06-03 20:47:22.360 Doing startup conversation with host.
+< 2026-06-03 20:47:22.360 Script: Starting the session...
+> 2026-06-03 20:47:22.361 PWD
+< 2026-06-03 20:47:22.441 257 "/" is your current location
+. 2026-06-03 20:47:22.441 Got reply 1 to the command 16
+. 2026-06-03 20:47:22.441 Getting current directory name.
+. 2026-06-03 20:47:22.441 Startup conversation with host finished.
+< 2026-06-03 20:47:22.441 Script: Session started.
+< 2026-06-03 20:47:22.441 Script: Active session: [1] julianshur@junkyardpro.com@ftp.junkyardpro.com
+. 2026-06-03 20:47:22.441 Session upkeep
+> 2026-06-03 20:47:22.442 Script: option batch on
+> 2026-06-03 20:47:22.442 Script: Parameter: batch
+> 2026-06-03 20:47:22.442 Script: Parameter: on
+< 2026-06-03 20:47:22.442 Script: batch           on        
+. 2026-06-03 20:47:22.442 Session upkeep
+> 2026-06-03 20:47:22.442 Script: option confirm off
+> 2026-06-03 20:47:22.442 Script: Parameter: confirm
+> 2026-06-03 20:47:22.442 Script: Parameter: off
+< 2026-06-03 20:47:22.442 Script: confirm         off       
+. 2026-06-03 20:47:22.442 Session upkeep
+> 2026-06-03 20:47:22.442 Script: lcd C:\Users\Julian\Documents\git\junkyard_pro
+> 2026-06-03 20:47:22.442 Script: Parameter: C:\Users\Julian\Documents\git\junkyard_pro
+< 2026-06-03 20:47:22.442 Script: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-06-03 20:47:22.442 Session upkeep
+> 2026-06-03 20:47:22.443 Script: put server.js
+> 2026-06-03 20:47:22.443 Script: Parameter: server.js
+. 2026-06-03 20:47:22.443 Size of 1 local files/folders calculated as 24458
+. 2026-06-03 20:47:22.443 Copying 1 files/directories to remote directory "/" - total size: 24,458
+. 2026-06-03 20:47:22.443   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: 
+. 2026-06-03 20:47:22.443   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 20:47:22.443   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 20:47:22.443 File: 'server.js' [2026-06-04T03:35:00.563Z] [24458]
+. 2026-06-03 20:47:22.444 Copying "server.js" to remote directory started.
+. 2026-06-03 20:47:22.444 Binary transfer mode selected.
+. 2026-06-03 20:47:22.444 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\server.js
+> 2026-06-03 20:47:22.444 TYPE I
+< 2026-06-03 20:47:22.529 200 TYPE is now 8-bit binary
+> 2026-06-03 20:47:22.529 PASV
+< 2026-06-03 20:47:22.611 227 Entering Passive Mode (40,90,253,12,252,3)
+> 2026-06-03 20:47:22.611 STOR server.js
+. 2026-06-03 20:47:22.611 Connecting to 40.90.253.12:64515 ...
+< 2026-06-03 20:47:22.780 150 Accepted data connection
+< 2026-06-03 20:47:22.946 226-File successfully transferred
+< 2026-06-03 20:47:22.946 226 0.168 seconds (measured here), 142.09 Kbytes per second
+> 2026-06-03 20:47:22.946 MFMT 20260604033500 server.js
+< 2026-06-03 20:47:23.040 213 UTIME OK
+. 2026-06-03 20:47:23.040 Upload successful
+. 2026-06-03 20:47:23.040 Got reply 1 to the command 4
+. 2026-06-03 20:47:23.040 Transfer done: 'server.js' => '/server.js' [24458]
+. 2026-06-03 20:47:23.040 Copying finished: Transferred: 24,458, Elapsed: 0:00:00, CPS: 40,968/s
+. 2026-06-03 20:47:23.040 Session upkeep
+> 2026-06-03 20:47:23.041 Script: put package.json
+> 2026-06-03 20:47:23.041 Script: Parameter: package.json
+. 2026-06-03 20:47:23.041 Size of 1 local files/folders calculated as 574
+. 2026-06-03 20:47:23.041 Copying 1 files/directories to remote directory "/" - total size: 574
+. 2026-06-03 20:47:23.041   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: 
+. 2026-06-03 20:47:23.041   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 20:47:23.041   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 20:47:23.041 File: 'package.json' [2026-06-04T03:45:04.045Z] [574]
+. 2026-06-03 20:47:23.041 Copying "package.json" to remote directory started.
+. 2026-06-03 20:47:23.041 Binary transfer mode selected.
+. 2026-06-03 20:47:23.042 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\package.json
+> 2026-06-03 20:47:23.042 TYPE I
+< 2026-06-03 20:47:23.124 200 TYPE is now 8-bit binary
+> 2026-06-03 20:47:23.124 PASV
+< 2026-06-03 20:47:23.204 227 Entering Passive Mode (40,90,253,12,239,39)
+> 2026-06-03 20:47:23.204 STOR package.json
+. 2026-06-03 20:47:23.205 Connecting to 40.90.253.12:61223 ...
+< 2026-06-03 20:47:23.364 150 Accepted data connection
+< 2026-06-03 20:47:23.442 226-File successfully transferred
+< 2026-06-03 20:47:23.442 226 0.078 seconds (measured here), 7.17 Kbytes per second
+> 2026-06-03 20:47:23.442 MFMT 20260604034504 package.json
+< 2026-06-03 20:47:23.522 213 UTIME OK
+. 2026-06-03 20:47:23.522 Upload successful
+. 2026-06-03 20:47:23.522 Got reply 1 to the command 4
+. 2026-06-03 20:47:23.522 Transfer done: 'package.json' => '/package.json' [574]
+. 2026-06-03 20:47:23.522 Copying finished: Transferred: 574, Elapsed: 0:00:00, CPS: 1,193/s
+. 2026-06-03 20:47:23.522 Session upkeep
+> 2026-06-03 20:47:23.522 Script: lcd C:\Users\Julian\Documents\git\junkyard_pro\public
+> 2026-06-03 20:47:23.522 Script: Parameter: C:\Users\Julian\Documents\git\junkyard_pro\public
+< 2026-06-03 20:47:23.522 Script: C:\Users\Julian\Documents\git\junkyard_pro\public
+. 2026-06-03 20:47:23.522 Session upkeep
+> 2026-06-03 20:47:23.522 Script: put index.html
+> 2026-06-03 20:47:23.522 Script: Parameter: index.html
+. 2026-06-03 20:47:23.523 Size of 1 local files/folders calculated as 1084
+. 2026-06-03 20:47:23.523 Copying 1 files/directories to remote directory "/" - total size: 1,084
+. 2026-06-03 20:47:23.523   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: 
+. 2026-06-03 20:47:23.523   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 20:47:23.523   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 20:47:23.523 File: 'index.html' [2026-06-04T03:13:54.070Z] [1084]
+. 2026-06-03 20:47:23.523 Copying "index.html" to remote directory started.
+. 2026-06-03 20:47:23.523 Binary transfer mode selected.
+. 2026-06-03 20:47:23.523 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\public\index.html
+> 2026-06-03 20:47:23.523 TYPE I
+< 2026-06-03 20:47:23.606 200 TYPE is now 8-bit binary
+> 2026-06-03 20:47:23.606 PASV
+< 2026-06-03 20:47:23.689 227 Entering Passive Mode (40,90,253,12,221,190)
+> 2026-06-03 20:47:23.689 STOR index.html
+. 2026-06-03 20:47:23.689 Connecting to 40.90.253.12:56766 ...
+< 2026-06-03 20:47:23.856 150 Accepted data connection
+< 2026-06-03 20:47:23.941 226-File successfully transferred
+< 2026-06-03 20:47:23.941 226 0.084 seconds (measured here), 12.65 Kbytes per second
+> 2026-06-03 20:47:23.941 MFMT 20260604031354 index.html
+< 2026-06-03 20:47:24.020 213 UTIME OK
+. 2026-06-03 20:47:24.020 Upload successful
+. 2026-06-03 20:47:24.020 Got reply 1 to the command 4
+. 2026-06-03 20:47:24.020 Transfer done: 'index.html' => '/index.html' [1084]
+. 2026-06-03 20:47:24.020 Copying finished: Transferred: 1,084, Elapsed: 0:00:00, CPS: 2,181/s
+. 2026-06-03 20:47:24.020 Session upkeep
+> 2026-06-03 20:47:24.021 Script: put app.js
+> 2026-06-03 20:47:24.021 Script: Parameter: app.js
+. 2026-06-03 20:47:24.021 Size of 1 local files/folders calculated as 6003
+. 2026-06-03 20:47:24.021 Copying 1 files/directories to remote directory "/" - total size: 6,003
+. 2026-06-03 20:47:24.021   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: 
+. 2026-06-03 20:47:24.021   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 20:47:24.021   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 20:47:24.021 File: 'app.js' [2026-06-04T03:14:00.323Z] [6003]
+. 2026-06-03 20:47:24.022 Copying "app.js" to remote directory started.
+. 2026-06-03 20:47:24.022 Binary transfer mode selected.
+. 2026-06-03 20:47:24.022 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\public\app.js
+> 2026-06-03 20:47:24.022 TYPE I
+< 2026-06-03 20:47:24.104 200 TYPE is now 8-bit binary
+> 2026-06-03 20:47:24.104 PASV
+< 2026-06-03 20:47:24.185 227 Entering Passive Mode (40,90,253,12,226,178)
+> 2026-06-03 20:47:24.185 STOR app.js
+. 2026-06-03 20:47:24.185 Connecting to 40.90.253.12:58034 ...
+< 2026-06-03 20:47:24.357 150 Accepted data connection
+< 2026-06-03 20:47:24.442 226-File successfully transferred
+< 2026-06-03 20:47:24.442 226 0.084 seconds (measured here), 69.50 Kbytes per second
+> 2026-06-03 20:47:24.442 MFMT 20260604031400 app.js
+< 2026-06-03 20:47:24.526 213 UTIME OK
+. 2026-06-03 20:47:24.526 Upload successful
+. 2026-06-03 20:47:24.526 Got reply 1 to the command 4
+. 2026-06-03 20:47:24.526 Transfer done: 'app.js' => '/app.js' [6003]
+. 2026-06-03 20:47:24.526 Copying finished: Transferred: 6,003, Elapsed: 0:00:00, CPS: 11,887/s
+. 2026-06-03 20:47:24.526 Session upkeep
+> 2026-06-03 20:47:24.526 Script: put styles.css
+> 2026-06-03 20:47:24.526 Script: Parameter: styles.css
+. 2026-06-03 20:47:24.527 Size of 1 local files/folders calculated as 5248
+. 2026-06-03 20:47:24.527 Copying 1 files/directories to remote directory "/" - total size: 5,248
+. 2026-06-03 20:47:24.527   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: 
+. 2026-06-03 20:47:24.527   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 20:47:24.527   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 20:47:24.527 File: 'styles.css' [2026-05-30T21:12:16.057Z] [5248]
+. 2026-06-03 20:47:24.527 Copying "styles.css" to remote directory started.
+. 2026-06-03 20:47:24.527 Binary transfer mode selected.
+. 2026-06-03 20:47:24.528 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\public\styles.css
+> 2026-06-03 20:47:24.528 TYPE I
+< 2026-06-03 20:47:24.611 200 TYPE is now 8-bit binary
+> 2026-06-03 20:47:24.611 PASV
+< 2026-06-03 20:47:24.702 227 Entering Passive Mode (40,90,253,12,225,10)
+> 2026-06-03 20:47:24.703 STOR styles.css
+. 2026-06-03 20:47:24.703 Connecting to 40.90.253.12:57610 ...
+< 2026-06-03 20:47:24.862 150 Accepted data connection
+< 2026-06-03 20:47:24.949 226-File successfully transferred
+< 2026-06-03 20:47:24.949 226 0.084 seconds (measured here), 60.99 Kbytes per second
+> 2026-06-03 20:47:24.950 MFMT 20260530211216 styles.css
+< 2026-06-03 20:47:25.031 213 UTIME OK
+. 2026-06-03 20:47:25.031 Upload successful
+. 2026-06-03 20:47:25.031 Got reply 1 to the command 4
+. 2026-06-03 20:47:25.031 Transfer done: 'styles.css' => '/styles.css' [5248]
+. 2026-06-03 20:47:25.031 Copying finished: Transferred: 5,248, Elapsed: 0:00:00, CPS: 10,412/s
+. 2026-06-03 20:47:25.031 Session upkeep
+> 2026-06-03 20:47:25.032 Script: exit
+. 2026-06-03 20:47:25.032 Session upkeep
+. 2026-06-03 20:47:25.032 Script: Exit code: 0
+. 2026-06-03 20:47:25.032 Script: Max roundtrip: 16
+. 2026-06-03 20:47:25.033 Got reply 1004 to the command 4
+. 2026-06-03 20:47:25.033 Disconnected from server
+. 2026-06-03 21:23:44.788 --------------------------------------------------------------------------
+. 2026-06-03 21:23:44.806 WinSCP Version 6.5.6 (Build 16502 2026-03-25) (OS 10.0.19045 – Windows 10 Pro)
+. 2026-06-03 21:23:44.806 Configuration: HKCU\Software\Martin Prikryl\WinSCP 2\
+. 2026-06-03 21:23:44.806 Log level: Debug 1
+. 2026-06-03 21:23:44.806 Local account: DESKTOP-D919AF9\Julian
+. 2026-06-03 21:23:44.806 Working directory: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-06-03 21:23:44.806 Process ID: 15292
+. 2026-06-03 21:23:44.820 Ancestor processes: WinSCP, powershell, claude, Code, Code, ...
+. 2026-06-03 21:23:44.854 Command-line: "C:\Program Files (x86)\WinSCP\WinSCP.exe" /console=6.5.6 /consoleinstance=_14768_721 "/script=C:\Users\Julian\Documents\git\junkyard_pro\winscp_deploy.txt" "/log=C:\Users\Julian\Documents\git\junkyard_pro\deploy.log" "/loglevel=1" 
+. 2026-06-03 21:23:44.854 Switch:    /console=6.5.6
+. 2026-06-03 21:23:44.854 Switch:    /consoleinstance=_14768_721
+. 2026-06-03 21:23:44.854 Switch:    /script=C:\Users\Julian\Documents\git\junkyard_pro\winscp_deploy.txt
+. 2026-06-03 21:23:44.854 Switch:    /log=C:\Users\Julian\Documents\git\junkyard_pro\deploy.log
+. 2026-06-03 21:23:44.854 Switch:    /loglevel=1
+. 2026-06-03 21:23:44.854 Time zone: Current: GMT-7, Standard: GMT-8 (Pacific Standard Time), DST: GMT-7 (Pacific Daylight Time), DST Start: 3/8/2026, DST End: 11/1/2026
+. 2026-06-03 21:23:44.855 Login time: Wednesday, June 3, 2026 9:23:44 PM
+. 2026-06-03 21:23:44.855 --------------------------------------------------------------------------
+. 2026-06-03 21:23:44.855 Script: Retrospectively logging previous script records:
+> 2026-06-03 21:23:44.855 Script: open ftp://julianshur%40junkyardpro.com:***@ftp.junkyardpro.com/ -passive=on
+> 2026-06-03 21:23:44.889 Script: Parameter: ftp://julianshur%40junkyardpro.com:***@ftp.junkyardpro.com/
+> 2026-06-03 21:23:44.889 Script: Switch:    -passive=on
+. 2026-06-03 21:23:44.889 --------------------------------------------------------------------------
+. 2026-06-03 21:23:44.889 Session name: julianshur@junkyardpro.com@ftp.junkyardpro.com (Ad-Hoc site)
+. 2026-06-03 21:23:44.889 Host name: ftp.junkyardpro.com (Port: 21)
+. 2026-06-03 21:23:44.889 User name: julianshur@junkyardpro.com (Password: Yes, Key file: No, Passphrase: No)
+. 2026-06-03 21:23:44.889 Transfer Protocol: FTP
+. 2026-06-03 21:23:44.889 Ping type: Dummy, Ping interval: 30 sec; Timeout: 15 sec
+. 2026-06-03 21:23:44.889 Disable Nagle: No
+. 2026-06-03 21:23:44.889 Proxy: None
+. 2026-06-03 21:23:44.889 Send buffer: 262144
+. 2026-06-03 21:23:44.889 UTF: Auto
+. 2026-06-03 21:23:44.889 FTPS: None [Client certificate: No]
+. 2026-06-03 21:23:44.889 FTP: Passive: Yes [Force IP: Auto]; MLSD: Auto [List all: Auto]; HOST: Auto
+. 2026-06-03 21:23:44.889 Local directory: default, Remote directory: home, Update: Yes, Cache: Yes
+. 2026-06-03 21:23:44.889 Cache directory changes: Yes, Permanent: Yes
+. 2026-06-03 21:23:44.889 Recycle bin: Delete to: No, Overwritten to: No, Bin path: 
+. 2026-06-03 21:23:44.889 Timezone offset: 0h 0m
+. 2026-06-03 21:23:44.889 --------------------------------------------------------------------------
+< 2026-06-03 21:23:44.914 Script: Connecting to ftp.junkyardpro.com ...
+. 2026-06-03 21:23:44.915 Connecting to ftp.junkyardpro.com ...
+. 2026-06-03 21:23:45.132 Connected with ftp.junkyardpro.com. Waiting for welcome message...
+< 2026-06-03 21:23:45.218 220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------
+< 2026-06-03 21:23:45.218 220-You are user number 2 of 50 allowed.
+< 2026-06-03 21:23:45.219 220-Local time is now 21:23. Server port: 21.
+< 2026-06-03 21:23:45.219 220-This is a private system - No anonymous login
+< 2026-06-03 21:23:45.247 220-IPv6 connections are also welcome on this server.
+< 2026-06-03 21:23:45.247 220 You will be disconnected after 15 minutes of inactivity.
+> 2026-06-03 21:23:45.247 USER julianshur@junkyardpro.com
+< 2026-06-03 21:23:45.301 331 User julianshur@junkyardpro.com OK. Password required
+> 2026-06-03 21:23:45.319 PASS **********
+< 2026-06-03 21:23:45.430 230 OK. Current restricted directory is /
+> 2026-06-03 21:23:45.430 SYST
+< 2026-06-03 21:23:45.511 215 UNIX Type: L8
+> 2026-06-03 21:23:45.511 FEAT
+< 2026-06-03 21:23:45.593 211-Extensions supported:
+< 2026-06-03 21:23:45.593  UTF8
+< 2026-06-03 21:23:45.593  EPRT
+< 2026-06-03 21:23:45.593  IDLE
+< 2026-06-03 21:23:45.594  MDTM
+< 2026-06-03 21:23:45.594  SIZE
+< 2026-06-03 21:23:45.594  MFMT
+< 2026-06-03 21:23:45.594  REST STREAM
+< 2026-06-03 21:23:45.626  MLST type*;size*;sizd*;modify*;UNIX.mode*;UNIX.uid*;UNIX.gid*;unique*;
+< 2026-06-03 21:23:45.626  MLSD
+< 2026-06-03 21:23:45.626  PRET
+< 2026-06-03 21:23:45.626  AUTH TLS
+< 2026-06-03 21:23:45.626  PBSZ
+< 2026-06-03 21:23:45.626  PROT
+< 2026-06-03 21:23:45.626  TVFS
+< 2026-06-03 21:23:45.626  ESTA
+< 2026-06-03 21:23:45.626  PASV
+< 2026-06-03 21:23:45.626  EPSV
+< 2026-06-03 21:23:45.626 211 End.
+> 2026-06-03 21:23:45.626 OPTS UTF8 ON
+< 2026-06-03 21:23:45.684 504 Unknown command
+< 2026-06-03 21:23:45.684 Script: Connected
+. 2026-06-03 21:23:45.684 Connected
+. 2026-06-03 21:23:45.685 Got reply 1 to the command 1
+. 2026-06-03 21:23:45.685 --------------------------------------------------------------------------
+. 2026-06-03 21:23:45.685 Using FTP protocol.
+. 2026-06-03 21:23:45.685 Doing startup conversation with host.
+< 2026-06-03 21:23:45.685 Script: Starting the session...
+> 2026-06-03 21:23:45.686 PWD
+< 2026-06-03 21:23:45.766 257 "/" is your current location
+. 2026-06-03 21:23:45.766 Got reply 1 to the command 16
+. 2026-06-03 21:23:45.766 Getting current directory name.
+. 2026-06-03 21:23:45.766 Startup conversation with host finished.
+< 2026-06-03 21:23:45.766 Script: Session started.
+< 2026-06-03 21:23:45.767 Script: Active session: [1] julianshur@junkyardpro.com@ftp.junkyardpro.com
+. 2026-06-03 21:23:45.767 Session upkeep
+> 2026-06-03 21:23:45.795 Script: option batch on
+> 2026-06-03 21:23:45.795 Script: Parameter: batch
+> 2026-06-03 21:23:45.796 Script: Parameter: on
+< 2026-06-03 21:23:45.796 Script: batch           on        
+. 2026-06-03 21:23:45.796 Session upkeep
+> 2026-06-03 21:23:45.796 Script: option confirm off
+> 2026-06-03 21:23:45.797 Script: Parameter: confirm
+> 2026-06-03 21:23:45.797 Script: Parameter: off
+< 2026-06-03 21:23:45.829 Script: confirm         off       
+. 2026-06-03 21:23:45.829 Session upkeep
+> 2026-06-03 21:23:45.830 Script: lcd C:\Users\Julian\Documents\git\junkyard_pro\public
+> 2026-06-03 21:23:45.830 Script: Parameter: C:\Users\Julian\Documents\git\junkyard_pro\public
+< 2026-06-03 21:23:45.830 Script: C:\Users\Julian\Documents\git\junkyard_pro\public
+. 2026-06-03 21:23:45.863 Session upkeep
+> 2026-06-03 21:23:45.864 Script: put index.html
+> 2026-06-03 21:23:45.864 Script: Parameter: index.html
+. 2026-06-03 21:23:45.866 Size of 1 local files/folders calculated as 1562
+. 2026-06-03 21:23:45.897 Copying 1 files/directories to remote directory "/" - total size: 1,562
+. 2026-06-03 21:23:45.897   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: 
+. 2026-06-03 21:23:45.897   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 21:23:45.897   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 21:23:45.898 File: 'index.html' [2026-06-04T04:23:14.462Z] [1562]
+. 2026-06-03 21:23:45.900 Copying "index.html" to remote directory started.
+. 2026-06-03 21:23:45.931 Binary transfer mode selected.
+. 2026-06-03 21:23:45.931 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\public\index.html
+> 2026-06-03 21:23:45.932 TYPE I
+< 2026-06-03 21:23:46.016 200 TYPE is now 8-bit binary
+> 2026-06-03 21:23:46.017 PASV
+< 2026-06-03 21:23:46.097 227 Entering Passive Mode (40,90,253,12,246,91)
+> 2026-06-03 21:23:46.098 STOR index.html
+. 2026-06-03 21:23:46.098 Connecting to 40.90.253.12:63067 ...
+< 2026-06-03 21:23:46.258 150 Accepted data connection
+< 2026-06-03 21:23:46.336 226-File successfully transferred
+< 2026-06-03 21:23:46.336 226 0.080 seconds (measured here), 19.02 Kbytes per second
+> 2026-06-03 21:23:46.336 MFMT 20260604042314 index.html
+< 2026-06-03 21:23:46.438 213 UTIME OK
+. 2026-06-03 21:23:46.438 Upload successful
+. 2026-06-03 21:23:46.438 Got reply 1 to the command 4
+. 2026-06-03 21:23:46.438 Transfer done: 'index.html' => '/index.html' [1562]
+. 2026-06-03 21:23:46.438 Copying finished: Transferred: 1,562, Elapsed: 0:00:00, CPS: 2,887/s
+. 2026-06-03 21:23:46.438 Session upkeep
+> 2026-06-03 21:23:46.439 Script: put app.js
+> 2026-06-03 21:23:46.439 Script: Parameter: app.js
+. 2026-06-03 21:23:46.440 Size of 1 local files/folders calculated as 6122
+. 2026-06-03 21:23:46.440 Copying 1 files/directories to remote directory "/" - total size: 6,122
+. 2026-06-03 21:23:46.474   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: 
+. 2026-06-03 21:23:46.474   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 21:23:46.474   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 21:23:46.474 File: 'app.js' [2026-06-04T04:23:28.425Z] [6122]
+. 2026-06-03 21:23:46.507 Copying "app.js" to remote directory started.
+. 2026-06-03 21:23:46.507 Binary transfer mode selected.
+. 2026-06-03 21:23:46.507 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\public\app.js
+> 2026-06-03 21:23:46.507 TYPE I
+< 2026-06-03 21:23:46.590 200 TYPE is now 8-bit binary
+> 2026-06-03 21:23:46.590 PASV
+< 2026-06-03 21:23:46.671 227 Entering Passive Mode (40,90,253,12,208,83)
+> 2026-06-03 21:23:46.675 STOR app.js
+. 2026-06-03 21:23:46.677 Connecting to 40.90.253.12:53331 ...
+< 2026-06-03 21:23:46.850 150 Accepted data connection
+< 2026-06-03 21:23:46.934 226-File successfully transferred
+< 2026-06-03 21:23:46.934 226 0.084 seconds (measured here), 71.53 Kbytes per second
+> 2026-06-03 21:23:46.935 MFMT 20260604042328 app.js
+< 2026-06-03 21:23:47.015 213 UTIME OK
+. 2026-06-03 21:23:47.036 Upload successful
+. 2026-06-03 21:23:47.036 Got reply 1 to the command 4
+. 2026-06-03 21:23:47.036 Transfer done: 'app.js' => '/app.js' [6122]
+. 2026-06-03 21:23:47.036 Copying finished: Transferred: 6,122, Elapsed: 0:00:00, CPS: 10,271/s
+. 2026-06-03 21:23:47.037 Session upkeep
+> 2026-06-03 21:23:47.037 Script: put styles.css
+> 2026-06-03 21:23:47.072 Script: Parameter: styles.css
+. 2026-06-03 21:23:47.109 Size of 1 local files/folders calculated as 5830
+. 2026-06-03 21:23:47.144 Copying 1 files/directories to remote directory "/" - total size: 5,830
+. 2026-06-03 21:23:47.144   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: 
+. 2026-06-03 21:23:47.144   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 21:23:47.144   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 21:23:47.144 File: 'styles.css' [2026-06-04T04:23:36.259Z] [5830]
+. 2026-06-03 21:23:47.179 Copying "styles.css" to remote directory started.
+. 2026-06-03 21:23:47.179 Binary transfer mode selected.
+. 2026-06-03 21:23:47.180 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\public\styles.css
+> 2026-06-03 21:23:47.180 TYPE I
+< 2026-06-03 21:23:47.259 200 TYPE is now 8-bit binary
+> 2026-06-03 21:23:47.287 PASV
+< 2026-06-03 21:23:47.341 227 Entering Passive Mode (40,90,253,12,205,156)
+> 2026-06-03 21:23:47.358 STOR styles.css
+. 2026-06-03 21:23:47.359 Connecting to 40.90.253.12:52636 ...
+< 2026-06-03 21:23:47.498 150 Accepted data connection
+< 2026-06-03 21:23:47.578 226-File successfully transferred
+< 2026-06-03 21:23:47.579 226 0.081 seconds (measured here), 70.67 Kbytes per second
+> 2026-06-03 21:23:47.579 MFMT 20260604042336 styles.css
+< 2026-06-03 21:23:47.660 213 UTIME OK
+. 2026-06-03 21:23:47.660 Upload successful
+. 2026-06-03 21:23:47.661 Got reply 1 to the command 4
+. 2026-06-03 21:23:47.661 Transfer done: 'styles.css' => '/styles.css' [5830]
+. 2026-06-03 21:23:47.661 Copying finished: Transferred: 5,830, Elapsed: 0:00:00, CPS: 11,276/s
+. 2026-06-03 21:23:47.661 Session upkeep
+> 2026-06-03 21:23:47.662 Script: exit
+. 2026-06-03 21:23:47.662 Session upkeep
+. 2026-06-03 21:23:47.662 Script: Exit code: 0
+. 2026-06-03 21:23:47.662 Script: Max roundtrip: 46
+. 2026-06-03 21:23:47.686 Got reply 1004 to the command 4
+. 2026-06-03 21:23:47.693 Disconnected from server
+. 2026-06-03 21:40:23.319 --------------------------------------------------------------------------
+. 2026-06-03 21:40:23.320 WinSCP Version 6.5.6 (Build 16502 2026-03-25) (OS 10.0.19045 – Windows 10 Pro)
+. 2026-06-03 21:40:23.320 Configuration: HKCU\Software\Martin Prikryl\WinSCP 2\
+. 2026-06-03 21:40:23.322 Log level: Debug 1
+. 2026-06-03 21:40:23.322 Local account: DESKTOP-D919AF9\Julian
+. 2026-06-03 21:40:23.322 Working directory: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-06-03 21:40:23.322 Process ID: 11144
+. 2026-06-03 21:40:23.342 Ancestor processes: WinSCP, powershell, claude, Code, Code, explorer, ...
+. 2026-06-03 21:40:23.343 Command-line: "C:\Program Files (x86)\WinSCP\WinSCP.exe" /console=6.5.6 /consoleinstance=_7636_905 "/script=C:\Users\Julian\Documents\git\junkyard_pro\winscp_deploy.txt" "/log=C:\Users\Julian\Documents\git\junkyard_pro\deploy.log" "/loglevel=1" 
+. 2026-06-03 21:40:23.343 Switch:    /console=6.5.6
+. 2026-06-03 21:40:23.343 Switch:    /consoleinstance=_7636_905
+. 2026-06-03 21:40:23.343 Switch:    /script=C:\Users\Julian\Documents\git\junkyard_pro\winscp_deploy.txt
+. 2026-06-03 21:40:23.343 Switch:    /log=C:\Users\Julian\Documents\git\junkyard_pro\deploy.log
+. 2026-06-03 21:40:23.343 Switch:    /loglevel=1
+. 2026-06-03 21:40:23.343 Time zone: Current: GMT-7, Standard: GMT-8 (Pacific Standard Time), DST: GMT-7 (Pacific Daylight Time), DST Start: 3/8/2026, DST End: 11/1/2026
+. 2026-06-03 21:40:23.343 Login time: Wednesday, June 3, 2026 9:40:23 PM
+. 2026-06-03 21:40:23.343 --------------------------------------------------------------------------
+. 2026-06-03 21:40:23.343 Script: Retrospectively logging previous script records:
+> 2026-06-03 21:40:23.344 Script: open ftp://julianshur%40junkyardpro.com:***@ftp.junkyardpro.com/ -passive=on
+> 2026-06-03 21:40:23.344 Script: Parameter: ftp://julianshur%40junkyardpro.com:***@ftp.junkyardpro.com/
+> 2026-06-03 21:40:23.344 Script: Switch:    -passive=on
+. 2026-06-03 21:40:23.344 --------------------------------------------------------------------------
+. 2026-06-03 21:40:23.344 Session name: julianshur@junkyardpro.com@ftp.junkyardpro.com (Ad-Hoc site)
+. 2026-06-03 21:40:23.344 Host name: ftp.junkyardpro.com (Port: 21)
+. 2026-06-03 21:40:23.344 User name: julianshur@junkyardpro.com (Password: Yes, Key file: No, Passphrase: No)
+. 2026-06-03 21:40:23.344 Transfer Protocol: FTP
+. 2026-06-03 21:40:23.345 Ping type: Dummy, Ping interval: 30 sec; Timeout: 15 sec
+. 2026-06-03 21:40:23.345 Disable Nagle: No
+. 2026-06-03 21:40:23.345 Proxy: None
+. 2026-06-03 21:40:23.345 Send buffer: 262144
+. 2026-06-03 21:40:23.345 UTF: Auto
+. 2026-06-03 21:40:23.345 FTPS: None [Client certificate: No]
+. 2026-06-03 21:40:23.345 FTP: Passive: Yes [Force IP: Auto]; MLSD: Auto [List all: Auto]; HOST: Auto
+. 2026-06-03 21:40:23.345 Local directory: default, Remote directory: home, Update: Yes, Cache: Yes
+. 2026-06-03 21:40:23.345 Cache directory changes: Yes, Permanent: Yes
+. 2026-06-03 21:40:23.346 Recycle bin: Delete to: No, Overwritten to: No, Bin path: 
+. 2026-06-03 21:40:23.346 Timezone offset: 0h 0m
+. 2026-06-03 21:40:23.346 --------------------------------------------------------------------------
+< 2026-06-03 21:40:23.365 Script: Connecting to ftp.junkyardpro.com ...
+. 2026-06-03 21:40:23.366 Connecting to ftp.junkyardpro.com ...
+. 2026-06-03 21:40:23.630 Connected with ftp.junkyardpro.com. Waiting for welcome message...
+< 2026-06-03 21:40:23.711 220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------
+< 2026-06-03 21:40:23.711 220-You are user number 1 of 50 allowed.
+< 2026-06-03 21:40:23.711 220-Local time is now 21:40. Server port: 21.
+< 2026-06-03 21:40:23.711 220-This is a private system - No anonymous login
+< 2026-06-03 21:40:23.712 220-IPv6 connections are also welcome on this server.
+< 2026-06-03 21:40:23.712 220 You will be disconnected after 15 minutes of inactivity.
+> 2026-06-03 21:40:23.712 USER julianshur@junkyardpro.com
+< 2026-06-03 21:40:23.790 331 User julianshur@junkyardpro.com OK. Password required
+> 2026-06-03 21:40:23.790 PASS **********
+< 2026-06-03 21:40:23.905 230 OK. Current restricted directory is /
+> 2026-06-03 21:40:23.905 SYST
+< 2026-06-03 21:40:23.984 215 UNIX Type: L8
+> 2026-06-03 21:40:23.984 FEAT
+< 2026-06-03 21:40:24.064 211-Extensions supported:
+< 2026-06-03 21:40:24.064  UTF8
+< 2026-06-03 21:40:24.064  EPRT
+< 2026-06-03 21:40:24.065  IDLE
+< 2026-06-03 21:40:24.065  MDTM
+< 2026-06-03 21:40:24.065  SIZE
+< 2026-06-03 21:40:24.065  MFMT
+< 2026-06-03 21:40:24.065  REST STREAM
+< 2026-06-03 21:40:24.065  MLST type*;size*;sizd*;modify*;UNIX.mode*;UNIX.uid*;UNIX.gid*;unique*;
+< 2026-06-03 21:40:24.065  MLSD
+< 2026-06-03 21:40:24.065  PRET
+< 2026-06-03 21:40:24.065  AUTH TLS
+< 2026-06-03 21:40:24.065  PBSZ
+< 2026-06-03 21:40:24.065  PROT
+< 2026-06-03 21:40:24.065  TVFS
+< 2026-06-03 21:40:24.065  ESTA
+< 2026-06-03 21:40:24.065  PASV
+< 2026-06-03 21:40:24.065  EPSV
+< 2026-06-03 21:40:24.065 211 End.
+> 2026-06-03 21:40:24.066 OPTS UTF8 ON
+< 2026-06-03 21:40:24.172 504 Unknown command
+< 2026-06-03 21:40:24.172 Script: Connected
+. 2026-06-03 21:40:24.173 Connected
+. 2026-06-03 21:40:24.173 Got reply 1 to the command 1
+. 2026-06-03 21:40:24.173 --------------------------------------------------------------------------
+. 2026-06-03 21:40:24.173 Using FTP protocol.
+. 2026-06-03 21:40:24.173 Doing startup conversation with host.
+< 2026-06-03 21:40:24.173 Script: Starting the session...
+> 2026-06-03 21:40:24.173 PWD
+< 2026-06-03 21:40:24.252 257 "/" is your current location
+. 2026-06-03 21:40:24.252 Got reply 1 to the command 16
+. 2026-06-03 21:40:24.258 Getting current directory name.
+. 2026-06-03 21:40:24.258 Startup conversation with host finished.
+< 2026-06-03 21:40:24.258 Script: Session started.
+< 2026-06-03 21:40:24.258 Script: Active session: [1] julianshur@junkyardpro.com@ftp.junkyardpro.com
+. 2026-06-03 21:40:24.258 Session upkeep
+> 2026-06-03 21:40:24.258 Script: option batch on
+> 2026-06-03 21:40:24.259 Script: Parameter: batch
+> 2026-06-03 21:40:24.259 Script: Parameter: on
+< 2026-06-03 21:40:24.259 Script: batch           on        
+. 2026-06-03 21:40:24.259 Session upkeep
+> 2026-06-03 21:40:24.259 Script: option confirm off
+> 2026-06-03 21:40:24.259 Script: Parameter: confirm
+> 2026-06-03 21:40:24.260 Script: Parameter: off
+< 2026-06-03 21:40:24.260 Script: confirm         off       
+. 2026-06-03 21:40:24.260 Session upkeep
+> 2026-06-03 21:40:24.260 Script: lcd C:\Users\Julian\Documents\git\junkyard_pro\public
+> 2026-06-03 21:40:24.260 Script: Parameter: C:\Users\Julian\Documents\git\junkyard_pro\public
+< 2026-06-03 21:40:24.260 Script: C:\Users\Julian\Documents\git\junkyard_pro\public
+. 2026-06-03 21:40:24.261 Session upkeep
+> 2026-06-03 21:40:24.261 Script: put app.js
+> 2026-06-03 21:40:24.261 Script: Parameter: app.js
+. 2026-06-03 21:40:24.261 Size of 1 local files/folders calculated as 6659
+. 2026-06-03 21:40:24.261 Copying 1 files/directories to remote directory "/" - total size: 6,659
+. 2026-06-03 21:40:24.262   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: 
+. 2026-06-03 21:40:24.262   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 21:40:24.262   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 21:40:24.262 File: 'app.js' [2026-06-04T04:40:02.386Z] [6659]
+. 2026-06-03 21:40:24.262 Copying "app.js" to remote directory started.
+. 2026-06-03 21:40:24.262 Binary transfer mode selected.
+. 2026-06-03 21:40:24.263 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\public\app.js
+> 2026-06-03 21:40:24.263 TYPE I
+< 2026-06-03 21:40:24.340 200 TYPE is now 8-bit binary
+> 2026-06-03 21:40:24.340 PASV
+< 2026-06-03 21:40:24.417 227 Entering Passive Mode (40,90,253,12,192,208)
+> 2026-06-03 21:40:24.417 STOR app.js
+. 2026-06-03 21:40:24.417 Connecting to 40.90.253.12:49360 ...
+< 2026-06-03 21:40:24.573 150 Accepted data connection
+< 2026-06-03 21:40:24.654 226-File successfully transferred
+< 2026-06-03 21:40:24.654 226 0.080 seconds (measured here), 80.91 Kbytes per second
+> 2026-06-03 21:40:24.654 MFMT 20260604044002 app.js
+< 2026-06-03 21:40:24.731 213 UTIME OK
+. 2026-06-03 21:40:24.731 Upload successful
+. 2026-06-03 21:40:24.732 Got reply 1 to the command 4
+. 2026-06-03 21:40:24.732 Transfer done: 'app.js' => '/app.js' [6659]
+. 2026-06-03 21:40:24.732 Copying finished: Transferred: 6,659, Elapsed: 0:00:00, CPS: 14,138/s
+. 2026-06-03 21:40:24.732 Session upkeep
+> 2026-06-03 21:40:24.732 Script: exit
+. 2026-06-03 21:40:24.732 Session upkeep
+. 2026-06-03 21:40:24.733 Script: Exit code: 0
+. 2026-06-03 21:40:24.733 Script: Max roundtrip: 0
+. 2026-06-03 21:40:24.733 Got reply 1004 to the command 4
+. 2026-06-03 21:40:24.735 Disconnected from server
+. 2026-06-03 21:44:01.015 --------------------------------------------------------------------------
+. 2026-06-03 21:44:01.015 WinSCP Version 6.5.6 (Build 16502 2026-03-25) (OS 10.0.19045 – Windows 10 Pro)
+. 2026-06-03 21:44:01.015 Configuration: HKCU\Software\Martin Prikryl\WinSCP 2\
+. 2026-06-03 21:44:01.015 Log level: Debug 1
+. 2026-06-03 21:44:01.015 Local account: DESKTOP-D919AF9\Julian
+. 2026-06-03 21:44:01.015 Working directory: C:\Users\Julian\Documents\git\junkyard_pro
+. 2026-06-03 21:44:01.015 Process ID: 14852
+. 2026-06-03 21:44:01.031 Ancestor processes: WinSCP, powershell, claude, Code, Code, explorer, ...
+. 2026-06-03 21:44:01.031 Command-line: "C:\Program Files (x86)\WinSCP\WinSCP.exe" /console=6.5.6 /consoleinstance=_1100_695 "/script=C:\Users\Julian\Documents\git\junkyard_pro\winscp_deploy.txt" "/log=C:\Users\Julian\Documents\git\junkyard_pro\deploy.log" "/loglevel=1" 
+. 2026-06-03 21:44:01.032 Switch:    /console=6.5.6
+. 2026-06-03 21:44:01.032 Switch:    /consoleinstance=_1100_695
+. 2026-06-03 21:44:01.032 Switch:    /script=C:\Users\Julian\Documents\git\junkyard_pro\winscp_deploy.txt
+. 2026-06-03 21:44:01.032 Switch:    /log=C:\Users\Julian\Documents\git\junkyard_pro\deploy.log
+. 2026-06-03 21:44:01.032 Switch:    /loglevel=1
+. 2026-06-03 21:44:01.032 Time zone: Current: GMT-7, Standard: GMT-8 (Pacific Standard Time), DST: GMT-7 (Pacific Daylight Time), DST Start: 3/8/2026, DST End: 11/1/2026
+. 2026-06-03 21:44:01.032 Login time: Wednesday, June 3, 2026 9:44:01 PM
+. 2026-06-03 21:44:01.032 --------------------------------------------------------------------------
+. 2026-06-03 21:44:01.032 Script: Retrospectively logging previous script records:
+> 2026-06-03 21:44:01.032 Script: open ftp://julianshur%40junkyardpro.com:***@ftp.junkyardpro.com/ -passive=on
+> 2026-06-03 21:44:01.032 Script: Parameter: ftp://julianshur%40junkyardpro.com:***@ftp.junkyardpro.com/
+> 2026-06-03 21:44:01.032 Script: Switch:    -passive=on
+. 2026-06-03 21:44:01.032 --------------------------------------------------------------------------
+. 2026-06-03 21:44:01.032 Session name: julianshur@junkyardpro.com@ftp.junkyardpro.com (Ad-Hoc site)
+. 2026-06-03 21:44:01.032 Host name: ftp.junkyardpro.com (Port: 21)
+. 2026-06-03 21:44:01.032 User name: julianshur@junkyardpro.com (Password: Yes, Key file: No, Passphrase: No)
+. 2026-06-03 21:44:01.032 Transfer Protocol: FTP
+. 2026-06-03 21:44:01.032 Ping type: Dummy, Ping interval: 30 sec; Timeout: 15 sec
+. 2026-06-03 21:44:01.032 Disable Nagle: No
+. 2026-06-03 21:44:01.032 Proxy: None
+. 2026-06-03 21:44:01.032 Send buffer: 262144
+. 2026-06-03 21:44:01.032 UTF: Auto
+. 2026-06-03 21:44:01.032 FTPS: None [Client certificate: No]
+. 2026-06-03 21:44:01.032 FTP: Passive: Yes [Force IP: Auto]; MLSD: Auto [List all: Auto]; HOST: Auto
+. 2026-06-03 21:44:01.032 Local directory: default, Remote directory: home, Update: Yes, Cache: Yes
+. 2026-06-03 21:44:01.032 Cache directory changes: Yes, Permanent: Yes
+. 2026-06-03 21:44:01.032 Recycle bin: Delete to: No, Overwritten to: No, Bin path: 
+. 2026-06-03 21:44:01.032 Timezone offset: 0h 0m
+. 2026-06-03 21:44:01.032 --------------------------------------------------------------------------
+< 2026-06-03 21:44:01.054 Script: Connecting to ftp.junkyardpro.com ...
+. 2026-06-03 21:44:01.054 Connecting to ftp.junkyardpro.com ...
+. 2026-06-03 21:44:01.256 Connected with ftp.junkyardpro.com. Waiting for welcome message...
+< 2026-06-03 21:44:01.354 220---------- Welcome to Pure-FTPd [privsep] [TLS] ----------
+< 2026-06-03 21:44:01.354 220-You are user number 1 of 50 allowed.
+< 2026-06-03 21:44:01.354 220-Local time is now 21:44. Server port: 21.
+< 2026-06-03 21:44:01.354 220-This is a private system - No anonymous login
+< 2026-06-03 21:44:01.354 220-IPv6 connections are also welcome on this server.
+< 2026-06-03 21:44:01.354 220 You will be disconnected after 15 minutes of inactivity.
+> 2026-06-03 21:44:01.354 USER julianshur@junkyardpro.com
+< 2026-06-03 21:44:01.430 331 User julianshur@junkyardpro.com OK. Password required
+> 2026-06-03 21:44:01.430 PASS **********
+< 2026-06-03 21:44:01.558 230 OK. Current restricted directory is /
+> 2026-06-03 21:44:01.558 SYST
+< 2026-06-03 21:44:01.650 215 UNIX Type: L8
+> 2026-06-03 21:44:01.652 FEAT
+< 2026-06-03 21:44:01.730 211-Extensions supported:
+< 2026-06-03 21:44:01.730  UTF8
+< 2026-06-03 21:44:01.730  EPRT
+< 2026-06-03 21:44:01.754  IDLE
+< 2026-06-03 21:44:01.754  MDTM
+< 2026-06-03 21:44:01.754  SIZE
+< 2026-06-03 21:44:01.754  MFMT
+< 2026-06-03 21:44:01.754  REST STREAM
+< 2026-06-03 21:44:01.754  MLST type*;size*;sizd*;modify*;UNIX.mode*;UNIX.uid*;UNIX.gid*;unique*;
+< 2026-06-03 21:44:01.755  MLSD
+< 2026-06-03 21:44:01.762  PRET
+< 2026-06-03 21:44:01.762  AUTH TLS
+< 2026-06-03 21:44:01.762  PBSZ
+< 2026-06-03 21:44:01.764  PROT
+< 2026-06-03 21:44:01.764  TVFS
+< 2026-06-03 21:44:01.764  ESTA
+< 2026-06-03 21:44:01.764  PASV
+< 2026-06-03 21:44:01.764  EPSV
+< 2026-06-03 21:44:01.764 211 End.
+> 2026-06-03 21:44:01.764 OPTS UTF8 ON
+< 2026-06-03 21:44:01.813 504 Unknown command
+< 2026-06-03 21:44:01.813 Script: Connected
+. 2026-06-03 21:44:01.814 Connected
+. 2026-06-03 21:44:01.816 Got reply 1 to the command 1
+. 2026-06-03 21:44:01.816 --------------------------------------------------------------------------
+. 2026-06-03 21:44:01.818 Using FTP protocol.
+. 2026-06-03 21:44:01.819 Doing startup conversation with host.
+< 2026-06-03 21:44:01.819 Script: Starting the session...
+> 2026-06-03 21:44:01.819 PWD
+< 2026-06-03 21:44:01.903 257 "/" is your current location
+. 2026-06-03 21:44:01.907 Got reply 1 to the command 16
+. 2026-06-03 21:44:01.911 Getting current directory name.
+. 2026-06-03 21:44:01.911 Startup conversation with host finished.
+< 2026-06-03 21:44:01.918 Script: Session started.
+< 2026-06-03 21:44:01.918 Script: Active session: [1] julianshur@junkyardpro.com@ftp.junkyardpro.com
+. 2026-06-03 21:44:01.918 Session upkeep
+> 2026-06-03 21:44:01.919 Script: option batch on
+> 2026-06-03 21:44:01.925 Script: Parameter: batch
+> 2026-06-03 21:44:01.930 Script: Parameter: on
+< 2026-06-03 21:44:01.930 Script: batch           on        
+. 2026-06-03 21:44:01.930 Session upkeep
+> 2026-06-03 21:44:01.933 Script: option confirm off
+> 2026-06-03 21:44:01.933 Script: Parameter: confirm
+> 2026-06-03 21:44:01.933 Script: Parameter: off
+< 2026-06-03 21:44:01.933 Script: confirm         off       
+. 2026-06-03 21:44:01.933 Session upkeep
+> 2026-06-03 21:44:01.933 Script: lcd C:\Users\Julian\Documents\git\junkyard_pro\public
+> 2026-06-03 21:44:01.933 Script: Parameter: C:\Users\Julian\Documents\git\junkyard_pro\public
+< 2026-06-03 21:44:01.933 Script: C:\Users\Julian\Documents\git\junkyard_pro\public
+. 2026-06-03 21:44:01.934 Session upkeep
+> 2026-06-03 21:44:01.934 Script: put app.js
+> 2026-06-03 21:44:01.934 Script: Parameter: app.js
+. 2026-06-03 21:44:01.934 Size of 1 local files/folders calculated as 6839
+. 2026-06-03 21:44:01.934 Copying 1 files/directories to remote directory "/" - total size: 6,839
+. 2026-06-03 21:44:01.934   PrTime: Yes; PrRO: No; Rght: rw-r--r--; PrR: No (No); FnCs: N; RIC: 0001; Resume: S (102400); CalcS: No; Mask: 
+. 2026-06-03 21:44:01.934   TM: B; ClAr: No; RemEOF: No; RemBOM: No; CPS: 0; NewerOnly: No; EncryptNewFiles: Yes; ExcludeHiddenFiles: No; ExcludeEmptyDirectories: No; InclM: ; ResumeL: 0
+. 2026-06-03 21:44:01.934   AscM: *.*html; *.htm; *.txt; *.php; *.php3; *.cgi; *.c; *.cpp; *.h; *.pas; *.bas; *.tex; *.pl; *.js; .htaccess; *.xtml; *.css; *.cfg; *.ini; *.sh; *.xml
+. 2026-06-03 21:44:01.934 File: 'app.js' [2026-06-04T04:43:46.318Z] [6839]
+. 2026-06-03 21:44:01.934 Copying "app.js" to remote directory started.
+. 2026-06-03 21:44:01.934 Binary transfer mode selected.
+. 2026-06-03 21:44:01.934 Starting upload of C:\Users\Julian\Documents\git\junkyard_pro\public\app.js
+> 2026-06-03 21:44:01.934 TYPE I
+< 2026-06-03 21:44:02.017 200 TYPE is now 8-bit binary
+> 2026-06-03 21:44:02.017 PASV
+< 2026-06-03 21:44:02.102 227 Entering Passive Mode (40,90,253,12,193,69)
+> 2026-06-03 21:44:02.102 STOR app.js
+. 2026-06-03 21:44:02.109 Connecting to 40.90.253.12:49477 ...
+< 2026-06-03 21:44:02.269 150 Accepted data connection
+< 2026-06-03 21:44:02.354 226-File successfully transferred
+< 2026-06-03 21:44:02.354 226 0.085 seconds (measured here), 78.47 Kbytes per second
+> 2026-06-03 21:44:02.354 MFMT 20260604044346 app.js
+< 2026-06-03 21:44:02.439 213 UTIME OK
+. 2026-06-03 21:44:02.439 Upload successful
+. 2026-06-03 21:44:02.448 Got reply 1 to the command 4
+. 2026-06-03 21:44:02.448 Transfer done: 'app.js' => '/app.js' [6839]
+. 2026-06-03 21:44:02.448 Copying finished: Transferred: 6,839, Elapsed: 0:00:00, CPS: 13,305/s
+. 2026-06-03 21:44:02.448 Session upkeep
+> 2026-06-03 21:44:02.448 Script: exit
+. 2026-06-03 21:44:02.448 Session upkeep
+. 2026-06-03 21:44:02.449 Script: Exit code: 0
+. 2026-06-03 21:44:02.449 Script: Max roundtrip: 16
+. 2026-06-03 21:44:02.449 Got reply 1004 to the command 4
+. 2026-06-03 21:44:02.451 Disconnected from server

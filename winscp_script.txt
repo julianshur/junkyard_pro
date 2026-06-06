@@ -1,7 +1,1 @@
-option batch continue
-option confirm off
-open ftp://julianshur@junkyardpro.com:b1n6b0n61!@ftp.junkyardpro.com:21/ -passive=on
-lcd 
-cd /
-synchronize remote
-exit
+# WinSCP script template — do not store real credentials in this file.

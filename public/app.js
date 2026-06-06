@@ -35,13 +35,13 @@ async function apiPoll(path, statusMsg, intervalMs = 4000, maxWaitMs = 120000) {
   const deadline = Date.now() + maxWaitMs;
   while (true) {
     const data = await api(path);
+    if (data.error) throw new Error(data.error);
     if (data.status === "scraping") {
-      if (Date.now() > deadline) throw new Error("Timed out waiting for scrape to complete.");
+      if (Date.now() > deadline) throw new Error("Timed out — the scrape is taking too long. Try again.");
       setStatus(statusMsg);
       await new Promise(r => setTimeout(r, intervalMs));
       continue;
     }
-    if (data.error) throw new Error(data.error);
     return data;
   }
 }

@@ -7,30 +7,43 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <header>
-    <h1>Junkyard Profit Finder</h1>
-    <p>Find cars at nearby self-service junkyards and see what their parts sell for on eBay.</p>
-  </header>
+  <div class="app-shell">
+    <div class="search-panel">
+      <div>
+        <p class="eyebrow">SoCal Self-Service Junkyards</p>
+        <h1>Junkyard Profit Finder</h1>
+        <p class="lede">Find cars at nearby Pick Your Part yards and see what their parts sell for on eBay.</p>
+      </div>
+      <form id="search-form" class="search-form">
+        <label for="location">Search by yard name or city</label>
+        <div class="input-row">
+          <input id="location" type="text" placeholder="e.g. Sun Valley, Wilmington, Anaheim…" autocomplete="off" required />
+          <button type="submit">Search</button>
+        </div>
+      </form>
+    </div>
 
-  <main>
-    <form id="search-form">
-      <input id="location" type="text" placeholder="City, State — e.g. Los Angeles CA" autocomplete="off" required />
-      <button type="submit">Search</button>
-    </form>
+    <div id="status" class="status-band" hidden></div>
 
-    <div id="status" hidden></div>
+    <div id="summary" class="summary-grid" hidden>
+      <article>
+        <span>Yard</span>
+        <strong id="yard-name">—</strong>
+        <a id="yard-link" href="#" target="_blank" rel="noreferrer">Open full inventory ↗</a>
+      </article>
+      <article>
+        <span>Vehicles in yard</span>
+        <strong id="car-count">—</strong>
+      </article>
+      <article>
+        <span>eBay comps loaded</span>
+        <strong id="comp-count">—</strong>
+      </article>
+    </div>
 
-    <section id="summary" hidden>
-      <p>
-        <strong id="yard-name"></strong> yards within 50 miles &mdash;
-        <a id="yard-link" href="#" target="_blank" rel="noreferrer">Open nearest inventory</a>
-      </p>
-      <p><span id="car-count"></span> vehicles &bull; <span id="listing-count"></span> sold comps</p>
-    </section>
+    <div id="results" class="results"></div>
+  </div>
 
-    <div id="results"></div>
-  </main>
-
-  <script src="/app.js?v=2"></script>
+  <script src="/app.js?v=3"></script>
 </body>
 </html>
