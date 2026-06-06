@@ -1,18 +1,39 @@
-// v6 - Redis cache, hardcoded stores + prices, extended TTLs
+// v7 - audit hardening: rate limiting, error states, concurrency, security, logging
 import express from "express";
 import axios   from "axios";
 import { load as cheerioLoad } from "cheerio";
 import cors    from "cors";
 import path    from "path";
-import fs      from "fs";
 import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const app  = express();
-const PORT = process.env.PORT || 5180;
+const app        = express();
+const PORT       = process.env.PORT || 5180;
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
+
+// Playwright browser path: set via env var, falls back to Render's project dir
+const PLAYWRIGHT_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH || "/opt/render/project/src/.playwright";
+
+// ── Logging (timestamped) ─────────────────────────────────────────────────────
+function log(tag, ...args) {
+  console.log(`[${new Date().toISOString()}] [${tag}]`, ...args);
+}
+
+// ── Rate limiting (in-memory, no extra dependency) ────────────────────────────
+const rateCounts = new Map();
+function rateLimit(max, windowMs = 60000) {
+  return (req, res, next) => {
+    const key = `${req.ip}:${Math.floor(Date.now() / windowMs)}`;
+    const n = (rateCounts.get(key) || 0) + 1;
+    rateCounts.set(key, n);
+    if (n === 1) setTimeout(() => rateCounts.delete(key), windowMs);
+    if (n > max) return res.status(429).json({ error: "Too many requests — please wait a moment." });
+    next();
+  };
+}
 
 app.use(cors({ origin: "*", methods: ["GET"] }));
-app.get("/test", (_, res) => res.json({ ok: true, version: 6 }));
+app.get("/test", (_, res) => res.json({ ok: true, version: 7 }));
 
 // ── HTTP client ───────────────────────────────────────────────────────────────
 const http = axios.create({
@@ -34,14 +55,12 @@ const http = axios.create({
 });
 
 // ── Cache: Upstash Redis + in-memory fallback ─────────────────────────────────
-// TTLs
 const TTL = {
-  inventory: 4  * 60 * 60,  // 4 hours
-  ebay:      72 * 60 * 60,  // 72 hours
-  queries:   7  * 24 * 60 * 60, // 7 days (same car = same queries)
+  inventory: 4  * 60 * 60,      // 4 hours
+  ebay:      72 * 60 * 60,      // 72 hours
+  queries:   7  * 24 * 60 * 60, // 7 days
 };
 
-// In-memory fallback
 const memCache = new Map();
 function memGet(key) {
   const e = memCache.get(key);
@@ -52,19 +71,17 @@ function memSet(key, data, ttlSec) {
   memCache.set(key, { data, exp: Date.now() + ttlSec * 1000 });
 }
 
-// Redis client (optional — set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN)
-let redisUrl   = process.env.UPSTASH_REDIS_REST_URL;
-let redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+const redisUrl   = process.env.UPSTASH_REDIS_REST_URL;
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
 async function cacheGet(key) {
-  // Try Redis first
   if (redisUrl && redisToken) {
     try {
       const r = await axios.get(`${redisUrl}/get/${encodeURIComponent(key)}`,
         { headers: { Authorization: `Bearer ${redisToken}` }, timeout: 3000 });
       const val = r.data?.result;
       if (val) return JSON.parse(val);
-    } catch(e) { /* fall through to memory */ }
+    } catch(_) {}
   }
   return memGet(key);
 }
@@ -76,15 +93,34 @@ async function cacheSet(key, data, ttlSec) {
       await axios.post(`${redisUrl}/set/${encodeURIComponent(key)}`,
         { value: JSON.stringify(data), ex: ttlSec },
         { headers: { Authorization: `Bearer ${redisToken}`, "Content-Type": "application/json" }, timeout: 3000 });
-    } catch(e) { /* Redis unavailable, memory cache still works */ }
+    } catch(_) {}
   }
 }
 
-// ── fetchPage (free, no third-party scraper API) ─────────────────────────────
-const cookieJar = {};
+// ── Playwright launcher (shared config) ───────────────────────────────────────
+const BROWSER_ARGS = [
+  "--no-sandbox", "--disable-setuid-sandbox",
+  "--disable-blink-features=AutomationControlled",
+  "--disable-dev-shm-usage", "--disable-gpu",
+];
+const STEALTH_SCRIPT = () => {
+  Object.defineProperty(navigator, "webdriver", { get: () => undefined });
+  window.chrome = { runtime: {} };
+  Object.defineProperty(navigator, "plugins",   { get: () => [1, 2, 3] });
+  Object.defineProperty(navigator, "languages", { get: () => ["en-US", "en"] });
+};
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
+async function launchChromium() {
+  process.env.PLAYWRIGHT_BROWSERS_PATH = PLAYWRIGHT_PATH;
+  const { chromium } = await import("playwright");
+  return chromium.launch({ headless: true, args: BROWSER_ARGS });
+}
+
+// ── fetchPage ─────────────────────────────────────────────────────────────────
+const cookieJar = {};
 const BROWSER_HEADERS = {
-  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "User-Agent": UA,
   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
   "Accept-Language": "en-US,en;q=0.9",
   "Accept-Encoding": "gzip, deflate, br",
@@ -94,30 +130,14 @@ const BROWSER_HEADERS = {
 async function fetchPage(url, referer = null) {
   const domain = new URL(url).hostname;
 
-  // pyp.com: use Playwright with stealth patches to bypass Cloudflare
   if (domain.includes("pyp.com")) {
-    process.env.PLAYWRIGHT_BROWSERS_PATH = "/opt/render/project/src/.playwright";
-    const { chromium } = await import("playwright");
-    const browser = await chromium.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled", "--disable-dev-shm-usage", "--disable-gpu"],
-    });
+    const browser = await launchChromium();
     try {
-      const ctx = await browser.newContext({
-        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        locale: "en-US",
-        extraHTTPHeaders: { "Accept-Language": "en-US,en;q=0.9" },
-      });
+      const ctx = await browser.newContext({ userAgent: UA, locale: "en-US",
+        extraHTTPHeaders: { "Accept-Language": "en-US,en;q=0.9" } });
       const page = await ctx.newPage();
-      // Hide webdriver fingerprint that Cloudflare checks
-      await page.addInitScript(() => {
-        Object.defineProperty(navigator, "webdriver", { get: () => undefined });
-        window.chrome = { runtime: {} };
-        Object.defineProperty(navigator, "plugins", { get: () => [1, 2, 3] });
-        Object.defineProperty(navigator, "languages", { get: () => ["en-US", "en"] });
-      });
+      await page.addInitScript(STEALTH_SCRIPT);
       await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-      // Wait for Cloudflare to pass and real inventory to appear
       await page.waitForSelector(".pypvi_resultRow", { timeout: 25000 }).catch(() => {});
       return await page.content();
     } finally {
@@ -125,7 +145,7 @@ async function fetchPage(url, referer = null) {
     }
   }
 
-  // Direct request with browser headers + cookie jar
+  // Direct request with cookie jar for other domains
   if (!cookieJar[domain]) {
     try {
       const r = await http.get(`https://${domain}/`, { headers: BROWSER_HEADERS, maxRedirects: 5 });
@@ -165,27 +185,23 @@ async function getSearchQueries(year, make, model) {
 
   const fallback = [`${year} ${make} ${model} engine`, `${year} ${make} ${model} transmission`, `${year} ${make} ${model} door`];
 
-  // Try up to 2 times with a short delay
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       if (attempt > 0) await new Promise(r => setTimeout(r, 2000));
       const text = await claudePost(
-        `For a ${year} ${make} ${model} at a self-service junkyard, list the 3 most valuable parts commonly resold on eBay. Focus on high-value items: engine, transmission, popular body parts for this specific model.
-Return ONLY a JSON array of 3 eBay search strings. Example: ["2003 Honda Accord engine","2003 Honda Accord transmission","2003 Honda Accord door"]`,
-        "You are an auto parts expert. Respond with a JSON array only — no explanation.",
-        300
-      );
+        `For a ${year} ${make} ${model} at a self-service junkyard, list the 3 most valuable parts commonly resold on eBay. Focus on high-value items: engine, transmission, popular body parts for this specific model.\nReturn ONLY a JSON array of 3 eBay search strings. Example: ["2003 Honda Accord engine","2003 Honda Accord transmission","2003 Honda Accord door"]`,
+        "You are an auto parts expert. Respond with a JSON array only — no explanation.", 300);
       if (!text) throw new Error("empty response");
       const arr = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0]);
       if (!Array.isArray(arr) || !arr.length) throw new Error("invalid array");
-      console.log(`[claude] queries for ${year} ${make} ${model}:`, arr);
+      log("claude", `queries for ${year} ${make} ${model}:`, arr);
       await cacheSet(cacheKey, arr, TTL.queries);
       return arr;
     } catch(e) {
-      console.log(`[claude] query gen attempt ${attempt+1} failed:`, e.message);
+      log("claude", `query gen attempt ${attempt+1} failed: ${e.message}`);
     }
   }
-  console.log(`[claude] using fallback queries for ${year} ${make} ${model}`);
+  log("claude", `using fallback queries for ${year} ${make} ${model}`);
   return fallback;
 }
 
@@ -193,21 +209,20 @@ async function matchAndScoreListings(listings, yardParts) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey || !listings.length) return;
 
-  const batch = listings.slice(0, 40);
+  // Process up to 100 listings (audit fix: was 40)
+  const batch = listings.slice(0, 100);
   const partNames = yardParts.map(p => p.partName);
-  const titlesStr = batch.map((l, i) => `${i}: ${l.title} [$${l.soldPrice}, ${l.soldCount}x sold]`).join("\n");
+  const titlesStr = batch.map((l, i) => `${i}: ${l.title} [$${l.soldPrice}${l.soldCount ? ", " + l.soldCount + "x sold" : ""}]`).join("\n");
 
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       if (attempt > 0) await new Promise(r => setTimeout(r, 3000));
       const text = await claudePost(
         `Match these eBay used auto part listings to PYP junkyard categories.\nCategories: ${partNames.join(", ")}\nListings:\n${titlesStr}\nJSON format: {"0":{"category":"Engine, 4 Cyl","demand":4},"1":{"category":"NO_MATCH","demand":0}}\ndemand: 1-5 (5=high volume). NO_MATCH if unclear.`,
-        "You are an auto parts expert. Respond with valid JSON only — no explanations, no markdown.",
-        2000
-      );
+        "You are an auto parts expert. Respond with valid JSON only — no explanations, no markdown.", 2000);
       if (!text) throw new Error("null response");
       const start = text.indexOf("{"), end2 = text.lastIndexOf("}");
-      if (start === -1 || end2 === -1) throw new Error("No JSON: " + text.slice(0, 80));
+      if (start === -1 || end2 === -1) throw new Error("No JSON");
       const results = JSON.parse(text.slice(start, end2 + 1));
       let matched = 0;
       batch.forEach((l, i) => {
@@ -221,10 +236,10 @@ async function matchAndScoreListings(listings, yardParts) {
           matched++;
         }
       });
-      console.log(`[claude] matched ${matched}/${batch.length}`);
+      log("claude", `matched ${matched}/${batch.length}`);
       return;
     } catch(e) {
-      console.log(`[claude] match attempt ${attempt+1} failed:`, e.message);
+      log("claude", `match attempt ${attempt+1} failed: ${e.message}`);
     }
   }
 }
@@ -244,23 +259,12 @@ function scoreYard(vehicles) {
   return { score: n, grade: n >= 70 ? "green" : n >= 40 ? "yellow" : "red", label: n >= 70 ? "High" : n >= 40 ? "Medium" : "Low" };
 }
 
-// ── eBay scraping helper (Playwright — fresh browser per query to avoid OOM) ──
+// ── eBay scraping (fresh browser per query to avoid OOM) ─────────────────────
 async function scrapeEbayQuery(q) {
-  process.env.PLAYWRIGHT_BROWSERS_PATH = "/opt/render/project/src/.playwright";
-  const { chromium } = await import("playwright");
-  const browser = await chromium.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled", "--disable-dev-shm-usage", "--disable-gpu"],
-  });
+  const browser = await launchChromium();
   try {
-    const ctx = await browser.newContext({
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      locale: "en-US",
-    });
-    await ctx.addInitScript(() => {
-      Object.defineProperty(navigator, "webdriver", { get: () => undefined });
-      window.chrome = { runtime: {} };
-    });
+    const ctx = await browser.newContext({ userAgent: UA, locale: "en-US" });
+    await ctx.addInitScript(STEALTH_SCRIPT);
     const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=60`;
     const page = await ctx.newPage();
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
@@ -273,8 +277,7 @@ async function scrapeEbayQuery(q) {
         const title = (titleEl?.textContent || "").replace("New listing","").replace(/Opens in a new window or tab/gi,"").trim();
         if (!title || title === "Shop on eBay") continue;
         const priceEl = card.querySelector(".s-item__price, .s-card__price");
-        const priceText = priceEl?.textContent || "";
-        const priceMatch = (priceText || text).match(/\$([\d,]+\.\d{2})/);
+        const priceMatch = (priceEl?.textContent || text).match(/\$([\d,]+\.\d{2})/);
         if (!priceMatch) continue;
         const price = parseFloat(priceMatch[1].replace(/,/g,""));
         if (!price || price < 1) continue;
@@ -284,13 +287,16 @@ async function scrapeEbayQuery(q) {
         const condEl = card.querySelector(".SECONDARY_INFO, .s-item__subtitle, .s-card__subtitle");
         const condition = condEl?.textContent?.trim() || null;
         if (/^new$|^brand new$/i.test(condition||"")) continue;
+        // Only record soldCount when eBay explicitly states it (audit fix: was defaulting to 1)
         const soldMatch = text.match(/(\d[\d,]*)\s+sold/i);
-        results.push({ title, soldPrice: price, url: href.split("?")[0], category: condition,
-          soldCount: soldMatch ? parseInt(soldMatch[1].replace(/,/g,"")) : 1 });
+        results.push({
+          title, soldPrice: price, url: href.split("?")[0], category: condition,
+          soldCount: soldMatch ? parseInt(soldMatch[1].replace(/,/g,"")) : null,
+        });
       }
       return results;
     });
-    console.log(`[ebay] "${q.slice(0,40)}" items:${listings.length}`);
+    log("ebay", `"${q.slice(0,40)}" items:${listings.length}`);
     return listings;
   } finally {
     await browser.close();
@@ -305,15 +311,16 @@ async function fetchEbayListings(searchQueries) {
       allListings.push(...listings);
       await new Promise(r => setTimeout(r, 1500));
     } catch(e) {
-      console.log(`[ebay] query failed "${q}":`, e.message);
+      log("ebay", `query failed "${q}": ${e.message}`);
     }
   }
   const seen = new Set();
-  return allListings.filter(l => { if (!l.url || seen.has(l.url)) return false; seen.add(l.url); return true; })
-    .sort((a,b) => (b.soldCount - a.soldCount) || (b.soldPrice - a.soldPrice));
+  return allListings
+    .filter(l => { if (!l.url || seen.has(l.url)) return false; seen.add(l.url); return true; })
+    .sort((a,b) => ((b.soldCount||0) - (a.soldCount||0)) || (b.soldPrice - a.soldPrice));
 }
 
-// ── Hardcoded PYP store list (all confirmed slugs) ────────────────────────────
+// ── Store & price data ────────────────────────────────────────────────────────
 const KNOWN_STORES = [
   { id: "sun-valley-1263",               name: "Pick Your Part - Sun Valley",       address: "8000 Laurel Canyon Blvd, Sun Valley, CA 91352" },
   { id: "wilmington-help-yourself-1262", name: "Pick Your Part - Wilmington",       address: "1600 E Anaheim St, Wilmington, CA 90744" },
@@ -330,7 +337,6 @@ const KNOWN_STORES = [
   { id: "anaheim-1265",                  name: "Pick Your Part - Anaheim",          address: "Anaheim, CA" },
 ];
 
-// ── Hardcoded PYP price list (standard SoCal flat rates) ─────────────────────
 const PYP_PRICES = [
   { partName: "Engine, 4 Cyl",        price: 275 }, { partName: "Engine, 6 Cyl",        price: 325 },
   { partName: "Engine, 8 Cyl",        price: 375 }, { partName: "Transmission, Auto",   price: 175 },
@@ -362,185 +368,174 @@ const PYP_PRICES = [
 ];
 
 // ── Routes ────────────────────────────────────────────────────────────────────
-app.get("/health", (_, res) => res.json({ status: "ok", redis: !!(redisUrl && redisToken) }));
+app.get("/health", (_, res) => res.json({ status: "ok", redis: !!(redisUrl && redisToken), version: 7 }));
 
-app.get("/debug-ebay", async (req, res) => {
-  const url = `https://www.ebay.com/sch/i.html?_nkw=2003+Ford+Expedition+engine&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=60`;
-  try {
-    const html = await fetchPage(url, "https://www.ebay.com/");
-    const $ = cheerioLoad(html);
-    const classes = [...html.matchAll(/class="([^"]+)"/g)].map(m => m[1]).slice(0, 60).join("\n");
-    res.setHeader("Content-Type", "text/plain");
-    res.send(`HTML length: ${html.length}\n.s-item count: ${$(".s-item").length}\n.s-card count: ${$(".s-card").length}\n\nCLASSES:\n${classes}\n\nSNIPPET:\n${html.slice(0, 3000)}`);
-  } catch(e) { res.status(500).send(e.message); }
-});
-
-app.get("/yards", async (req, res) => {
+app.get("/yards", rateLimit(30), async (req, res) => {
   const q = (req.query.q || "").trim().toLowerCase();
   if (!q) return res.json({ error: "Missing location query" });
-
   const qWords = q.split(/[\s,]+/).filter(w => w.length > 1);
   const scored = KNOWN_STORES.map(s => {
     const hay = (s.name + " " + s.address).toLowerCase();
     const score = qWords.reduce((n, w) => n + (s.name.toLowerCase().includes(w) ? 2 : hay.includes(w) ? 1 : 0), 0);
     return { ...s, score };
   }).filter(s => s.score > 0).sort((a,b) => b.score - a.score);
-
-  if (!scored.length) return res.json({ yards: KNOWN_STORES, message: `No exact match — showing all yards.` });
+  if (!scored.length) return res.json({ yards: KNOWN_STORES, message: "No exact match — showing all yards." });
   res.json({ yards: scored.slice(0, 8) });
 });
 
-app.get("/debug-pyp/:yardId", async (req, res) => {
-  const url = `https://www.pyp.com/inventory/${req.params.yardId}/`;
-  try {
-    process.env.PLAYWRIGHT_BROWSERS_PATH = "/opt/render/project/src/.playwright";
-    const { chromium } = await import("playwright");
-    const browser = await chromium.launch({ headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-    await page.waitForSelector(".pypvi_resultRow", { timeout: 25000 }).catch(() => {});
-    const html = await page.content();
-    await browser.close();
-    res.setHeader("Content-Type", "text/plain");
-    // Show classes used in the page to find correct selectors
-    const classes = [...html.matchAll(/class="([^"]+)"/g)]
-      .map(m => m[1]).join("\n").slice(0, 5000);
-    res.send(`URL: ${url}\nHTML length: ${html.length}\n\nCLASSES FOUND:\n${classes}\n\nHTML SNIPPET:\n${html.slice(0, 4000)}`);
-  } catch(e) { res.status(500).send(e.message + "\n" + e.stack); }
-});
+// ── Inventory scraping with background job + polling ─────────────────────────
+// Job states: "running" | { error: string } | absent (done — data in cache)
+const scrapeJobs = new Map();
 
-const scrapeJobs = new Map(); // yardId -> "running" | Error
-
-app.get("/inventory/:yardId", async (req, res) => {
+app.get("/inventory/:yardId", rateLimit(20), async (req, res) => {
   const { yardId } = req.params;
   const cacheKey = `inv:${yardId}`;
   const cached = await cacheGet(cacheKey);
-  if (cached) { console.log(`[inv] cache hit: ${yardId}`); return res.json(cached); }
+  if (cached) { log("inv", `cache hit: ${yardId}`); return res.json(cached); }
 
-  // If already scraping, tell client to poll
-  if (scrapeJobs.get(yardId) === "running") return res.json({ status: "scraping" });
+  const job = scrapeJobs.get(yardId);
+  if (job === "running") return res.json({ status: "scraping" });
+  if (job?.error) { scrapeJobs.delete(yardId); return res.json({ error: job.error }); }
 
-  // Start scrape in background, respond immediately
   scrapeJobs.set(yardId, "running");
   res.json({ status: "scraping" });
 
-  console.log(`[inv] fetching: ${yardId}`);
-  let html;
-  try { html = await fetchPage(`https://www.pyp.com/inventory/${yardId}/`, "https://www.pyp.com/"); }
-  catch(e) { scrapeJobs.set(yardId, new Error(e.message)); return; }
+  log("inv", `fetching: ${yardId}`);
+  try {
+    const html = await fetchPage(`https://www.pyp.com/inventory/${yardId}/`, "https://www.pyp.com/");
+    const $ = cheerioLoad(html);
+    const vehicles = [];
 
-  const $ = cheerioLoad(html);
-  const vehicles = [];
-  $(".pypvi_resultRow").each((_, el) => {
-    if (vehicles.length >= 20) return false;
-    const $el = $(el);
-    const ymm = $el.find(".pypvi_ymm").text().replace(/\s+/g," ").trim();
-    const m = ymm.match(/^(\d{4})\s+(\S+)\s+(.+)$/);
-    if (!m) return;
-    const [, year, make, model] = m;
-    let row=null, section=null, color=null, vin=null, stockNo=null, dateAdded=null;
-    $el.find(".pypvi_detailItem").each((_, d) => {
-      const t = $(d).text().replace(/\s+/g," ").trim();
-      const g = re => t.match(re)?.[1]?.trim() || null;
-      row     = row     || g(/Row\s*:\s*(\S+)/i);
-      section = section || g(/Section\s*:\s*(\S+)/i);
-      color   = color   || g(/Color\s*:\s*(.+)/i);
-      vin     = vin     || g(/VIN\s*:\s*(\S+)/i);
-      stockNo = stockNo || g(/Stock\s*#\s*:\s*(\S+)/i);
+    $(".pypvi_resultRow").each((_, el) => {
+      if (vehicles.length >= 50) return false; // audit fix: was 20
+      const $el = $(el);
+      const ymm = $el.find(".pypvi_ymm").text().replace(/\s+/g," ").trim();
+      const m = ymm.match(/^(\d{4})\s+(\S+)\s+(.+)$/);
+      if (!m) return;
+      const [, year, make, model] = m;
+      let row=null, section=null, color=null, vin=null, stockNo=null, dateAdded=null;
+      $el.find(".pypvi_detailItem").each((_, d) => {
+        const t = $(d).text().replace(/\s+/g," ").trim();
+        const g = re => t.match(re)?.[1]?.trim() || null;
+        row     = row     || g(/Row\s*:\s*(\S+)/i);
+        section = section || g(/Section\s*:\s*(\S+)/i);
+        color   = color   || g(/Color\s*:\s*(.+)/i);
+        vin     = vin     || g(/VIN\s*:\s*(\S+)/i);
+        stockNo = stockNo || g(/Stock\s*#\s*:\s*(\S+)/i);
+      });
+      const te = $el.find("time");
+      if (te.length) dateAdded = te.attr("datetime")?.split("T")[0] || te.text().trim();
+      vehicles.push({ year: parseInt(year), make, model, section, row, color, vin, stockNo, dateAdded,
+        img: $el.find("img").first().attr("src") || null });
     });
-    const te = $el.find("time");
-    if (te.length) dateAdded = te.attr("datetime")?.split("T")[0] || te.text().trim();
-    vehicles.push({ year: parseInt(year), make, model, section, row, color, vin, stockNo, dateAdded, img: $el.find("img").first().attr("src") || null });
-  });
 
-  if (!vehicles.length) { scrapeJobs.delete(yardId); return; }
+    if (!vehicles.length) {
+      scrapeJobs.set(yardId, { error: `No vehicles found for "${yardId}" — the yard may be empty or the page structure changed.` });
+      return;
+    }
 
-  const yardScore = scoreYard(vehicles);
-  const result = { vehicles, yardScore };
-  await cacheSet(cacheKey, result, TTL.inventory);
-  scrapeJobs.delete(yardId);
+    const result = { vehicles, yardScore: scoreYard(vehicles) };
+    await cacheSet(cacheKey, result, TTL.inventory);
+    scrapeJobs.delete(yardId);
+    log("inv", `done: ${vehicles.length} vehicles for ${yardId}`);
+  } catch(e) {
+    log("inv", `failed: ${yardId}: ${e.message}`);
+    scrapeJobs.set(yardId, { error: "Failed to load inventory: " + e.message });
+  }
 });
 
-app.get("/prices/:yardId", async (req, res) => {
-  // Prices are hardcoded — no scraping needed
-  res.json({ parts: PYP_PRICES, sourceUrl: `https://www.pyp.com/prices/${req.params.yardId}/` });
-});
+// ── eBay scraping with background job + polling ───────────────────────────────
+const ebayJobs = new Map();
+let ebayBrowserBusy = false;
 
-const ebayJobs = new Map(); // cacheKey -> "running"
-let ebayBrowserBusy = false; // only one Playwright browser at a time
+async function runEbayJob(cacheKey, year, make, model) {
+  try {
+    const queries = await getSearchQueries(year, make, model);
+    log("ebay", `fetching ${queries.length} queries: ${year} ${make} ${model}`);
+    const listings = await fetchEbayListings(queries);
+    await matchAndScoreListings(listings, PYP_PRICES);
+    log("ebay", `cached ${listings.length} for ${year} ${make} ${model}`);
+    await cacheSet(cacheKey, listings, TTL.ebay);
+    ebayJobs.delete(cacheKey);
+  } catch(e) {
+    log("ebay", `job failed for ${cacheKey}: ${e.message}`);
+    ebayJobs.set(cacheKey, { error: e.message });
+  } finally {
+    ebayBrowserBusy = false;
+  }
+}
 
-app.get("/ebay", async (req, res) => {
+app.get("/ebay", rateLimit(15), async (req, res) => {
   const { year, make, model } = req.query;
   if (!year || !make || !model) return res.json({ error: "Missing params" });
 
   const cacheKey = `ebay:${year}:${make}:${model}`;
   const cached = await cacheGet(cacheKey);
-  if (cached) { console.log(`[ebay] cache hit: ${year} ${make} ${model}`); return res.json({ listings: cached }); }
+  if (cached) { log("ebay", `cache hit: ${year} ${make} ${model}`); return res.json({ listings: cached }); }
 
-  if (ebayJobs.get(cacheKey) === "running") return res.json({ status: "scraping" });
+  const job = ebayJobs.get(cacheKey);
+  if (job === "running") return res.json({ status: "scraping" });
+  if (job?.error) { ebayJobs.delete(cacheKey); return res.json({ error: job.error }); }
+
   if (ebayBrowserBusy) return res.json({ status: "scraping" });
 
   ebayJobs.set(cacheKey, "running");
   ebayBrowserBusy = true;
   res.json({ status: "scraping" });
-
-  try {
-    const queries = await getSearchQueries(year, make, model);
-    console.log(`[ebay] fetching ${queries.length} queries: ${year} ${make} ${model}`);
-    const listings = await fetchEbayListings(queries);
-    await matchAndScoreListings(listings, PYP_PRICES);
-    console.log(`[ebay] cached ${listings.length} for ${year} ${make} ${model}`);
-    await cacheSet(cacheKey, listings, TTL.ebay);
-  } finally {
-    ebayJobs.delete(cacheKey);
-    ebayBrowserBusy = false;
-  }
+  runEbayJob(cacheKey, year, make, model);
 });
 
-app.get("/prefetch/:yardId", async (req, res) => {
+app.get("/prices/:yardId", (req, res) => {
+  res.json({ parts: PYP_PRICES, sourceUrl: `https://www.pyp.com/prices/${req.params.yardId}/` });
+});
+
+// Prefetch: warms eBay cache for all vehicles in a yard, respects browser lock
+app.get("/prefetch/:yardId", rateLimit(5), async (req, res) => {
   const inv = await cacheGet(`inv:${req.params.yardId}`);
   if (!inv?.vehicles) return res.json({ ok: false, reason: "inventory not cached" });
   res.json({ ok: true, count: inv.vehicles.length });
 
-  // Background: warm eBay cache one vehicle at a time with delays
-  for (let i = 0; i < inv.vehicles.length; i++) {
-    const v = inv.vehicles[i];
+  for (const v of inv.vehicles) {
     const key = `ebay:${v.year}:${v.make}:${v.model}`;
     if (await cacheGet(key)) continue;
-    try {
-      const queries = await getSearchQueries(v.year, v.make, v.model);
-      const listings = await fetchEbayListings(queries);
-      await matchAndScoreListings(listings, PYP_PRICES);
-      await cacheSet(key, listings, TTL.ebay);
-      console.log(`[prefetch] ${v.year} ${v.make} ${v.model}: ${listings.length} listings`);
-    } catch(e) { console.log(`[prefetch] failed ${v.year} ${v.make} ${v.model}:`, e.message); }
-    await new Promise(r => setTimeout(r, 4000)); // 4s between vehicles
+    if (ebayJobs.get(key) === "running" || ebayBrowserBusy) {
+      await new Promise(r => setTimeout(r, 5000));
+      continue;
+    }
+    ebayJobs.set(key, "running");
+    ebayBrowserBusy = true;
+    await runEbayJob(key, v.year, v.make, v.model);
+    await new Promise(r => setTimeout(r, 2000));
   }
 });
 
-// Debug routes
-app.get("/stores",      (_, res) => res.json({ stores: KNOWN_STORES }));
+// ── Admin / utility routes ────────────────────────────────────────────────────
+app.get("/stores", (_, res) => res.json({ stores: KNOWN_STORES }));
+
 app.get("/cache-stats", (_, res) => res.json({ memCacheSize: memCache.size, redis: !!(redisUrl && redisToken) }));
-app.get("/cache-clear", async (_, res) => {
+
+app.get("/cache-clear", async (req, res) => {
+  // Require ADMIN_TOKEN if set
+  if (ADMIN_TOKEN && req.query.token !== ADMIN_TOKEN) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
   memCache.clear();
-  // Flush Redis if connected
   if (redisUrl && redisToken) {
     try {
       await axios.get(`${redisUrl}/flushall`, { headers: { Authorization: `Bearer ${redisToken}` }, timeout: 5000 });
-      res.json({ ok: true, message: "memory + Redis cache cleared" });
-    } catch(e) { res.json({ ok: true, message: "memory cleared, Redis flush failed: " + e.message }); }
-  } else {
-    res.json({ ok: true, message: "memory cache cleared" });
+      return res.json({ ok: true, message: "memory + Redis cache cleared" });
+    } catch(e) { return res.json({ ok: true, message: "memory cleared, Redis flush failed: " + e.message }); }
   }
+  res.json({ ok: true, message: "memory cache cleared" });
 });
 
-// Static files
+// ── Static files & error handling ─────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, "public")));
-
 app.use((err, req, res, next) => res.status(500).json({ error: err.message }));
 app.use((req, res) => res.status(404).json({ error: "Not found: " + req.path }));
 
 process.on("SIGINT",  () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));
 
-app.listen(PORT, "0.0.0.0", () => console.log(`\n🔧 Junkyard Profit Finder v6 on port ${PORT} | Redis: ${!!(redisUrl && redisToken)}\n`));
+app.listen(PORT, "0.0.0.0", () =>
+  log("server", `Junkyard Pro v7 on port ${PORT} | Redis: ${!!(redisUrl && redisToken)}`));
