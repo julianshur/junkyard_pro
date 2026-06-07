@@ -76,7 +76,7 @@ function buildCard(v) {
       </div>
       <div class="car-actions">
         <span class="comp-count">Loading…</span>
-        <a href="${clSearchUrl(v)}" target="_blank" rel="noreferrer">Craigslist search</a>
+        <a href="${clSearchUrl(v)}" target="_blank" rel="noreferrer">CL search</a>
       </div>
     </header>
     <div class="card-body"><div class="empty">Loading eBay sold listings…</div></div>
@@ -104,18 +104,20 @@ function updateCard(v, listings) {
   body.innerHTML = `
     <table class="listing-table">
       <thead><tr>
-        <th>Craigslist listing</th><th>Asking price</th><th>PYP cost</th><th>Est. profit</th>
+        <th>Part</th><th>Est. market price</th><th>PYP cost</th><th>Est. profit</th>
       </tr></thead>
-      <tbody>${top.map(l => `
-        <tr>
+      <tbody>${top.map(l => {
+        const profit = l.pypPrice != null ? l.soldPrice - l.pypPrice : null;
+        return `<tr>
           <td>
-            <a href="${l.url || "#"}" target="_blank" rel="noreferrer">${l.title}</a>
-            ${l.category ? `<div class="listing-meta">${l.category}</div>` : ""}
+            ${l.title}
+            ${l.demand ? `<div class="listing-meta">Demand: ${"★".repeat(l.demand)}${"☆".repeat(5-l.demand)}</div>` : ""}
           </td>
           <td class="price">${money(l.soldPrice)}</td>
           <td>${l.pypPrice != null ? money(l.pypPrice) : "—"}</td>
-          <td class="${(l.profit||0) > 0 ? "profit" : ""}">${l.pypPrice != null ? money(l.soldPrice - l.pypPrice) : "—"}</td>
-        </tr>`).join("")}
+          <td class="${(profit||0) > 0 ? "profit" : ""}">${profit != null ? money(profit) : "—"}</td>
+        </tr>`;
+      }).join("")}
       </tbody>
     </table>
   `;

@@ -259,42 +259,49 @@ function scoreYard(vehicles) {
   return { score: n, grade: n >= 70 ? "green" : n >= 40 ? "yellow" : "red", label: n >= 70 ? "High" : n >= 40 ? "Medium" : "Low" };
 }
 
-// ── Craigslist RSS scraper (free, no bot detection, local SoCal pricing) ─────
-// Searches LA and Inland Empire — covers all 13 PYP yard markets
-const CL_AREAS = ["losangeles", "inlandempire", "sandiego"];
+// ── Claude-based pricing (replaces scraping — all listing sites block Render IP) ─
+async function getVehiclePricing(year, make, model) {
+  const cacheKey = `pricing:${year}:${make}:${model}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached) return cached;
 
-async function scrapeEbayQuery(q) {
-  const seen = new Set();
-  const allListings = [];
+  const partNames = PYP_PRICES.map(p => p.partName);
+  const text = await claudePost(
+    `For a ${year} ${make} ${model} at a self-service junkyard in Southern California, list the 3 most profitable parts to pull and resell.\n\nFor each part:\n- Match it EXACTLY to one of these PYP categories: ${partNames.join(", ")}\n- Give a realistic used private-party asking price in SoCal (Craigslist/FB Marketplace)\n- Rate demand 1-5 (5=fastest moving)\n\nReturn ONLY a JSON array, no explanation:\n[{"title":"${year} ${make} ${model} 3.5L V6 engine","pypCategory":"Engine, 6 Cyl","price":750,"demand":4}]`,
+    "You are a Southern California used auto parts pricing expert. Return only valid JSON.",
+    400
+  );
 
-  for (const area of CL_AREAS) {
-    const url = `https://${area}.craigslist.org/search/pta?format=rss&query=${encodeURIComponent(q)}&sort=date`;
-    try {
-      const r = await http.get(url, { timeout: 12000 });
-      const xml = typeof r.data === "string" ? r.data : "";
-      const items = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
-      for (const item of items) {
-        const titleMatch = item.match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/);
-        const title = titleMatch?.[1]?.trim() || "";
-        const linkMatch = item.match(/<link>([^<\s]+)/);
-        const link = linkMatch?.[1]?.trim() || "";
-        if (!title || !link || seen.has(link)) continue;
-        const priceMatch = title.match(/\$\s?([\d,]+)/);
-        if (!priceMatch) continue;
-        const price = parseFloat(priceMatch[1].replace(/,/g, ""));
-        if (!price || price < 20) continue;
-        seen.add(link);
-        const cleanTitle = title.replace(/\s*[-–]\s*\$[\d,]+.*$/, "").replace(/\$[\d,]+/, "").trim();
-        allListings.push({ title: cleanTitle || title, soldPrice: price, url: link, category: area, soldCount: null });
-      }
-    } catch(e) {
-      log("cl", `${area} failed for "${q.slice(0,30)}": ${e.message}`);
-    }
+  if (!text) return [];
+
+  try {
+    const arr = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0]);
+    if (!Array.isArray(arr)) return [];
+    const listings = arr.map(item => {
+      const part = PYP_PRICES.find(p =>
+        p.partName.toLowerCase() === (item.pypCategory || "").toLowerCase() ||
+        p.partName.toLowerCase().includes((item.pypCategory || "").toLowerCase().split(",")[0])
+      );
+      return {
+        title: item.title || `${year} ${make} ${model} ${item.pypCategory}`,
+        soldPrice: Number(item.price) || 0,
+        url: null,
+        category: item.pypCategory || null,
+        pypCategory: part?.partName || item.pypCategory,
+        pypPrice: part?.price ?? null,
+        demand: item.demand || 3,
+        soldCount: null,
+        isEstimate: true,
+      };
+    }).filter(l => l.soldPrice > 0);
+
+    log("pricing", `${year} ${make} ${model}: ${listings.length} parts estimated`);
+    await cacheSet(cacheKey, listings, TTL.ebay);
+    return listings;
+  } catch(e) {
+    log("pricing", `parse failed for ${year} ${make} ${model}: ${e.message}`);
+    return [];
   }
-
-  allListings.sort((a, b) => a.soldPrice - b.soldPrice);
-  log("cl", `"${q.slice(0,40)}" items:${allListings.length}`);
-  return allListings;
 }
 
 async function fetchEbayListings(searchQueries) {
@@ -442,10 +449,7 @@ const ebayJobs = new Map();
 
 async function runEbayJob(cacheKey, year, make, model) {
   try {
-    const queries = await getSearchQueries(year, make, model);
-    log("ebay", `fetching ${queries.length} queries: ${year} ${make} ${model}`);
-    const listings = await fetchEbayListings(queries);
-    await matchAndScoreListings(listings, PYP_PRICES);
+    const listings = await getVehiclePricing(year, make, model);
     log("ebay", `cached ${listings.length} for ${year} ${make} ${model}`);
     await cacheSet(cacheKey, listings, TTL.ebay);
     ebayJobs.delete(cacheKey);
