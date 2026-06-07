@@ -503,31 +503,28 @@ app.get("/debug-ebay", async (req, res) => {
   }
   const callUrl = `${workerUrl}?q=${encodeURIComponent(q)}`;
   try {
-    const r = await http.get(callUrl, {
-      timeout: 20000, responseType: "text", transformResponse: [d => d],
-    });
-    const html = r.data;
+    // Retry up to 4 times to get past edge-propagation flakiness
+    let html = "", workerStatus = 0;
+    for (let i = 0; i < 4; i++) {
+      const r = await http.get(callUrl, { timeout: 25000, responseType: "text", transformResponse: [d => d] });
+      workerStatus = r.status;
+      if (r.data.length > 50000) { html = r.data; break; }
+      await new Promise(ok => setTimeout(ok, 2000));
+    }
+    if (!html) return res.json({ error: "Worker kept returning short response after 4 tries", workerStatus });
+
     const $ = cheerioLoad(html);
-    const items = $(".s-item").length;
-    const titles = [];
-    $(".s-item__title").each((i, el) => { if (i < 5) titles.push($(el).text().trim()); });
-    // Try alternative selectors to find the right one
-    const selectors = [".s-item", ".srp-results li", ".lvresult", ".sresult", "[data-gr]", "li.s-item"];
+    const selectors = [".s-item", "li.s-item", ".srp-results li", ".lvresult", ".sresult"];
     const selectorHits = {};
     for (const sel of selectors) selectorHits[sel] = $(sel).length;
 
-    // Search for class names near price patterns in raw HTML
-    const priceMatches = [...html.matchAll(/class="([^"]*)"[^>]*>\$[\d,]+/g)].slice(0, 5).map(m => m[1]);
+    // Find class names appearing near dollar signs
+    const priceClasses = [...html.matchAll(/class="([^"]{3,40})"[^<]{0,60}\$\d/g)]
+      .slice(0, 8).map(m => m[1]);
 
-    res.json({
-      calledUrl: callUrl,
-      workerStatus: r.status,
-      htmlLength: html.length,
-      hasErrorPage: html.includes("Error Page"),
-      selectorHits,
-      priceClasses: priceMatches,
-      htmlSnippet: html.slice(100000, 100500),
-    });
+    // Snippet from middle of page where listings typically live
+    const mid = Math.floor(html.length / 2);
+    res.json({ workerStatus, htmlLength: html.length, selectorHits, priceClasses, midSnippet: html.slice(mid, mid + 600) });
   } catch(e) {
     res.json({ error: e.message, calledUrl: callUrl });
   }
