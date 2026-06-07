@@ -59,8 +59,8 @@ function renderYardPicker(yards, onSelect) {
   }
 }
 
-function ebaySearchUrl(v) {
-  return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(v.year + " " + v.make + " " + v.model + " engine")}&LH_Sold=1&LH_Complete=1`;
+function clSearchUrl(v) {
+  return `https://losangeles.craigslist.org/search/pta?query=${encodeURIComponent(v.year + " " + v.make + " " + v.model)}`;
 }
 
 function buildCard(v) {
@@ -76,7 +76,7 @@ function buildCard(v) {
       </div>
       <div class="car-actions">
         <span class="comp-count">Loading…</span>
-        <a href="${ebaySearchUrl(v)}" target="_blank" rel="noreferrer">eBay search</a>
+        <a href="${clSearchUrl(v)}" target="_blank" rel="noreferrer">Craigslist search</a>
       </div>
     </header>
     <div class="card-body"><div class="empty">Loading eBay sold listings…</div></div>
@@ -104,7 +104,7 @@ function updateCard(v, listings) {
   body.innerHTML = `
     <table class="listing-table">
       <thead><tr>
-        <th>eBay listing</th><th>Listed price</th><th>PYP cost</th><th>Est. profit</th>
+        <th>Craigslist listing</th><th>Asking price</th><th>PYP cost</th><th>Est. profit</th>
       </tr></thead>
       <tbody>${top.map(l => `
         <tr>
