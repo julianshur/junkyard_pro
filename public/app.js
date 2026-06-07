@@ -26,19 +26,18 @@ async function api(path) {
   const text = await r.text();
   let data;
   try { data = JSON.parse(text); }
-  catch(_) { throw new Error(`Server returned non-JSON (status ${r.status}): ${text.slice(0, 120)}`); }
+  catch(_) { throw new Error(`Server error (${r.status}): ${text.slice(0, 120)}`); }
   if (!r.ok) throw new Error(data.error || "Request failed");
   return data;
 }
 
-async function apiPoll(path, statusMsg, intervalMs = 4000, maxWaitMs = 120000) {
+async function apiPoll(path, intervalMs = 4000, maxWaitMs = 120000) {
   const deadline = Date.now() + maxWaitMs;
   while (true) {
     const data = await api(path);
     if (data.error) throw new Error(data.error);
     if (data.status === "scraping") {
-      if (Date.now() > deadline) throw new Error("Timed out — the scrape is taking too long. Try again.");
-      setStatus(statusMsg);
+      if (Date.now() > deadline) throw new Error("Timed out — try again.");
       await new Promise(r => setTimeout(r, intervalMs));
       continue;
     }
@@ -60,74 +59,72 @@ function renderYardPicker(yards, onSelect) {
   }
 }
 
-function renderInventory(yard, vehicles, ebayMap) {
-  results.innerHTML = "";
+function ebaySearchUrl(v) {
+  return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(v.year + " " + v.make + " " + v.model + " engine")}&LH_Sold=1&LH_Complete=1`;
+}
 
-  yardNameEl.textContent = yard.name;
-  yardLinkEl.href = `https://www.pyp.com/inventory/${yard.id}/`;
-  carCountEl.textContent = vehicles.length;
-  const totalComps = Object.values(ebayMap).reduce((n, l) => n + l.length, 0);
-  compCountEl.textContent = totalComps;
-  summary.hidden = false;
+function buildCard(v) {
+  const card = document.createElement("article");
+  card.className = "car-card";
+  card.id = `card-${v.year}-${v.make}-${v.model}`.replace(/\s+/g, "-");
+  const meta = [v.color, v.section && "Section " + v.section, v.row && "Row " + v.row].filter(Boolean).join(" · ");
+  card.innerHTML = `
+    <header class="car-header">
+      <div>
+        <h2 class="car-title">${v.year} ${v.make} ${v.model}</h2>
+        <div class="listing-meta">${meta}</div>
+      </div>
+      <div class="car-actions">
+        <span class="comp-count">Loading…</span>
+        <a href="${ebaySearchUrl(v)}" target="_blank" rel="noreferrer">eBay search</a>
+      </div>
+    </header>
+    <div class="card-body"><div class="empty">Loading eBay sold listings…</div></div>
+  `;
+  return card;
+}
 
-  if (!vehicles.length) {
-    results.innerHTML = '<div class="empty">No vehicles found in this yard\'s inventory.</div>';
+function updateCard(v, listings) {
+  const id = `card-${v.year}-${v.make}-${v.model}`.replace(/\s+/g, "-");
+  const card = document.getElementById(id);
+  if (!card) return;
+
+  const countEl = card.querySelector(".comp-count");
+  const body = card.querySelector(".card-body");
+
+  if (!listings.length) {
+    if (countEl) countEl.textContent = "0 sold comps";
+    body.innerHTML = '<div class="empty">No sold eBay listings found.</div>';
     return;
   }
 
-  for (const v of vehicles) {
-    const card = document.createElement("article");
-    card.className = "car-card";
+  if (countEl) countEl.textContent = `${listings.length} sold comps`;
 
-    const listings = ebayMap[`${v.year}:${v.make}:${v.model}`] || [];
-    const topListings = listings.slice(0, 8);
+  const top = listings.slice(0, 8);
+  body.innerHTML = `
+    <table class="listing-table">
+      <thead><tr>
+        <th>Sold item</th><th>Sold price</th><th>PYP cost</th><th>Profit</th>
+      </tr></thead>
+      <tbody>${top.map(l => `
+        <tr>
+          <td>
+            <a href="${l.url || "#"}" target="_blank" rel="noreferrer">${l.title}</a>
+            ${l.category ? `<div class="listing-meta">${l.category}</div>` : ""}
+          </td>
+          <td class="price">${money(l.soldPrice)}</td>
+          <td>${l.pypPrice != null ? money(l.pypPrice) : "—"}</td>
+          <td class="${(l.profit||0) > 0 ? "profit" : ""}">${l.profit != null ? money(l.profit) : "—"}</td>
+        </tr>`).join("")}
+      </tbody>
+    </table>
+  `;
 
-    card.innerHTML = `
-      <header class="car-header">
-        <div>
-          <h2 class="car-title">${v.year} ${v.make} ${v.model}</h2>
-          <div class="listing-meta">
-            ${[v.color, v.section && "Section " + v.section, v.row && "Row " + v.row].filter(Boolean).join(" · ")}
-          </div>
-        </div>
-        <div class="car-actions">
-          <span>${listings.length} sold comps</span>
-          ${listings.length ? `<a href="https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(v.year + " " + v.make + " " + v.model + " parts")}&LH_Sold=1&LH_Complete=1" target="_blank" rel="noreferrer">eBay search</a>` : ""}
-        </div>
-      </header>
-    `;
-
-    if (!topListings.length) {
-      const empty = document.createElement("div");
-      empty.className = "empty";
-      empty.textContent = "No sold eBay listings found.";
-      card.append(empty);
-    } else {
-      const table = document.createElement("table");
-      table.className = "listing-table";
-      table.innerHTML = `
-        <thead><tr>
-          <th>Sold item</th>
-          <th>Sold price</th>
-          <th>PYP cost</th>
-          <th>Profit</th>
-        </tr></thead>
-        <tbody>${topListings.map(l => `
-          <tr>
-            <td><a href="${l.url || "#"}" target="_blank" rel="noreferrer">${l.title}</a>
-              ${l.category ? `<div class="listing-meta">${l.category}</div>` : ""}
-            </td>
-            <td class="price">${money(l.soldPrice)}</td>
-            <td>${l.pypPrice != null ? money(l.pypPrice) : "—"}</td>
-            <td class="${l.profit > 0 ? "profit" : ""}">${l.profit != null ? money(l.profit) : "—"}</td>
-          </tr>`).join("")}
-        </tbody>
-      `;
-      card.append(table);
-    }
-
-    results.append(card);
-  }
+  // Update global comp count
+  const total = document.querySelectorAll(".comp-count");
+  let sum = 0;
+  total.forEach(el => { const n = parseInt(el.textContent); if (!isNaN(n)) sum += n; });
+  compCountEl.textContent = sum;
 }
 
 form.addEventListener("submit", async (e) => {
@@ -142,7 +139,6 @@ form.addEventListener("submit", async (e) => {
   setStatus("Finding yards…");
 
   try {
-    // 1. Find yards
     const { yards } = await api(`/yards?q=${encodeURIComponent(q)}`);
     if (!yards?.length) throw new Error("No yards found near that location.");
 
@@ -166,36 +162,50 @@ async function loadYard(yard) {
   submitBtn.textContent = "Loading…";
   summary.hidden = true;
   results.innerHTML = "";
-  setStatus("Loading inventory…");
+  setStatus("Loading inventory from pyp.com… (first load takes ~30s)");
 
   try {
-    // 2. Inventory (polls until scraped)
-    const inv = await apiPoll(`/inventory/${yard.id}`, "Loading inventory from pyp.com (this takes ~30s the first time)…");
+    const inv = await apiPoll(`/inventory/${yard.id}`);
     const vehicles = inv.vehicles || [];
 
-    // 3. eBay listings — sequential to avoid launching multiple browsers at once
-    const ebayMap = {};
-    for (let i = 0; i < vehicles.length; i++) {
-      const v = vehicles[i];
-      const key = `${v.year}:${v.make}:${v.model}`;
-      setStatus(`Loading eBay sold listings… (${i + 1}/${vehicles.length}: ${v.year} ${v.make} ${v.model})`);
+    // Show inventory immediately
+    yardNameEl.textContent = yard.name;
+    yardLinkEl.href = `https://www.pyp.com/inventory/${yard.id}/`;
+    carCountEl.textContent = vehicles.length;
+    compCountEl.textContent = "…";
+    summary.hidden = false;
+    setStatus("");
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Search";
+
+    if (!vehicles.length) {
+      results.innerHTML = '<div class="empty">No vehicles found in this yard\'s inventory.</div>';
+      return;
+    }
+
+    // Render all cards immediately with loading state
+    for (const v of vehicles) results.append(buildCard(v));
+
+    // Load eBay for each vehicle sequentially, updating cards as data arrives
+    let totalComps = 0;
+    for (const v of vehicles) {
       try {
         const data = await apiPoll(
           `/ebay?year=${v.year}&make=${encodeURIComponent(v.make)}&model=${encodeURIComponent(v.model)}`,
-          `Scraping eBay for ${v.year} ${v.make} ${v.model}…`,
           4000, 90000
         );
-        ebayMap[key] = data.listings || [];
-      } catch (_) {
-        ebayMap[key] = [];
+        const listings = data.listings || [];
+        totalComps += listings.length;
+        compCountEl.textContent = totalComps;
+        updateCard(v, listings);
+      } catch(_) {
+        updateCard(v, []);
       }
     }
+    compCountEl.textContent = totalComps;
 
-    setStatus("");
-    renderInventory(yard, vehicles, ebayMap);
   } catch (err) {
     setStatus(err.message, true);
-  } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = "Search";
   }
