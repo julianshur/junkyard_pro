@@ -259,56 +259,42 @@ function scoreYard(vehicles) {
   return { score: n, grade: n >= 70 ? "green" : n >= 40 ? "yellow" : "red", label: n >= 70 ? "High" : n >= 40 ? "Medium" : "Low" };
 }
 
-// ── eBay scraping via free proxies (Render's IP is CDN-blocked by eBay) ───────
-function parseEbayHtml(html) {
-  if (!html || typeof html !== "string" || html.includes("Error Page | eBay")) return [];
-  const $ = cheerioLoad(html);
-  const results = [];
-  $(".s-item, .s-card").each((_, card) => {
-    const $c = $(card);
-    const text = $c.text();
-    const title = ($c.find(".s-item__title, .s-card__title").text() || "")
-      .replace("New listing","").replace(/Opens in a new window or tab/gi,"").trim();
-    if (!title || title === "Shop on eBay") return;
-    const priceMatch = ($c.find(".s-item__price, .s-card__price").text() || text).match(/\$([\d,]+\.\d{2})/);
-    if (!priceMatch) return;
-    const price = parseFloat(priceMatch[1].replace(/,/g,""));
-    if (!price || price < 1) return;
-    const href = ($c.find("a.s-item__link, a.s-card__link").attr("href") || "").split("?")[0];
-    if (!href || href.includes("rover.ebay.com")) return;
-    const condition = $c.find(".SECONDARY_INFO, .s-item__subtitle, .s-card__subtitle").first().text().trim() || null;
-    if (/^new$|^brand new$/i.test(condition||"")) return;
-    results.push({ title, soldPrice: price, url: href, category: condition, soldCount: null });
-  });
-  return results;
-}
+// ── Craigslist RSS scraper (free, no bot detection, local SoCal pricing) ─────
+// Searches LA and Inland Empire — covers all 13 PYP yard markets
+const CL_AREAS = ["losangeles", "inlandempire", "sandiego"];
 
 async function scrapeEbayQuery(q) {
-  const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&LH_ItemCondition=4&_sop=15&_ipg=48`;
+  const seen = new Set();
+  const allListings = [];
 
-  // Try free CORS proxies — their IPs are not in eBay's block list
-  const proxies = [
-    { url: `https://api.allorigins.win/get?url=${encodeURIComponent(ebayUrl)}`, extract: r => r.contents },
-    { url: `https://corsproxy.io/?${encodeURIComponent(ebayUrl)}`,              extract: r => r },
-    { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(ebayUrl)}`, extract: r => r },
-    { url: `https://thingproxy.freeboard.io/fetch/${ebayUrl}`,                  extract: r => r },
-  ];
-
-  for (const { url, extract } of proxies) {
+  for (const area of CL_AREAS) {
+    const url = `https://${area}.craigslist.org/search/pta?format=rss&query=${encodeURIComponent(q)}&sort=date`;
     try {
-      const r = await http.get(url, { timeout: 20000, transformResponse: [d => d] });
-      let html;
-      try { html = extract(JSON.parse(r.data)); } catch(_) { html = r.data; }
-      const listings = parseEbayHtml(html);
-      if (listings.length > 0) {
-        log("ebay", `"${q.slice(0,40)}" items:${listings.length}`);
-        return listings;
+      const r = await http.get(url, { timeout: 12000 });
+      const xml = typeof r.data === "string" ? r.data : "";
+      const items = xml.match(/<item>[\s\S]*?<\/item>/g) || [];
+      for (const item of items) {
+        const titleMatch = item.match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/);
+        const title = titleMatch?.[1]?.trim() || "";
+        const linkMatch = item.match(/<link>([^<\s]+)/);
+        const link = linkMatch?.[1]?.trim() || "";
+        if (!title || !link || seen.has(link)) continue;
+        const priceMatch = title.match(/\$\s?([\d,]+)/);
+        if (!priceMatch) continue;
+        const price = parseFloat(priceMatch[1].replace(/,/g, ""));
+        if (!price || price < 20) continue;
+        seen.add(link);
+        const cleanTitle = title.replace(/\s*[-–]\s*\$[\d,]+.*$/, "").replace(/\$[\d,]+/, "").trim();
+        allListings.push({ title: cleanTitle || title, soldPrice: price, url: link, category: area, soldCount: null });
       }
-    } catch(_) {}
+    } catch(e) {
+      log("cl", `${area} failed for "${q.slice(0,30)}": ${e.message}`);
+    }
   }
 
-  log("ebay", `"${q.slice(0,40)}" items:0 (all proxies failed)`);
-  return [];
+  allListings.sort((a, b) => a.soldPrice - b.soldPrice);
+  log("cl", `"${q.slice(0,40)}" items:${allListings.length}`);
+  return allListings;
 }
 
 async function fetchEbayListings(searchQueries) {
