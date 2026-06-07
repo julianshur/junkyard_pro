@@ -270,6 +270,9 @@ async function scrapeEbayQuery(q) {
     const page = await ctx.newPage();
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
     await page.waitForSelector(".s-item, .s-card", { timeout: 10000 }).catch(() => {});
+    const pageTitle = await page.title();
+    const snippet = await page.evaluate(() => document.body?.innerText?.slice(0, 200) || "");
+    log("ebay-debug", `title="${pageTitle}" snippet="${snippet.replace(/\n/g," ").slice(0,120)}"`);
     const listings = await page.evaluate(() => {
       const results = [];
       for (const card of document.querySelectorAll(".s-item, .s-card")) {
