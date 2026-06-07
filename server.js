@@ -265,8 +265,9 @@ async function scrapeEbayQuery(q) {
   try {
     const ctx = await browser.newContext({ userAgent: UA, locale: "en-US" });
     await ctx.addInitScript(STEALTH_SCRIPT);
-    // No _sacat filter — category restriction was causing 0 results
-    const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=48`;
+    // Active listings — eBay's CDN blocks sold/completed searches from Render's IP
+    const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&LH_ItemCondition=4&_sop=15&_ipg=48`;
+    // _sop=15 = lowest price + shipping first (conservative pricing signal)
     const page = await ctx.newPage();
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
     await page.waitForSelector(".s-item, .s-card", { timeout: 10000 }).catch(() => {});

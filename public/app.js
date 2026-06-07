@@ -104,7 +104,7 @@ function updateCard(v, listings) {
   body.innerHTML = `
     <table class="listing-table">
       <thead><tr>
-        <th>Sold item</th><th>Sold price</th><th>PYP cost</th><th>Profit</th>
+        <th>eBay listing</th><th>Listed price</th><th>PYP cost</th><th>Est. profit</th>
       </tr></thead>
       <tbody>${top.map(l => `
         <tr>
@@ -114,7 +114,7 @@ function updateCard(v, listings) {
           </td>
           <td class="price">${money(l.soldPrice)}</td>
           <td>${l.pypPrice != null ? money(l.pypPrice) : "—"}</td>
-          <td class="${(l.profit||0) > 0 ? "profit" : ""}">${l.profit != null ? money(l.profit) : "—"}</td>
+          <td class="${(l.profit||0) > 0 ? "profit" : ""}">${l.pypPrice != null ? money(l.soldPrice - l.pypPrice) : "—"}</td>
         </tr>`).join("")}
       </tbody>
     </table>
