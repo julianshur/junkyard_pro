@@ -304,6 +304,44 @@ async function getVehiclePricing(year, make, model) {
   }
 }
 
+// ── eBay scraping via Cloudflare Worker proxy ─────────────────────────────────
+// Set EBAY_WORKER_URL env var on Render to enable real sold listings.
+// Falls back to Claude estimates when not set.
+async function scrapeEbayQuery(query) {
+  const workerUrl = process.env.EBAY_WORKER_URL;
+  if (!workerUrl) throw new Error("EBAY_WORKER_URL not configured");
+
+  const r = await http.get(`${workerUrl}?q=${encodeURIComponent(query)}`, {
+    timeout: 20000,
+    responseType: "text",
+    transformResponse: [d => d],
+  });
+  const html = r.data;
+
+  if (html.includes("Error Page") || html.includes("errorpage")) {
+    log("ebay", `error page returned for: ${query}`);
+    return [];
+  }
+
+  const $ = cheerioLoad(html);
+  const listings = [];
+
+  $(".s-item").each((_, el) => {
+    const $el = $(el);
+    const title = $el.find(".s-item__title").first().text().trim();
+    if (!title || /shop on ebay/i.test(title)) return;
+
+    const priceText = $el.find(".s-item__price").first().text().trim();
+    const price = parseFloat(priceText.replace(/[^0-9.]/g, ""));
+    const href = $el.find("a.s-item__link").attr("href") || null;
+
+    if (price > 0) listings.push({ title, soldPrice: price, url: href, soldCount: null });
+  });
+
+  log("ebay", `"${query}": ${listings.length} sold listings`);
+  return listings;
+}
+
 async function fetchEbayListings(searchQueries) {
   const allListings = [];
   for (const q of searchQueries) {
@@ -449,7 +487,25 @@ const ebayJobs = new Map();
 
 async function runEbayJob(cacheKey, year, make, model) {
   try {
-    const listings = await getVehiclePricing(year, make, model);
+    let listings;
+
+    if (process.env.EBAY_WORKER_URL) {
+      // Real eBay sold listings via Cloudflare Worker proxy
+      const queries = await getSearchQueries(year, make, model);
+      const rawListings = await fetchEbayListings(queries);
+
+      if (rawListings.length > 0) {
+        await matchAndScoreListings(rawListings, PYP_PRICES);
+        listings = rawListings;
+      } else {
+        log("ebay", `no results from eBay for ${year} ${make} ${model}, falling back to estimates`);
+        listings = await getVehiclePricing(year, make, model);
+      }
+    } else {
+      // No Worker configured — use Claude estimates
+      listings = await getVehiclePricing(year, make, model);
+    }
+
     log("ebay", `cached ${listings.length} for ${year} ${make} ${model}`);
     await cacheSet(cacheKey, listings, TTL.ebay);
     ebayJobs.delete(cacheKey);

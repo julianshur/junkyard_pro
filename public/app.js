@@ -79,7 +79,7 @@ function buildCard(v) {
         <a href="${clSearchUrl(v)}" target="_blank" rel="noreferrer">CL search</a>
       </div>
     </header>
-    <div class="card-body"><div class="empty">Loading eBay sold listings…</div></div>
+    <div class="card-body"><div class="empty">Loading pricing data…</div></div>
   `;
   return card;
 }
@@ -101,10 +101,11 @@ function updateCard(v, listings) {
   if (countEl) countEl.textContent = `${listings.length} sold comps`;
 
   const top = listings.slice(0, 8);
+  const isEstimate = top.some(l => l.isEstimate);
   body.innerHTML = `
     <table class="listing-table">
       <thead><tr>
-        <th>Part</th><th>Est. market price</th><th>PYP cost</th><th>Est. profit</th>
+        <th>Part</th><th>${isEstimate ? "Est. market price" : "eBay sold price"}</th><th>PYP cost</th><th>${isEstimate ? "Est. " : ""}profit</th>
       </tr></thead>
       <tbody>${top.map(l => {
         const profit = l.pypPrice != null ? l.soldPrice - l.pypPrice : null;
