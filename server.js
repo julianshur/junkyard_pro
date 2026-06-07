@@ -259,53 +259,56 @@ function scoreYard(vehicles) {
   return { score: n, grade: n >= 70 ? "green" : n >= 40 ? "yellow" : "red", label: n >= 70 ? "High" : n >= 40 ? "Medium" : "Low" };
 }
 
-// ── eBay scraping (fresh browser per query to avoid OOM) ─────────────────────
+// ── eBay scraping via free proxies (Render's IP is CDN-blocked by eBay) ───────
+function parseEbayHtml(html) {
+  if (!html || typeof html !== "string" || html.includes("Error Page | eBay")) return [];
+  const $ = cheerioLoad(html);
+  const results = [];
+  $(".s-item, .s-card").each((_, card) => {
+    const $c = $(card);
+    const text = $c.text();
+    const title = ($c.find(".s-item__title, .s-card__title").text() || "")
+      .replace("New listing","").replace(/Opens in a new window or tab/gi,"").trim();
+    if (!title || title === "Shop on eBay") return;
+    const priceMatch = ($c.find(".s-item__price, .s-card__price").text() || text).match(/\$([\d,]+\.\d{2})/);
+    if (!priceMatch) return;
+    const price = parseFloat(priceMatch[1].replace(/,/g,""));
+    if (!price || price < 1) return;
+    const href = ($c.find("a.s-item__link, a.s-card__link").attr("href") || "").split("?")[0];
+    if (!href || href.includes("rover.ebay.com")) return;
+    const condition = $c.find(".SECONDARY_INFO, .s-item__subtitle, .s-card__subtitle").first().text().trim() || null;
+    if (/^new$|^brand new$/i.test(condition||"")) return;
+    results.push({ title, soldPrice: price, url: href, category: condition, soldCount: null });
+  });
+  return results;
+}
+
 async function scrapeEbayQuery(q) {
-  const browser = await launchChromium();
-  try {
-    const ctx = await browser.newContext({ userAgent: UA, locale: "en-US" });
-    await ctx.addInitScript(STEALTH_SCRIPT);
-    // Active listings — eBay's CDN blocks sold/completed searches from Render's IP
-    const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&LH_ItemCondition=4&_sop=15&_ipg=48`;
-    // _sop=15 = lowest price + shipping first (conservative pricing signal)
-    const page = await ctx.newPage();
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-    await page.waitForSelector(".s-item, .s-card", { timeout: 10000 }).catch(() => {});
-    const pageTitle = await page.title();
-    const snippet = await page.evaluate(() => document.body?.innerText?.slice(0, 200) || "");
-    log("ebay-debug", `title="${pageTitle}" snippet="${snippet.replace(/\n/g," ").slice(0,120)}"`);
-    const listings = await page.evaluate(() => {
-      const results = [];
-      for (const card of document.querySelectorAll(".s-item, .s-card")) {
-        const text = card.textContent || "";
-        const titleEl = card.querySelector(".s-item__title, .s-card__title");
-        const title = (titleEl?.textContent || "").replace("New listing","").replace(/Opens in a new window or tab/gi,"").trim();
-        if (!title || title === "Shop on eBay") continue;
-        const priceEl = card.querySelector(".s-item__price, .s-card__price");
-        const priceMatch = (priceEl?.textContent || text).match(/\$([\d,]+\.\d{2})/);
-        if (!priceMatch) continue;
-        const price = parseFloat(priceMatch[1].replace(/,/g,""));
-        if (!price || price < 1) continue;
-        const linkEl = card.querySelector("a.s-item__link, a.s-card__link, a[href*='ebay.com/itm']");
-        const href = linkEl?.href || "";
-        if (!href || href.includes("rover.ebay.com")) continue;
-        const condEl = card.querySelector(".SECONDARY_INFO, .s-item__subtitle, .s-card__subtitle");
-        const condition = condEl?.textContent?.trim() || null;
-        if (/^new$|^brand new$/i.test(condition||"")) continue;
-        // Only record soldCount when eBay explicitly states it (audit fix: was defaulting to 1)
-        const soldMatch = text.match(/(\d[\d,]*)\s+sold/i);
-        results.push({
-          title, soldPrice: price, url: href.split("?")[0], category: condition,
-          soldCount: soldMatch ? parseInt(soldMatch[1].replace(/,/g,"")) : null,
-        });
+  const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&LH_ItemCondition=4&_sop=15&_ipg=48`;
+
+  // Try free CORS proxies — their IPs are not in eBay's block list
+  const proxies = [
+    { url: `https://api.allorigins.win/get?url=${encodeURIComponent(ebayUrl)}`, extract: r => r.contents },
+    { url: `https://corsproxy.io/?${encodeURIComponent(ebayUrl)}`,              extract: r => r },
+    { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(ebayUrl)}`, extract: r => r },
+    { url: `https://thingproxy.freeboard.io/fetch/${ebayUrl}`,                  extract: r => r },
+  ];
+
+  for (const { url, extract } of proxies) {
+    try {
+      const r = await http.get(url, { timeout: 20000, transformResponse: [d => d] });
+      let html;
+      try { html = extract(JSON.parse(r.data)); } catch(_) { html = r.data; }
+      const listings = parseEbayHtml(html);
+      if (listings.length > 0) {
+        log("ebay", `"${q.slice(0,40)}" items:${listings.length}`);
+        return listings;
       }
-      return results;
-    });
-    log("ebay", `"${q.slice(0,40)}" items:${listings.length}`);
-    return listings;
-  } finally {
-    await browser.close();
+    } catch(_) {}
   }
+
+  log("ebay", `"${q.slice(0,40)}" items:0 (all proxies failed)`);
+  return [];
 }
 
 async function fetchEbayListings(searchQueries) {
@@ -314,7 +317,6 @@ async function fetchEbayListings(searchQueries) {
     try {
       const listings = await scrapeEbayQuery(q);
       allListings.push(...listings);
-      await new Promise(r => setTimeout(r, 1500));
     } catch(e) {
       log("ebay", `query failed "${q}": ${e.message}`);
     }
@@ -451,7 +453,6 @@ app.get("/inventory/:yardId", rateLimit(20), async (req, res) => {
 
 // ── eBay scraping with background job + polling ───────────────────────────────
 const ebayJobs = new Map();
-let ebayBrowserBusy = false;
 
 async function runEbayJob(cacheKey, year, make, model) {
   try {
@@ -465,8 +466,6 @@ async function runEbayJob(cacheKey, year, make, model) {
   } catch(e) {
     log("ebay", `job failed for ${cacheKey}: ${e.message}`);
     ebayJobs.set(cacheKey, { error: e.message });
-  } finally {
-    ebayBrowserBusy = false;
   }
 }
 
@@ -482,10 +481,7 @@ app.get("/ebay", rateLimit(15), async (req, res) => {
   if (job === "running") return res.json({ status: "scraping" });
   if (job?.error) { ebayJobs.delete(cacheKey); return res.json({ error: job.error }); }
 
-  if (ebayBrowserBusy) return res.json({ status: "scraping" });
-
   ebayJobs.set(cacheKey, "running");
-  ebayBrowserBusy = true;
   res.json({ status: "scraping" });
   runEbayJob(cacheKey, year, make, model);
 });
@@ -502,15 +498,10 @@ app.get("/prefetch/:yardId", rateLimit(5), async (req, res) => {
 
   for (const v of inv.vehicles) {
     const key = `ebay:${v.year}:${v.make}:${v.model}`;
-    if (await cacheGet(key)) continue;
-    if (ebayJobs.get(key) === "running" || ebayBrowserBusy) {
-      await new Promise(r => setTimeout(r, 5000));
-      continue;
-    }
+    if (await cacheGet(key) || ebayJobs.get(key) === "running") continue;
     ebayJobs.set(key, "running");
-    ebayBrowserBusy = true;
     await runEbayJob(key, v.year, v.make, v.model);
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 1000));
   }
 });
 
