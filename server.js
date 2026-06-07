@@ -501,8 +501,9 @@ app.get("/debug-ebay", async (req, res) => {
   } catch(_) {
     return res.json({ error: "EBAY_WORKER_URL is not a valid URL", value: workerUrl });
   }
+  const callUrl = `${workerUrl}?q=${encodeURIComponent(q)}`;
   try {
-    const r = await http.get(`${workerUrl}?q=${encodeURIComponent(q)}`, {
+    const r = await http.get(callUrl, {
       timeout: 20000, responseType: "text", transformResponse: [d => d],
     });
     const html = r.data;
@@ -511,6 +512,7 @@ app.get("/debug-ebay", async (req, res) => {
     const titles = [];
     $(".s-item__title").each((i, el) => { if (i < 5) titles.push($(el).text().trim()); });
     res.json({
+      calledUrl: callUrl,
       workerStatus: r.status,
       htmlLength: html.length,
       hasErrorPage: html.includes("Error Page"),
@@ -519,7 +521,7 @@ app.get("/debug-ebay", async (req, res) => {
       htmlSnippet: html.slice(0, 300),
     });
   } catch(e) {
-    res.json({ error: e.message });
+    res.json({ error: e.message, calledUrl: callUrl });
   }
 });
 
