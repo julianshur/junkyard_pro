@@ -259,50 +259,6 @@ function scoreYard(vehicles) {
   return { score: n, grade: n >= 70 ? "green" : n >= 40 ? "yellow" : "red", label: n >= 70 ? "High" : n >= 40 ? "Medium" : "Low" };
 }
 
-// ── Claude-based pricing (replaces scraping — all listing sites block Render IP) ─
-async function getVehiclePricing(year, make, model) {
-  const cacheKey = `pricing:${year}:${make}:${model}`;
-  const cached = await cacheGet(cacheKey);
-  if (cached) return cached;
-
-  const partNames = PYP_PRICES.map(p => p.partName);
-  const text = await claudePost(
-    `For a ${year} ${make} ${model} at a self-service junkyard in Southern California, list the 3 most profitable parts to pull and resell.\n\nFor each part:\n- Match it EXACTLY to one of these PYP categories: ${partNames.join(", ")}\n- Give a realistic used private-party asking price in SoCal (Craigslist/FB Marketplace)\n- Rate demand 1-5 (5=fastest moving)\n\nReturn ONLY a JSON array, no explanation:\n[{"title":"${year} ${make} ${model} 3.5L V6 engine","pypCategory":"Engine, 6 Cyl","price":750,"demand":4}]`,
-    "You are a Southern California used auto parts pricing expert. Return only valid JSON.",
-    400
-  );
-
-  if (!text) return [];
-
-  try {
-    const arr = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0]);
-    if (!Array.isArray(arr)) return [];
-    const listings = arr.map(item => {
-      const part = PYP_PRICES.find(p =>
-        p.partName.toLowerCase() === (item.pypCategory || "").toLowerCase() ||
-        p.partName.toLowerCase().includes((item.pypCategory || "").toLowerCase().split(",")[0])
-      );
-      return {
-        title: item.title || `${year} ${make} ${model} ${item.pypCategory}`,
-        soldPrice: Number(item.price) || 0,
-        url: null,
-        category: item.pypCategory || null,
-        pypCategory: part?.partName || item.pypCategory,
-        pypPrice: part?.price ?? null,
-        demand: item.demand || 3,
-        soldCount: null,
-        isEstimate: true,
-      };
-    }).filter(l => l.soldPrice > 0);
-
-    log("pricing", `${year} ${make} ${model}: ${listings.length} parts estimated`);
-    await cacheSet(cacheKey, listings, TTL.ebay);
-    return listings;
-  } catch(e) {
-    log("pricing", `parse failed for ${year} ${make} ${model}: ${e.message}`);
-    return [];
-  }
-}
 
 // ── eBay scraping via Cloudflare Worker proxy ─────────────────────────────────
 // Set EBAY_WORKER_URL env var on Render to enable real sold listings.
@@ -487,26 +443,10 @@ const ebayJobs = new Map();
 
 async function runEbayJob(cacheKey, year, make, model) {
   try {
-    let listings;
-
-    if (process.env.EBAY_WORKER_URL) {
-      // Real eBay sold listings via Cloudflare Worker proxy
-      const queries = await getSearchQueries(year, make, model);
-      const rawListings = await fetchEbayListings(queries);
-
-      if (rawListings.length > 0) {
-        await matchAndScoreListings(rawListings, PYP_PRICES);
-        listings = rawListings;
-      } else {
-        log("ebay", `no results from eBay for ${year} ${make} ${model}, falling back to estimates`);
-        listings = await getVehiclePricing(year, make, model);
-      }
-    } else {
-      // No Worker configured — use Claude estimates
-      listings = await getVehiclePricing(year, make, model);
-    }
-
-    log("ebay", `cached ${listings.length} for ${year} ${make} ${model}`);
+    const queries = await getSearchQueries(year, make, model);
+    const listings = await fetchEbayListings(queries);
+    if (listings.length > 0) await matchAndScoreListings(listings, PYP_PRICES);
+    log("ebay", `cached ${listings.length} sold listings for ${year} ${make} ${model}`);
     await cacheSet(cacheKey, listings, TTL.ebay);
     ebayJobs.delete(cacheKey);
   } catch(e) {

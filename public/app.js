@@ -59,10 +59,6 @@ function renderYardPicker(yards, onSelect) {
   }
 }
 
-function clSearchUrl(v) {
-  return `https://losangeles.craigslist.org/search/pta?query=${encodeURIComponent(v.year + " " + v.make + " " + v.model)}`;
-}
-
 function buildCard(v) {
   const card = document.createElement("article");
   card.className = "car-card";
@@ -74,12 +70,9 @@ function buildCard(v) {
         <h2 class="car-title">${v.year} ${v.make} ${v.model}</h2>
         <div class="listing-meta">${meta}</div>
       </div>
-      <div class="car-actions">
-        <span class="comp-count">Loading…</span>
-        <a href="${clSearchUrl(v)}" target="_blank" rel="noreferrer">CL search</a>
-      </div>
+      <span class="comp-count">Loading…</span>
     </header>
-    <div class="card-body"><div class="empty">Loading pricing data…</div></div>
+    <div class="card-body"><div class="empty">Loading eBay data…</div></div>
   `;
   return card;
 }
@@ -93,27 +86,23 @@ function updateCard(v, listings) {
   const body = card.querySelector(".card-body");
 
   if (!listings.length) {
-    if (countEl) countEl.textContent = "0 sold comps";
-    body.innerHTML = '<div class="empty">No sold eBay listings found.</div>';
+    if (countEl) countEl.textContent = "0 sold";
+    body.innerHTML = '<div class="empty">No eBay sold listings found.</div>';
     return;
   }
 
-  if (countEl) countEl.textContent = `${listings.length} sold comps`;
+  if (countEl) countEl.textContent = `${listings.length} sold`;
 
   const top = listings.slice(0, 8);
-  const isEstimate = top.some(l => l.isEstimate);
   body.innerHTML = `
     <table class="listing-table">
       <thead><tr>
-        <th>Part</th><th>${isEstimate ? "Est. market price" : "eBay sold price"}</th><th>PYP cost</th><th>${isEstimate ? "Est. " : ""}profit</th>
+        <th>Part</th><th>eBay sold price</th><th>PYP cost</th><th>Profit</th>
       </tr></thead>
       <tbody>${top.map(l => {
         const profit = l.pypPrice != null ? l.soldPrice - l.pypPrice : null;
         return `<tr>
-          <td>
-            ${l.title}
-            ${l.demand ? `<div class="listing-meta">Demand: ${"★".repeat(l.demand)}${"☆".repeat(5-l.demand)}</div>` : ""}
-          </td>
+          <td>${l.title}</td>
           <td class="price">${money(l.soldPrice)}</td>
           <td>${l.pypPrice != null ? money(l.pypPrice) : "—"}</td>
           <td class="${(profit||0) > 0 ? "profit" : ""}">${profit != null ? money(profit) : "—"}</td>
