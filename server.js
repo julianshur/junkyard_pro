@@ -491,6 +491,33 @@ app.get("/prefetch/:yardId", rateLimit(5), async (req, res) => {
   }
 });
 
+// ── Debug: test Worker + eBay parsing directly ───────────────────────────────
+app.get("/debug-ebay", async (req, res) => {
+  const q = req.query.q || "2005 Honda Odyssey engine";
+  const workerUrl = process.env.EBAY_WORKER_URL;
+  if (!workerUrl) return res.json({ error: "EBAY_WORKER_URL not set", workerUrl: null });
+  try {
+    const r = await http.get(`${workerUrl}?q=${encodeURIComponent(q)}`, {
+      timeout: 20000, responseType: "text", transformResponse: [d => d],
+    });
+    const html = r.data;
+    const $ = cheerioLoad(html);
+    const items = $(".s-item").length;
+    const titles = [];
+    $(".s-item__title").each((i, el) => { if (i < 5) titles.push($(el).text().trim()); });
+    res.json({
+      workerStatus: r.status,
+      htmlLength: html.length,
+      hasErrorPage: html.includes("Error Page"),
+      sItemCount: items,
+      firstTitles: titles,
+      htmlSnippet: html.slice(0, 300),
+    });
+  } catch(e) {
+    res.json({ error: e.message });
+  }
+});
+
 // ── Admin / utility routes ────────────────────────────────────────────────────
 app.get("/stores", (_, res) => res.json({ stores: KNOWN_STORES }));
 
