@@ -511,14 +511,22 @@ app.get("/debug-ebay", async (req, res) => {
     const items = $(".s-item").length;
     const titles = [];
     $(".s-item__title").each((i, el) => { if (i < 5) titles.push($(el).text().trim()); });
+    // Try alternative selectors to find the right one
+    const selectors = [".s-item", ".srp-results li", ".lvresult", ".sresult", "[data-gr]", "li.s-item"];
+    const selectorHits = {};
+    for (const sel of selectors) selectorHits[sel] = $(sel).length;
+
+    // Search for class names near price patterns in raw HTML
+    const priceMatches = [...html.matchAll(/class="([^"]*)"[^>]*>\$[\d,]+/g)].slice(0, 5).map(m => m[1]);
+
     res.json({
       calledUrl: callUrl,
       workerStatus: r.status,
       htmlLength: html.length,
       hasErrorPage: html.includes("Error Page"),
-      sItemCount: items,
-      firstTitles: titles,
-      htmlSnippet: html.slice(0, 300),
+      selectorHits,
+      priceClasses: priceMatches,
+      htmlSnippet: html.slice(100000, 100500),
     });
   } catch(e) {
     res.json({ error: e.message, calledUrl: callUrl });
