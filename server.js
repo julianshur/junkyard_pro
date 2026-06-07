@@ -183,14 +183,14 @@ async function getSearchQueries(year, make, model) {
   const cached = await cacheGet(cacheKey);
   if (cached) return cached;
 
-  const fallback = [`${year} ${make} ${model} engine`, `${year} ${make} ${model} transmission`, `${year} ${make} ${model} door`];
+  const fallback = [`${year} ${make} ${model} engine`];
 
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       if (attempt > 0) await new Promise(r => setTimeout(r, 2000));
       const text = await claudePost(
-        `For a ${year} ${make} ${model} at a self-service junkyard, list the 3 most valuable parts commonly resold on eBay. Focus on high-value items: engine, transmission, popular body parts for this specific model.\nReturn ONLY a JSON array of 3 eBay search strings. Example: ["2003 Honda Accord engine","2003 Honda Accord transmission","2003 Honda Accord door"]`,
-        "You are an auto parts expert. Respond with a JSON array only — no explanation.", 300);
+        `For a ${year} ${make} ${model} at a self-service junkyard, what is the single most valuable part commonly resold on eBay? Focus on high-value items like engine, transmission, or a model-specific popular part.\nReturn ONLY a JSON array with 1 eBay search string. Example: ["2003 Honda Accord engine"]`,
+        "You are an auto parts expert. Respond with a JSON array only — no explanation.", 100);
       if (!text) throw new Error("empty response");
       const arr = JSON.parse(text.match(/\[[\s\S]*\]/)?.[0]);
       if (!Array.isArray(arr) || !arr.length) throw new Error("invalid array");
@@ -265,7 +265,8 @@ async function scrapeEbayQuery(q) {
   try {
     const ctx = await browser.newContext({ userAgent: UA, locale: "en-US" });
     await ctx.addInitScript(STEALTH_SCRIPT);
-    const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&_sacat=6028&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=60`;
+    // No _sacat filter — category restriction was causing 0 results
+    const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&LH_Sold=1&LH_Complete=1&LH_ItemCondition=4&_sop=12&_ipg=48`;
     const page = await ctx.newPage();
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
     await page.waitForSelector(".s-item, .s-card", { timeout: 10000 }).catch(() => {});
