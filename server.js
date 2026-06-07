@@ -495,7 +495,12 @@ app.get("/prefetch/:yardId", rateLimit(5), async (req, res) => {
 app.get("/debug-ebay", async (req, res) => {
   const q = req.query.q || "2005 Honda Odyssey engine";
   const workerUrl = process.env.EBAY_WORKER_URL;
-  if (!workerUrl) return res.json({ error: "EBAY_WORKER_URL not set", workerUrl: null });
+  if (!workerUrl) return res.json({ error: "EBAY_WORKER_URL not set" });
+  try {
+    new URL(workerUrl); // validate before using
+  } catch(_) {
+    return res.json({ error: "EBAY_WORKER_URL is not a valid URL", value: workerUrl });
+  }
   try {
     const r = await http.get(`${workerUrl}?q=${encodeURIComponent(q)}`, {
       timeout: 20000, responseType: "text", transformResponse: [d => d],
