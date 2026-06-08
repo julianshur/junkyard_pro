@@ -523,26 +523,17 @@ app.get("/debug-ebay", async (req, res) => {
     const cardCount = $("a.s-card__link").length;
     const priceCount = $(".s-card__price").length;
 
-    // Extract the big eBay component blob ($M_fbd99063_C) and search for item data
-    let bigScript = "";
-    $("script").each((_, el) => {
-      const c = $(el).html() || "";
-      if (c.includes("$M_fbd99063_C") && c.length > bigScript.length) bigScript = c;
+    // Try eBay RSS feed — designed for programmatic access, real data in XML
+    const rssUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&LH_Sold=1&LH_Complete=1&_sop=12&_rss=1`;
+    const rssR = await http.get(rssUrl, {
+      timeout: 20000, responseType: "text", transformResponse: [d => d],
+      headers: { "User-Agent": "Mozilla/5.0", "Accept": "application/rss+xml, text/xml, */*" },
     });
+    const rssXml = rssR.data;
+    const rssTitles = [...rssXml.matchAll(/<title><!\[CDATA\[([^\]]{10,120})\]\]><\/title>/g)].slice(0, 8).map(m => m[1]);
+    const rssItems = [...rssXml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 3).map(m => m[1].slice(0, 400));
 
-    // Search for title patterns in the blob
-    const titleMatches = [...bigScript.matchAll(/"title"\s*:\s*"([^"]{10,120})"/g)]
-      .slice(0, 10).map(m => m[1]);
-
-    // Search for price + title pairs near each other
-    const priceTitleMatches = [...bigScript.matchAll(/"price"\s*:\s*\{[^}]*"value"\s*:\s*"([\d.]+)"[^}]*\}[^{]{0,500}"title"\s*:\s*"([^"]{10,120})"/g)]
-      .slice(0, 5).map(m => ({ price: m[1], title: m[2] }));
-
-    // Snippet around first "title" occurrence
-    const firstTitleIdx = bigScript.indexOf('"title"');
-    const titleContext = firstTitleIdx >= 0 ? bigScript.slice(firstTitleIdx, firstTitleIdx + 400) : "not found";
-
-    res.json({ htmlLength: html.length, blobLen: bigScript.length, titleMatches, priceTitleMatches, titleContext });
+    res.json({ rssStatus: rssR.status, rssLength: rssXml.length, rssTitles, rssSnippet: rssXml.slice(0, 500), rssItems });
   } catch(e) {
     res.json({ error: e.message });
   }
