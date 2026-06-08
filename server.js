@@ -520,7 +520,7 @@ app.get("/debug-ebay", async (req, res) => {
     items.each((_, el) => {
       if (firstItemHtml) return;
       const h = $(el).html() || "";
-      if (h.length > 200) firstItemHtml = h.slice(0, 1200);
+      if (h.length > 200) firstItemHtml = h.slice(0, 4000);
     });
     res.json({ workerStatus, htmlLength: html.length, itemCount: items.length, firstItemHtml });
   } catch(e) {
