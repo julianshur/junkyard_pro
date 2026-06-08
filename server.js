@@ -502,9 +502,29 @@ app.get("/prefetch/:yardId", rateLimit(5), async (req, res) => {
 // ── Debug: test a single eBay query end-to-end ───────────────────────────────
 app.get("/debug-ebay", async (req, res) => {
   const q = req.query.q || "2005 Honda Odyssey engine";
+  const workerUrl = process.env.EBAY_WORKER_URL;
+  if (!workerUrl) return res.json({ error: "EBAY_WORKER_URL not set" });
   try {
-    const listings = await scrapeEbayQuery(q);
-    res.json({ query: q, count: listings.length, listings: listings.slice(0, 5) });
+    const r = await http.get(`${workerUrl}?q=${encodeURIComponent(q)}`, {
+      timeout: 25000, responseType: "text", transformResponse: [d => d],
+    });
+    const html = r.data;
+    const $ = cheerioLoad(html);
+    const liCount = $(".srp-results li").length;
+    const cardCount = $("a.s-card__link").length;
+    const priceCount = $(".s-card__price").length;
+
+    // Parse first item manually for diagnosis
+    let firstItem = null;
+    $(".srp-results li").each((_, el) => {
+      if (firstItem) return;
+      const $el = $(el);
+      const rawTitle = $el.find("a.s-card__link").first().text().trim();
+      const priceText = $el.find(".s-card__price").first().text().trim();
+      if (rawTitle.length > 5) firstItem = { rawTitle: rawTitle.slice(0, 80), priceText };
+    });
+
+    res.json({ htmlLength: html.length, liCount, cardCount, priceCount, firstItem });
   } catch(e) {
     res.json({ error: e.message });
   }
