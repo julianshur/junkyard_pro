@@ -267,34 +267,42 @@ async function scrapeEbayQuery(query) {
   const workerUrl = process.env.EBAY_WORKER_URL;
   if (!workerUrl) throw new Error("EBAY_WORKER_URL not configured");
 
-  const r = await http.get(`${workerUrl}?q=${encodeURIComponent(query)}`, {
-    timeout: 20000,
-    responseType: "text",
-    transformResponse: [d => d],
-  });
-  const html = r.data;
+  // Retry up to 3 times — Deno Deploy cold starts can return short responses
+  let html = "";
+  for (let i = 0; i < 3; i++) {
+    const r = await http.get(`${workerUrl}?q=${encodeURIComponent(query)}`, {
+      timeout: 25000, responseType: "text", transformResponse: [d => d],
+    });
+    if (r.data.length > 50000) { html = r.data; break; }
+    if (i < 2) await new Promise(ok => setTimeout(ok, 2000));
+  }
 
-  if (html.includes("Error Page") || html.includes("errorpage")) {
-    log("ebay", `error page returned for: ${query}`);
+  if (!html || html.includes("Error Page")) {
+    log("ebay", `bad response for: ${query}`);
     return [];
   }
 
   const $ = cheerioLoad(html);
   const listings = [];
 
-  $(".s-item").each((_, el) => {
+  $(".srp-results li").each((_, el) => {
     const $el = $(el);
-    const title = $el.find(".s-item__title").first().text().trim();
-    if (!title || /shop on ebay/i.test(title)) return;
 
-    const priceText = $el.find(".s-item__price").first().text().trim();
+    // Title: main card link, strip eBay's "(For: ...)" and tab-open suffix
+    let title = $el.find("a.s-card__link").first().text().trim();
+    title = title.replace(/\s*\(For:[^)]*\)/g, "").replace(/Opens in a new window or tab/gi, "").trim();
+    if (!title || title.length < 5) return;
+
+    // Sold price: .s-card__price is the final/sold price (green = positive)
+    const priceText = $el.find(".s-card__price").first().text().trim();
     const price = parseFloat(priceText.replace(/[^0-9.]/g, ""));
-    const href = $el.find("a.s-item__link").attr("href") || null;
+
+    const href = $el.find("a.s-card__link").first().attr("href") || null;
 
     if (price > 0) listings.push({ title, soldPrice: price, url: href, soldCount: null });
   });
 
-  log("ebay", `"${query}": ${listings.length} sold listings`);
+  log("ebay", `"${query}": ${listings.length} listings`);
   return listings;
 }
 
@@ -491,59 +499,14 @@ app.get("/prefetch/:yardId", rateLimit(5), async (req, res) => {
   }
 });
 
-// ── Debug: test Worker + eBay parsing directly ───────────────────────────────
+// ── Debug: test a single eBay query end-to-end ───────────────────────────────
 app.get("/debug-ebay", async (req, res) => {
   const q = req.query.q || "2005 Honda Odyssey engine";
-  const workerUrl = process.env.EBAY_WORKER_URL;
-  if (!workerUrl) return res.json({ error: "EBAY_WORKER_URL not set" });
   try {
-    new URL(workerUrl); // validate before using
-  } catch(_) {
-    return res.json({ error: "EBAY_WORKER_URL is not a valid URL", value: workerUrl });
-  }
-  const callUrl = `${workerUrl}?q=${encodeURIComponent(q)}`;
-  try {
-    // Retry up to 4 times to get past edge-propagation flakiness
-    let html = "", workerStatus = 0;
-    for (let i = 0; i < 4; i++) {
-      const r = await http.get(callUrl, { timeout: 25000, responseType: "text", transformResponse: [d => d] });
-      workerStatus = r.status;
-      if (r.data.length > 50000) { html = r.data; break; }
-      await new Promise(ok => setTimeout(ok, 2000));
-    }
-    if (!html) return res.json({ error: "Worker kept returning short response after 4 tries", workerStatus });
-
-    const $ = cheerioLoad(html);
-    const items = $(".srp-results li");
-
-    // Extract data from first 3 items to find working selectors
-    const samples = [];
-    items.each((i, el) => {
-      if (samples.length >= 3) return;
-      const $el = $(el);
-      const h = $el.html() || "";
-      if (h.length < 200) return;
-
-      // Grab all anchor text (non-empty, non-image links)
-      const links = [];
-      $el.find("a").each((_, a) => {
-        const t = $(a).text().trim();
-        if (t.length > 5 && t.length < 200) links.push({ text: t, class: $(a).attr("class") || "" });
-      });
-
-      // Grab all spans/divs with $ in their text
-      const prices = [];
-      $el.find("span, div").each((_, s) => {
-        const t = $(s).text().trim();
-        if (t.match(/^\$[\d,]+/) && t.length < 20) prices.push({ text: t, class: $(s).attr("class") || "" });
-      });
-
-      samples.push({ links: links.slice(0, 5), prices: prices.slice(0, 3) });
-    });
-
-    res.json({ workerStatus, htmlLength: html.length, itemCount: items.length, samples });
+    const listings = await scrapeEbayQuery(q);
+    res.json({ query: q, count: listings.length, listings: listings.slice(0, 5) });
   } catch(e) {
-    res.json({ error: e.message, calledUrl: callUrl });
+    res.json({ error: e.message });
   }
 });
 
