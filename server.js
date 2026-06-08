@@ -523,20 +523,21 @@ app.get("/debug-ebay", async (req, res) => {
     const cardCount = $("a.s-card__link").length;
     const priceCount = $(".s-card__price").length;
 
-    // Dump raw data from first 5 a.s-card__link elements — no filtering
-    const raw = [];
-    $("a.s-card__link").each((_, el) => {
-      if (raw.length >= 5) return;
-      const $a = $(el);
-      raw.push({
-        href: ($a.attr("href") || "").slice(0, 80),
-        text: $a.text().trim().slice(0, 100),
-        parentTag: $a.parent().prop("tagName"),
-        parentClass: ($a.parent().attr("class") || "").slice(0, 60),
-      });
+    // Look for embedded JSON data in script tags
+    const scriptMatches = [];
+    $("script").each((_, el) => {
+      const content = $(el).html() || "";
+      // Look for eBay's data blobs
+      if (content.includes('"itemId"') || content.includes('"title"') || content.includes('PRELOADED') || content.includes('__NEXT_DATA__')) {
+        scriptMatches.push({ len: content.length, snippet: content.slice(0, 300) });
+      }
     });
 
-    res.json({ htmlLength: html.length, liCount, cardCount, priceCount, raw });
+    // Also try regex on raw html for item data patterns
+    const itemDataMatches = [...html.matchAll(/"itemId"\s*:\s*"?(\d+)"?[^}]{0,200}"title"\s*:\s*"([^"]{10,100})"/g)]
+      .slice(0, 5).map(m => ({ id: m[1], title: m[2] }));
+
+    res.json({ htmlLength: html.length, liCount, cardCount, priceCount, scriptCount: scriptMatches.length, scriptMatches: scriptMatches.slice(0, 3), itemDataMatches });
   } catch(e) {
     res.json({ error: e.message });
   }
