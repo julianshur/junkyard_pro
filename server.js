@@ -514,17 +514,15 @@ app.get("/debug-ebay", async (req, res) => {
     if (!html) return res.json({ error: "Worker kept returning short response after 4 tries", workerStatus });
 
     const $ = cheerioLoad(html);
-    const selectors = [".s-item", "li.s-item", ".srp-results li", ".lvresult", ".sresult"];
-    const selectorHits = {};
-    for (const sel of selectors) selectorHits[sel] = $(sel).length;
-
-    // Find class names appearing near dollar signs
-    const priceClasses = [...html.matchAll(/class="([^"]{3,40})"[^<]{0,60}\$\d/g)]
-      .slice(0, 8).map(m => m[1]);
-
-    // Snippet from middle of page where listings typically live
-    const mid = Math.floor(html.length / 2);
-    res.json({ workerStatus, htmlLength: html.length, selectorHits, priceClasses, midSnippet: html.slice(mid, mid + 600) });
+    const items = $(".srp-results li");
+    // Dump inner HTML of first real listing item (skip header rows)
+    let firstItemHtml = "";
+    items.each((_, el) => {
+      if (firstItemHtml) return;
+      const h = $(el).html() || "";
+      if (h.length > 200) firstItemHtml = h.slice(0, 1200);
+    });
+    res.json({ workerStatus, htmlLength: html.length, itemCount: items.length, firstItemHtml });
   } catch(e) {
     res.json({ error: e.message, calledUrl: callUrl });
   }
