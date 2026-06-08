@@ -515,14 +515,33 @@ app.get("/debug-ebay", async (req, res) => {
 
     const $ = cheerioLoad(html);
     const items = $(".srp-results li");
-    // Dump inner HTML of first real listing item (skip header rows)
-    let firstItemHtml = "";
-    items.each((_, el) => {
-      if (firstItemHtml) return;
-      const h = $(el).html() || "";
-      if (h.length > 200) firstItemHtml = h.slice(0, 4000);
+
+    // Extract data from first 3 items to find working selectors
+    const samples = [];
+    items.each((i, el) => {
+      if (samples.length >= 3) return;
+      const $el = $(el);
+      const h = $el.html() || "";
+      if (h.length < 200) return;
+
+      // Grab all anchor text (non-empty, non-image links)
+      const links = [];
+      $el.find("a").each((_, a) => {
+        const t = $(a).text().trim();
+        if (t.length > 5 && t.length < 200) links.push({ text: t, class: $(a).attr("class") || "" });
+      });
+
+      // Grab all spans/divs with $ in their text
+      const prices = [];
+      $el.find("span, div").each((_, s) => {
+        const t = $(s).text().trim();
+        if (t.match(/^\$[\d,]+/) && t.length < 20) prices.push({ text: t, class: $(s).attr("class") || "" });
+      });
+
+      samples.push({ links: links.slice(0, 5), prices: prices.slice(0, 3) });
     });
-    res.json({ workerStatus, htmlLength: html.length, itemCount: items.length, firstItemHtml });
+
+    res.json({ workerStatus, htmlLength: html.length, itemCount: items.length, samples });
   } catch(e) {
     res.json({ error: e.message, calledUrl: callUrl });
   }
