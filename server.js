@@ -260,14 +260,54 @@ function scoreYard(vehicles) {
 }
 
 
-// ── eBay scraping via Cloudflare Worker proxy ─────────────────────────────────
-// Set EBAY_WORKER_URL env var on Render to enable real sold listings.
-// Falls back to Claude estimates when not set.
-async function scrapeEbayQuery(query) {
-  const workerUrl = process.env.EBAY_WORKER_URL;
-  if (!workerUrl) throw new Error("EBAY_WORKER_URL not configured");
+// ── eBay Finding API (official, returns real sold JSON) ──────────────────────
+// Requires EBAY_APP_ID env var — free at developer.ebay.com
+async function findCompletedItems(query) {
+  const appId = process.env.EBAY_APP_ID;
+  if (!appId) return null; // signal: API not configured
 
-  // Retry up to 3 times — Deno Deploy cold starts can return short responses
+  const params = new URLSearchParams({
+    "OPERATION-NAME": "findCompletedItems",
+    "SERVICE-VERSION": "1.0.0",
+    "SECURITY-APPNAME": appId,
+    "RESPONSE-DATA-FORMAT": "JSON",
+    "SEARCH-KEYWORDS": query,
+    "itemFilter(0).name": "SoldItemsOnly",
+    "itemFilter(0).value": "true",
+    "paginationInput.entriesPerPage": "15",
+    "sortOrder": "EndTimeSoonest",
+  });
+
+  const url = `https://svcs.ebay.com/services/search/FindingService/v1?${params}`;
+  const r = await http.get(url, { timeout: 15000, responseType: "json" });
+
+  const resp = r.data?.findCompletedItemsResponse?.[0];
+  if (!resp || resp.ack?.[0] !== "Success") {
+    log("ebay", `Finding API ack: ${resp?.ack?.[0]}, error: ${JSON.stringify(resp?.errorMessage)}`);
+    return [];
+  }
+
+  const items = resp.searchResult?.[0]?.item || [];
+  return items.map(item => ({
+    title: item.title?.[0] || "",
+    soldPrice: parseFloat(item.sellingStatus?.[0]?.currentPrice?.[0]?.["__value__"] || "0"),
+    url: item.viewItemURL?.[0] || "",
+    soldCount: null,
+  })).filter(l => l.title.length > 5 && l.soldPrice > 0);
+}
+
+async function scrapeEbayQuery(query) {
+  // Prefer official Finding API when App ID is available
+  const apiResult = await findCompletedItems(query);
+  if (apiResult !== null) {
+    log("ebay", `Finding API "${query}": ${apiResult.length} sold listings`);
+    return apiResult;
+  }
+
+  // Fallback: proxy HTML scrape (limited by SSR placeholders)
+  const workerUrl = process.env.EBAY_WORKER_URL;
+  if (!workerUrl) throw new Error("No EBAY_APP_ID or EBAY_WORKER_URL configured");
+
   let html = "";
   for (let i = 0; i < 3; i++) {
     const r = await http.get(`${workerUrl}?q=${encodeURIComponent(query)}`, {
@@ -278,7 +318,7 @@ async function scrapeEbayQuery(query) {
   }
 
   if (!html || html.includes("Error Page")) {
-    log("ebay", `bad response for: ${query}`);
+    log("ebay", `bad proxy response for: ${query}`);
     return [];
   }
 
@@ -286,32 +326,26 @@ async function scrapeEbayQuery(query) {
   const listings = [];
   const seen = new Set();
 
-  // Start from card links (confirmed to exist), walk up to card container for price
   $("a.s-card__link").each((_, el) => {
     const $a = $(el);
     const href = $a.attr("href") || "";
-    // Only actual item pages, dedupe by URL
     const itemMatch = href.match(/\/itm\/(\d+)/);
-    if (!itemMatch) return;
-    if (seen.has(itemMatch[1])) return;
+    if (!itemMatch || seen.has(itemMatch[1])) return;
     seen.add(itemMatch[1]);
 
     let title = $a.text().trim()
       .replace(/\s*\(For:[^)]*\)/g, "")
-      .replace(/Opens in a new window or tab/gi, "")
-      .trim();
+      .replace(/Opens in a new window or tab/gi, "").trim();
     if (title.length < 5) return;
 
-    // Walk up to the card container, then find the price within it
     const $card = $a.closest("[class*='su-card']");
     const priceText = $card.find(".s-card__price").first().text().trim() ||
                       $card.find("[class*='price']").first().text().trim();
     const price = parseFloat(priceText.replace(/[^0-9.]/g, ""));
-
     if (price > 0) listings.push({ title, soldPrice: price, url: href, soldCount: null });
   });
 
-  log("ebay", `"${query}": ${listings.length} listings`);
+  log("ebay", `proxy scrape "${query}": ${listings.length} listings`);
   return listings;
 }
 
@@ -508,34 +542,18 @@ app.get("/prefetch/:yardId", rateLimit(5), async (req, res) => {
   }
 });
 
-// ── Debug: test a single eBay query end-to-end ───────────────────────────────
+// ── Debug: test eBay Finding API ─────────────────────────────────────────────
 app.get("/debug-ebay", async (req, res) => {
   const q = req.query.q || "2005 Honda Odyssey engine";
-  const workerUrl = process.env.EBAY_WORKER_URL;
-  if (!workerUrl) return res.json({ error: "EBAY_WORKER_URL not set" });
+  const appId = process.env.EBAY_APP_ID;
   try {
-    const r = await http.get(`${workerUrl}?q=${encodeURIComponent(q)}`, {
-      timeout: 25000, responseType: "text", transformResponse: [d => d],
-    });
-    const html = r.data;
-    const $ = cheerioLoad(html);
-    const liCount = $(".srp-results li").length;
-    const cardCount = $("a.s-card__link").length;
-    const priceCount = $(".s-card__price").length;
-
-    // Try eBay RSS feed — designed for programmatic access, real data in XML
-    const rssUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(q)}&LH_Sold=1&LH_Complete=1&_sop=12&_rss=1`;
-    const rssR = await http.get(rssUrl, {
-      timeout: 20000, responseType: "text", transformResponse: [d => d],
-      headers: { "User-Agent": "Mozilla/5.0", "Accept": "application/rss+xml, text/xml, */*" },
-    });
-    const rssXml = rssR.data;
-    const rssTitles = [...rssXml.matchAll(/<title><!\[CDATA\[([^\]]{10,120})\]\]><\/title>/g)].slice(0, 8).map(m => m[1]);
-    const rssItems = [...rssXml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 3).map(m => m[1].slice(0, 400));
-
-    res.json({ rssStatus: rssR.status, rssLength: rssXml.length, rssTitles, rssSnippet: rssXml.slice(0, 500), rssItems });
+    if (!appId) {
+      return res.json({ error: "EBAY_APP_ID not set — get a free key at developer.ebay.com (Finding API > Production App ID)" });
+    }
+    const apiResult = await findCompletedItems(q);
+    res.json({ source: "FindingAPI", query: q, count: apiResult.length, listings: apiResult.slice(0, 10) });
   } catch(e) {
-    res.json({ error: e.message });
+    res.json({ error: e.message, stack: e.stack?.split("\n").slice(0,5) });
   }
 });
 
