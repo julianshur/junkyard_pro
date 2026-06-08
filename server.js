@@ -284,20 +284,29 @@ async function scrapeEbayQuery(query) {
 
   const $ = cheerioLoad(html);
   const listings = [];
+  const seen = new Set();
 
-  $(".srp-results li").each((_, el) => {
-    const $el = $(el);
+  // Start from card links (confirmed to exist), walk up to card container for price
+  $("a.s-card__link").each((_, el) => {
+    const $a = $(el);
+    const href = $a.attr("href") || "";
+    // Only actual item pages, dedupe by URL
+    const itemMatch = href.match(/\/itm\/(\d+)/);
+    if (!itemMatch) return;
+    if (seen.has(itemMatch[1])) return;
+    seen.add(itemMatch[1]);
 
-    // Title: main card link, strip eBay's "(For: ...)" and tab-open suffix
-    let title = $el.find("a.s-card__link").first().text().trim();
-    title = title.replace(/\s*\(For:[^)]*\)/g, "").replace(/Opens in a new window or tab/gi, "").trim();
-    if (!title || title.length < 5) return;
+    let title = $a.text().trim()
+      .replace(/\s*\(For:[^)]*\)/g, "")
+      .replace(/Opens in a new window or tab/gi, "")
+      .trim();
+    if (title.length < 5) return;
 
-    // Sold price: .s-card__price is the final/sold price (green = positive)
-    const priceText = $el.find(".s-card__price").first().text().trim();
+    // Walk up to the card container, then find the price within it
+    const $card = $a.closest("[class*='su-card']");
+    const priceText = $card.find(".s-card__price").first().text().trim() ||
+                      $card.find("[class*='price']").first().text().trim();
     const price = parseFloat(priceText.replace(/[^0-9.]/g, ""));
-
-    const href = $el.find("a.s-card__link").first().attr("href") || null;
 
     if (price > 0) listings.push({ title, soldPrice: price, url: href, soldCount: null });
   });
@@ -514,17 +523,24 @@ app.get("/debug-ebay", async (req, res) => {
     const cardCount = $("a.s-card__link").length;
     const priceCount = $(".s-card__price").length;
 
-    // Parse first item manually for diagnosis
-    let firstItem = null;
-    $(".srp-results li").each((_, el) => {
-      if (firstItem) return;
-      const $el = $(el);
-      const rawTitle = $el.find("a.s-card__link").first().text().trim();
-      const priceText = $el.find(".s-card__price").first().text().trim();
-      if (rawTitle.length > 5) firstItem = { rawTitle: rawTitle.slice(0, 80), priceText };
+    // Test new approach: start from a.s-card__link, walk up to card
+    const seen = new Set();
+    const parsed = [];
+    $("a.s-card__link").each((_, el) => {
+      if (parsed.length >= 3) return;
+      const $a = $(el);
+      const href = $a.attr("href") || "";
+      const itemMatch = href.match(/\/itm\/(\d+)/);
+      if (!itemMatch || seen.has(itemMatch[1])) return;
+      seen.add(itemMatch[1]);
+      const title = $a.text().trim().replace(/\s*\(For:[^)]*\)/g, "").replace(/Opens in a new window or tab/gi, "").trim();
+      if (title.length < 5) return;
+      const $card = $a.closest("[class*='su-card']");
+      const priceText = $card.find(".s-card__price").first().text().trim() || $card.find("[class*='price']").first().text().trim();
+      parsed.push({ title: title.slice(0, 80), priceText });
     });
 
-    res.json({ htmlLength: html.length, liCount, cardCount, priceCount, firstItem });
+    res.json({ htmlLength: html.length, liCount, cardCount, priceCount, parsed });
   } catch(e) {
     res.json({ error: e.message });
   }
