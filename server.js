@@ -296,6 +296,51 @@ async function findCompletedItems(query) {
   })).filter(l => l.title.length > 5 && l.soldPrice > 0);
 }
 
+// Browser-rendered fallback: a raw HTTP fetch of eBay's sold-search page only
+// gets the SSR placeholder shell (filled in client-side by JS), so this needs
+// an actual JS-executing browser to see real listings. Same approach as the
+// proven scraper in ebay.js, just reusing this file's shared launchChromium().
+async function scrapeEbaySoldBrowser(query) {
+  const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1&LH_ItemCondition=3000&_ipg=240`;
+  const browser = await launchChromium();
+  try {
+    const ctx = await browser.newContext({ userAgent: UA, locale: "en-US" });
+    const page = await ctx.newPage();
+    await page.addInitScript(STEALTH_SCRIPT);
+    try {
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+      await page.waitForSelector(".s-card, li.s-item", { timeout: 15000 }).catch(() => {});
+
+      const listings = await page.evaluate(() => {
+        const cards = Array.from(document.querySelectorAll(".s-card, li.s-item"));
+        const out = [];
+        for (const card of cards) {
+          const titleEl = card.querySelector('[class*="title" i]');
+          const title = (titleEl ? titleEl.textContent : "").trim();
+          if (!title || /^shop on ebay$/i.test(title)) continue;
+
+          const priceEl = card.querySelector('[class*="price" i]');
+          const ptext = (priceEl ? priceEl.textContent : "") || "";
+          const m = ptext.match(/\$\s?([\d,]+(?:\.\d{2})?)/); // first $; ranges -> low
+          if (!m) continue;
+          const price = parseFloat(m[1].replace(/,/g, ""));
+          if (!isFinite(price) || price <= 0) continue;
+
+          const linkEl = card.querySelector("a");
+          out.push({ title, soldPrice: price, url: linkEl ? linkEl.href : "", soldCount: null });
+        }
+        return out;
+      });
+
+      return listings;
+    } finally {
+      await ctx.close();
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function scrapeEbayQuery(query) {
   // Prefer official Finding API when App ID is available
   const apiResult = await findCompletedItems(query);
@@ -304,48 +349,8 @@ async function scrapeEbayQuery(query) {
     return apiResult;
   }
 
-  // Fallback: proxy HTML scrape (limited by SSR placeholders)
-  const workerUrl = process.env.EBAY_WORKER_URL;
-  if (!workerUrl) throw new Error("No EBAY_APP_ID or EBAY_WORKER_URL configured");
-
-  let html = "";
-  for (let i = 0; i < 3; i++) {
-    const r = await http.get(`${workerUrl}?q=${encodeURIComponent(query)}`, {
-      timeout: 25000, responseType: "text", transformResponse: [d => d],
-    });
-    if (r.data.length > 50000) { html = r.data; break; }
-    if (i < 2) await new Promise(ok => setTimeout(ok, 2000));
-  }
-
-  if (!html || html.includes("Error Page")) {
-    log("ebay", `bad proxy response for: ${query}`);
-    return [];
-  }
-
-  const $ = cheerioLoad(html);
-  const listings = [];
-  const seen = new Set();
-
-  $("a.s-card__link").each((_, el) => {
-    const $a = $(el);
-    const href = $a.attr("href") || "";
-    const itemMatch = href.match(/\/itm\/(\d+)/);
-    if (!itemMatch || seen.has(itemMatch[1])) return;
-    seen.add(itemMatch[1]);
-
-    let title = $a.text().trim()
-      .replace(/\s*\(For:[^)]*\)/g, "")
-      .replace(/Opens in a new window or tab/gi, "").trim();
-    if (title.length < 5) return;
-
-    const $card = $a.closest("[class*='su-card']");
-    const priceText = $card.find(".s-card__price").first().text().trim() ||
-                      $card.find("[class*='price']").first().text().trim();
-    const price = parseFloat(priceText.replace(/[^0-9.]/g, ""));
-    if (price > 0) listings.push({ title, soldPrice: price, url: href, soldCount: null });
-  });
-
-  log("ebay", `proxy scrape "${query}": ${listings.length} listings`);
+  const listings = await scrapeEbaySoldBrowser(query);
+  log("ebay", `browser scrape "${query}": ${listings.length} listings`);
   return listings;
 }
 
@@ -542,16 +547,13 @@ app.get("/prefetch/:yardId", rateLimit(5), async (req, res) => {
   }
 });
 
-// ── Debug: test eBay Finding API ─────────────────────────────────────────────
+// ── Debug: test eBay sold-listing scraping ────────────────────────────────────
 app.get("/debug-ebay", async (req, res) => {
   const q = req.query.q || "2005 Honda Odyssey engine";
-  const appId = process.env.EBAY_APP_ID;
   try {
-    if (!appId) {
-      return res.json({ error: "EBAY_APP_ID not set — get a free key at developer.ebay.com (Finding API > Production App ID)" });
-    }
-    const apiResult = await findCompletedItems(q);
-    res.json({ source: "FindingAPI", query: q, count: apiResult.length, listings: apiResult.slice(0, 10) });
+    const listings = await scrapeEbayQuery(q);
+    const source = process.env.EBAY_APP_ID ? "FindingAPI-or-browser" : "browser";
+    res.json({ source, query: q, count: listings.length, listings: listings.slice(0, 10) });
   } catch(e) {
     res.json({ error: e.message, stack: e.stack?.split("\n").slice(0,5) });
   }
