@@ -6,3 +6,5 @@ winscp_deploy.txt
 winscp_script.txt
 .playwright/
 *.local
+terapeak-profile/
+scripts/terapeak-out/
